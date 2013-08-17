@@ -5,7 +5,7 @@ from os import path
 from collections import defaultdict
 from distutils.core import setup
 from distutils.extension import Extension
-from Cython import Distutils
+from Cython.Distutils import build_ext
 
 
 PKGCONFIG_TOKEN_MAP = {
@@ -99,6 +99,6 @@ setup(
     install_requires=[
         'lxml >= 3.0',
     ],
-    cmdclass = {'build_ext': Distutils.build_ext},
+    cmdclass = {'build_ext': build_ext},
     ext_modules=[Extension('xmlsec', ['src/xmlsec.pyx'], **config)]
 )
