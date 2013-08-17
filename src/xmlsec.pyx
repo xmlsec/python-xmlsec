@@ -1,10 +1,11 @@
 import atexit
 from xmlsec cimport *
-from etreepublic cimport import_lxml__etree, _Element, _ElementTree, pyunicode, elementFactory, _Document
-from tree cimport xmlDocCopyNode, xmlFreeNode, xmlNode, xmlDoc, xmlDocGetRootElement, xmlCopyDoc, xmlNewDoc
+from etreepublic cimport _Element, _ElementTree, _Document
+from etreepublic cimport import_lxml__etree, pyunicode, elementFactory
+from tree cimport xmlNode, xmlDoc
 from lxml.etree import ElementTree
 
-# Ensure internal lxml utilities are initialized.
+# Ensure internal lxml utilities are initialized for this module.
 import_lxml__etree()
 
 
@@ -55,7 +56,7 @@ cdef make_document():
     return tree._doc
 
 
-cdef inline xmlChar2py(xmlChar * xs):
+cdef inline xmlChar_to_python(xmlChar * xs):
   if xs == NULL: return None
   return pyunicode(xs)
 
@@ -68,10 +69,12 @@ cdef class _Transform:
   cdef xmlSecTransformId id
 
   property name:
-    def __get__(self): return xmlChar2py(<xmlChar*>self.id.name)
+    def __get__(self):
+        return xmlChar_to_python(<xmlChar*>self.id.name)
 
   property href:
-    def __get__(self): return xmlChar2py(<xmlChar*>self.id.href)
+    def __get__(self):
+        return xmlChar_to_python(<xmlChar*>self.id.href)
 
 
 cdef _mkti(xmlSecTransformId id):
@@ -233,47 +236,47 @@ def add_x509_data(_Element node not None):
     return elementFactory(node._doc, c_node)
 
 
-cdef class Key:
-    cdef xmlSecKeyPtr _handle
+# cdef class Key:
+#     cdef xmlSecKeyPtr _handle
 
-    def __dealloc__(self):
-        if self._handle != NULL:
-            xmlSecKeyDestroy(self._handle)
+#     def __dealloc__(self):
+#         if self._handle != NULL:
+#             xmlSecKeyDestroy(self._handle)
 
-    @classmethod
-    cdef load(
-            cls,
-            char* filename,
-            xmlSecKeyDataFormat format,
-            char* password=NULL):
-        """Load PKI key from the specified filename.
-        """
+#     @classmethod
+#     def load(
+#             cls,
+#             char* filename,
+#             xmlSecKeyDataFormat format,
+#             char* password=NULL):
+#         """Load PKI key from the specified filename.
+#         """
 
-        cdef xmlSecKeyPtr handle
+#         cdef xmlSecKeyPtr handle
 
-        handle = xmlSecCryptoAppKeyLoad(
-            filename, format, c_password, NULL, NULL)
+#         handle = xmlSecCryptoAppKeyLoad(
+#             filename, format, password, NULL, NULL)
 
-        if  handle == NULL:
-            raise ValueError('Failed to load the key from file', filename)
+#         if  handle == NULL:
+#             raise ValueError('Failed to load the key from file', filename)
 
-        cdef Key instance = cls()
-        instance._handle = handle
+#         cdef Key instance = cls()
+#         instance._handle = handle
 
-        return instance
+#         return instance
 
 
-cdef class SignatureContext:
-    cdef xmlSecDSigCtxPtr _handle
+# cdef class SignatureContext:
+#     cdef xmlSecDSigCtxPtr _handle
 
-    def __cinit__(self): # , KeysMngr manager=None):
-        # cdef xmlSecKeysMngrPtr _mngr
+#     def __cinit__(self): # , KeysMngr manager=None):
+#         # cdef xmlSecKeysMngrPtr _mngr
 
-        # _mngr = mngr.mngr if mngr is not None else NULL
-        self._handle = xmlSecDSigCtxCreate(NULL)
-        if self._handle == NULL:
-            raise RuntimeError("Failed to create digital signature context.")
+#         # _mngr = mngr.mngr if mngr is not None else NULL
+#         self._handle = xmlSecDSigCtxCreate(NULL)
+#         if self._handle == NULL:
+#             raise RuntimeError("Failed to create digital signature context.")
 
-    def __dealloc__(self):
-        if self._handle != NULL:
-            xmlSecDSigCtxDestroy(self._handle)
+#     def __dealloc__(self):
+#         if self._handle != NULL:
+#             xmlSecDSigCtxDestroy(self._handle)
