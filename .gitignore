@@ -1,6 +1,7 @@
 # Dot files
 .*
 !.editorconfig
+!.travis*
 !.git*
 
 # Python

@@ -1,0 +1,12 @@
+language: python
+python:
+  - '3.3'
+
+before_install:
+  - 'travis_retry sudo apt-get install python-dev libxml2-dev libxmlsec-dev'
+  - 'travis_retry pip install Cython --use-mirrors'
+
+install:
+  - 'travis_retry pip install -e ".[test]" --use-mirrors'
+
+script: 'py.test'
