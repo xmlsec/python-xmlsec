@@ -93,12 +93,26 @@ setup(
     name='xmlsec',
     version='0.1.0',
     description='Python bindings for the XML Security Library.',
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Developers',
+        'Intended Audience :: System Administrators',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 3.3',
+        'Topic :: Text Processing :: Markup :: XML'
+    ],
+    author='Concordus Applications',
+    author_email='support@concordusapps.com',
     setup_requires=[
         'lxml >= 3.0',
     ],
     install_requires=[
         'lxml >= 3.0',
     ],
+    extras_require={
+        'test': ['pytest']
+    },
     cmdclass = {'build_ext': build_ext},
     ext_modules=[Extension('xmlsec', ['src/xmlsec.pyx'], **config)]
 )

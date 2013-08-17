@@ -9,3 +9,5 @@
 *.pyc
 *.pyo
 *.egg*
+*.so
+*.c
