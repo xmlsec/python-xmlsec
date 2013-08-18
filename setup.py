@@ -2,6 +2,7 @@
 import sys
 import subprocess
 from os import path
+from pkgutil import get_importer
 from collections import defaultdict
 from distutils.core import setup
 from distutils.extension import Extension
@@ -89,10 +90,27 @@ config = pkgconfig('libxml-2.0', 'xmlsec1-%s' % XMLSEC_CRYPTO)
 config['include_dirs'].insert(0, 'src')  # Prepend 'src' as an include dir.
 
 
+def make_extension(name):
+    # Resolve extension location from name.
+    location = path.join('src', *name.split('.'))
+    location += '.pyx'
+
+    # Create and return the extension.
+    return Extension(name, [location], **config)
+
+
+# Load the metadata for inclusion in the package.
+BASE_DIR = path.abspath(path.dirname(__file__))
+
+# Navigate, import, and retrieve the metadata of the project.
+_imp = get_importer(path.join(BASE_DIR, 'src', 'xmlsec'))
+meta = _imp.find_module('meta').load_module('meta')
+
+
 setup(
     name='xmlsec',
-    version='0.1.0',
-    description='Python bindings for the XML Security Library.',
+    version=meta.version,
+    description=meta.description,
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
@@ -113,6 +131,12 @@ setup(
     extras_require={
         'test': ['pytest']
     },
-    cmdclass = {'build_ext': build_ext},
-    ext_modules=[Extension('xmlsec', ['src/xmlsec.pyx'], **config)]
+    package_dir={'xmlsec': 'src/xmlsec'},
+    packages=['xmlsec'],
+    cmdclass={'build_ext': build_ext},
+    ext_modules=[
+        make_extension('xmlsec.constants'),
+        # make_extension('xmlsec.template'),
+        make_extension('xmlsec.tree'),
+    ]
 )
