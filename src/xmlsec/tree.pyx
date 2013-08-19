@@ -16,7 +16,7 @@ __all__ = [
 
 def find_child(_Element parent not None,
                name not None,
-               namespace=constants.namespace.DS):
+               namespace=constants.Namespace.DS):
     """
     Searches a direct child of the parent node having given name and
     namespace href.
@@ -28,7 +28,7 @@ def find_child(_Element parent not None,
 
 def find_parent(_Element node not None,
                 name not None,
-                namespace=constants.namespace.DS):
+                namespace=constants.Namespace.DS):
     """
     Searches the ancestors axis of the node for a node having given name
     and namespace href.
@@ -40,7 +40,7 @@ def find_parent(_Element node not None,
 
 def find_node(_Element parent not None,
               name not None,
-              namespace=constants.namespace.DS):
+              namespace=constants.Namespace.DS):
     """
     Searches all children of the parent node having given name and
     namespace href.

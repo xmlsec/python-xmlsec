@@ -2,12 +2,12 @@ from constants cimport *
 from utils cimport *
 
 __all__ = [
-    'namespace',
-    'node'
+    'Namespace',
+    'Node'
 ]
 
 
-class namespace:
+class Namespace:
     """Global namespaces."""
     BASE = _u(xmlSecNs)
     DS = _u(xmlSecDSigNs)
@@ -20,7 +20,7 @@ class namespace:
     SOAP12 = _u(xmlSecSoap12Ns)
 
 
-class node:
+class Node:
     """Digital signature nodes."""
     SIGNATURE = _u(xmlSecNodeSignature)
     SIGNED_INFO = _u(xmlSecNodeSignedInfo)
