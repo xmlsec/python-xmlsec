@@ -87,7 +87,8 @@ XMLSEC_CRYPTO = 'openssl'
 # Process the `pkg-config` utility and discover include and library
 # directories.
 config = pkgconfig('libxml-2.0', 'xmlsec1-%s' % XMLSEC_CRYPTO)
-config['include_dirs'].insert(0, 'src')  # Prepend 'src' as an include dir.
+config['include_dirs'].insert(0, 'src/xmlsec')
+config['include_dirs'].insert(0, 'src')
 
 
 def make_extension(name):
@@ -136,7 +137,10 @@ setup(
     cmdclass={'build_ext': build_ext},
     ext_modules=[
         make_extension('xmlsec.constants'),
-        # make_extension('xmlsec.template'),
+        make_extension('xmlsec.utils'),
         make_extension('xmlsec.tree'),
+        make_extension('xmlsec.key'),
+        Extension('xmlsec.ds', ['src/xmlsec/ds.pyx'], **config),
+        # make_extension('xmlsec.ds'),
     ]
 )

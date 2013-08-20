@@ -1,7 +1,7 @@
 from lxml.includes.tree cimport const_xmlChar
 
 
-cdef extern from "xmlsec/strings.h":
+cdef extern from "xmlsec.h":  # xmlsec/strings.h
     # Global namespaces.
     const_xmlChar* xmlSecNs
     const_xmlChar* xmlSecDSigNs

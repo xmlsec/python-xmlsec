@@ -23,12 +23,21 @@ def test_sign_1():
 
     # Load private key (assuming that there is no password).
     filename = path.join(BASE_DIR, 'rsakey.pem')
-    ctx.key = xmlsec.Key(filename, xmlsec.Key.Format.PEM)
+    key = xmlsec.Key.from_file(filename, xmlsec.KeyFormat.PEM)
+
+    assert key is not None
 
     # Set key name to the file name (note: this is just a test).
-    ctx.key.name = filename
+    key.name = filename
+
+    # Set the key on the context.
+    ctx.key = key
+
+    assert ctx.key is not None
+    assert ctx.key.name == filename
 
     # Sign the template.
     ctx.sign(signature_node)
 
     # TODO: Assert the contents of the XML document.
+    print('\n', etree.tostring(template, pretty_print=True).decode('utf8'))

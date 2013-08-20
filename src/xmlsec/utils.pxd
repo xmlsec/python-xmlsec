@@ -2,6 +2,9 @@ from lxml.includes.tree cimport const_xmlChar
 
 
 cdef inline const_xmlChar* _b(text):
+    if text is None:
+        return NULL
+
     if isinstance(text, str):
         text = text.encode('utf8')
         return text
@@ -10,4 +13,19 @@ cdef inline const_xmlChar* _b(text):
 
 
 cdef inline _u(const_xmlChar* text):
-    return text.decode('utf8')
+    return text.decode('utf8') if text != NULL else None
+
+
+cdef extern from "xmlsec.h":  # xmlsec/xmlsec.h
+    int xmlSecInit() nogil
+    int xmlSecShutdown() nogil
+
+
+cdef extern from "xmlsec.h":  # xmlsec/app.h
+    int xmlSecCryptoInit() nogil
+    int xmlSecCryptoShutdown() nogil
+
+    int xmlSecCryptoAppInit(char* name) nogil
+    int xmlSecCryptoAppShutdown() nogil
+
+    void xmlSecErrorsSetCallback(void* callback) nogil

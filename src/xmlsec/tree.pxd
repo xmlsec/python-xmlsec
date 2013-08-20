@@ -1,7 +1,7 @@
 from lxml.includes.tree cimport const_xmlChar, xmlNode
 
 
-cdef extern from "xmlsec/xmltree.h":
+cdef extern from "xmlsec.h":  # xmlsec/xmltree.h
 
     # const_xmlChar* xmlSecGetNodeNsHref(xmlNode* node)
 
