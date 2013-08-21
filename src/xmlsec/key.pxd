@@ -59,9 +59,6 @@ cdef extern from "xmlsec.h":  # xmlsec/keys.h
     xmlSecKeyPtr xmlSecCryptoAppKeyLoad(
         const_char*, xmlSecKeyDataFormat, const_char*, void*, void *) nogil
 
-    int xmlSecCryptoAppKeyCertLoad(
-        xmlSecKeyPtr, const_char*, xmlSecKeyDataFormat) nogil
-
     xmlSecKeyPtr xmlSecCryptoAppKeyLoadMemory(
         const_unsigned_char*, int, xmlSecKeyDataFormat,
         const_char*, void*, void*) nogil
@@ -71,13 +68,18 @@ cdef extern from "xmlsec.h":  # xmlsec/keys.h
     # xmlSecKeyPtr xmlSecKeyReadMemory(
     #     xmlSecKeyDataId, const_unsigned_char*, size_t) nogil
 
+    int xmlSecCryptoAppKeyCertLoad(
+        xmlSecKeyPtr, const_char*, xmlSecKeyDataFormat) nogil
+
+    int xmlSecCryptoAppKeyCertLoadMemory(
+        xmlSecKeyPtr, const_unsigned_char*, int, xmlSecKeyDataFormat) nogil
+
     # xmlSecKeyPtr xmlSecKeyGenerate(
     #     xmlSecKeyDataId, size_t, xmlSecKeyDataType) nogil
 
     int xmlSecKeySetName(xmlSecKeyPtr, const_xmlChar*) nogil
 
     const_xmlChar* xmlSecKeyGetName(xmlSecKeyPtr) nogil
-
 
 cdef class Key:
     cdef xmlSecKeyPtr _handle
