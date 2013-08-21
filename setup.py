@@ -4,8 +4,8 @@ import subprocess
 from os import path
 from pkgutil import get_importer
 from collections import defaultdict
-from distutils.core import setup
-from distutils.extension import Extension
+from setuptools import setup, Extension
+# from distutils.extension import Extension
 from Cython.Distutils import build_ext
 
 
@@ -127,6 +127,7 @@ setup(
     ],
     author='Concordus Applications',
     author_email='support@concordusapps.com',
+    url='https://github.com/concordusapps/python-xmlsec',
     setup_requires=[
         'lxml >= 3.0',
     ],
