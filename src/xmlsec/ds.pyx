@@ -51,8 +51,19 @@ cdef class SignatureContext:
         """
 
         cdef int rv
-        cdef xmlSecDSigCtxPtr handle = self._handle
 
-        rv = xmlSecDSigCtxSign(handle, node._c_node)
+        rv = xmlSecDSigCtxSign(self._handle, node._c_node)
         if rv != 0:
-            raise RuntimeError('signing failed with return value %r' % rv)
+            raise RuntimeError('sign failed with return value %r' % rv)
+
+    def verify(self, _Element node not None):
+        """Verify according to the signature template.
+        """
+
+        cdef int rv
+
+        rv = xmlSecDSigCtxVerify(self._handle, node._c_node)
+        if rv != 0:
+            raise RuntimeError('verify failed with return value %r' % rv)
+
+        return self._handle.status == xmlSecDSigStatusSucceeded

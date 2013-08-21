@@ -25,11 +25,11 @@ cdef extern from "xmlsec.h":  # xmlsec/keys.h
         xmlSecKeyPtr signKey
         # xmlSecTransformOperation operation
         # xmlSecBufferPtr result
-        # xmlSecDSigStatus status
+        xmlSecDSigStatus status
         # xmlSecTransformPtr signMethod
         # xmlSecTransformPtr c14nMethod
         # xmlSecTransformPtr preSignMemBufMethod
-        xmlNode* signValueNode
+        # xmlNode* signValueNode
         # xmlChar* id
         # xmlSecPtrList signedInfoReferences
         # xmlSecPtrList manifestReferences

@@ -122,6 +122,7 @@ setup(
         'Intended Audience :: System Administrators',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
+        'Programming Language :: Cython',
         'Programming Language :: Python :: 3.3',
         'Topic :: Text Processing :: Markup :: XML'
     ],

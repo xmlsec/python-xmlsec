@@ -19,49 +19,23 @@ def test_verify_with_pem_file(index):
     assert signature_node is not None
     assert signature_node.tag.endswith(xmlsec.Node.SIGNATURE)
 
-    # /* load file */
-    # doc = xmlParseFile(xml_file);
-    # if ((doc == NULL) || (xmlDocGetRootElement(doc) == NULL)){
-    #     fprintf(stderr, "Error: unable to parse file \"%s\"\n", xml_file);
-    #     goto done;
-    # }
+    # Create a digital signature context (no key manager is needed).
+    ctx = xmlsec.SignatureContext()
 
-    # /* find start node */
-    # node = xmlSecFindNode(xmlDocGetRootElement(doc), xmlSecNodeSignature, xmlSecDSigNs);
-    # if(node == NULL) {
-    #     fprintf(stderr, "Error: start node not found in \"%s\"\n", xml_file);
-    #     goto done;
-    # }
+    # Load the public key.
+    filename = path.join(BASE_DIR, 'rsapub.pem')
+    key = xmlsec.Key.from_file(filename, xmlsec.KeyFormat.PEM)
 
-    # /* create signature context, we don't need keys manager in this example */
-    # dsigCtx = xmlSecDSigCtxCreate(NULL);
-    # if(dsigCtx == NULL) {
-    #     fprintf(stderr,"Error: failed to create signature context\n");
-    #     goto done;
-    # }
+    assert key is not None
 
-    # /* load public key */
-    # dsigCtx->signKey = xmlSecCryptoAppKeyLoad(key_file, xmlSecKeyDataFormatPem, NULL, NULL, NULL);
-    # if(dsigCtx->signKey == NULL) {
-    #     fprintf(stderr,"Error: failed to load public pem key from \"%s\"\n", key_file);
-    #     goto done;
-    # }
+    # Set key name to the file name (note: this is just a test).
+    key.name = path.basename(filename)
 
-    # /* set key name to the file name, this is just an example! */
-    # if(xmlSecKeySetName(dsigCtx->signKey, key_file) < 0) {
-    #     fprintf(stderr,"Error: failed to set key name for key from \"%s\"\n", key_file);
-    #     goto done;
-    # }
+    # Set the key on the context.
+    ctx.key = key
 
-    # /* Verify signature */
-    # if(xmlSecDSigCtxVerify(dsigCtx, node) < 0) {
-    #     fprintf(stderr,"Error: signature verify\n");
-    #     goto done;
-    # }
+    assert ctx.key is not None
+    assert ctx.key.name == path.basename(filename)
 
-    # /* print verification result to stdout */
-    # if(dsigCtx->status == xmlSecDSigStatusSucceeded) {
-    #     fprintf(stdout, "Signature is OK\n");
-    # } else {
-    #     fprintf(stdout, "Signature is INVALID\n");
-    # }
+    # Verify the signature.
+    assert ctx.verify(signature_node)
