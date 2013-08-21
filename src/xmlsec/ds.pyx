@@ -53,12 +53,6 @@ cdef class SignatureContext:
         cdef int rv
         cdef xmlSecDSigCtxPtr handle = self._handle
 
-        print('handle.signValueNode == NULL', handle.signValueNode is NULL)
-        handle.signValueNode = NULL
-        print('handle.signValueNode == NULL', <int>NULL)
-
         rv = xmlSecDSigCtxSign(handle, node._c_node)
-
-
         if rv != 0:
             raise RuntimeError('signing failed with return value %r' % rv)

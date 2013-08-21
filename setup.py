@@ -45,7 +45,11 @@ def pkgconfig(*packages):
     # Iterate and resolve define macros.
     macros = []
     for declaration in config['define_macros']:
-        macros.append(tuple(declaration.split('=')))
+        macro = tuple(declaration.split('='))
+        if len(macro) == 1:
+            macro += '',
+
+        macros.append(macro)
 
     config['define_macros'] = macros
 
@@ -91,10 +95,10 @@ config['include_dirs'].insert(0, 'src/xmlsec')
 config['include_dirs'].insert(0, 'src')
 
 
-def make_extension(name):
+def make_extension(name, cython=True):
     # Resolve extension location from name.
     location = path.join('src', *name.split('.'))
-    location += '.pyx'
+    location += '.pyx' if cython else '.c'
 
     # Create and return the extension.
     return Extension(name, [location], **config)
@@ -140,7 +144,6 @@ setup(
         make_extension('xmlsec.utils'),
         make_extension('xmlsec.tree'),
         make_extension('xmlsec.key'),
-        Extension('xmlsec.ds', ['src/xmlsec/ds.pyx'], **config),
-        # make_extension('xmlsec.ds'),
+        make_extension('xmlsec.ds'),
     ]
 )
