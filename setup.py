@@ -142,10 +142,6 @@ setup(
     extras_require={
         'test': ['pytest']
     },
-    include_package_data=True,
-    package_data={
-        'xmlsec': ['*.pxd', '*.pyx'],
-    },
     package_dir={'xmlsec': 'src/xmlsec'},
     packages=['xmlsec'],
     cmdclass={'build_ext': build_ext},
