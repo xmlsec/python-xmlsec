@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+# -*- coding: utf-8 -*-
+# from __future__ import absolute_import, unicode_literals, division
 import sys
 import subprocess
 from os import path
@@ -59,7 +61,7 @@ def pkgconfig(*packages):
 
 # we must extend our cflags once `lxml` is installed.
 #  To this end, we override `Extension`
-class Extension(Extension):
+class Extension(Extension, object):
 
     lxml_extended = False
 
@@ -123,6 +125,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Cython',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.3',
         'Topic :: Text Processing :: Markup :: XML'
     ],

@@ -27,5 +27,3 @@ cdef extern from "xmlsec.h":  # xmlsec/app.h
 
     int xmlSecCryptoAppInit(char* name) nogil
     int xmlSecCryptoAppShutdown() nogil
-
-    void xmlSecErrorsSetCallback(void* callback) nogil

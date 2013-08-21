@@ -80,5 +80,5 @@ cdef extern from "xmlsec.h":  # xmlsec/strings.h
     xmlSecTransformId xmlSecTransformSha512Id
 
 
-cdef class _Transform:
+cdef class _Transform(object):
     cdef xmlSecTransformId target

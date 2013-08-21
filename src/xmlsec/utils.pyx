@@ -1,30 +1,11 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, unicode_literals, division
 from utils cimport *
-
-from logging import getLogger
-logger = getLogger(__name__)
 
 __all__ = [
     'init',
     'shutdown'
 ]
-
-
-cdef void _error_callback(char *filename, int line, char *func,
-                          char *errorObject, char *errorSubject,
-                          int reason, char * msg) with gil:
-    if filename == NULL: filename = "unknown"
-    if func == NULL: func = "unknown"
-    if errorObject == NULL: errorObject = "unknown"
-    if errorSubject == NULL: errorSubject = "unknown"
-    if msg == NULL: msg = ""
-
-    logger.error(
-        'internal xmlsec error: {msg} {obj} {subject} [{filename} in {func}]'.format(
-            msg=msg.decode('utf8'),
-            obj=errorObject.decode('utf8'),
-            subject=errorSubject.decode('utf8'),
-            filename=filename.decode('utf8'),
-            func=func.decode('utf8')))
 
 
 def init():
@@ -45,7 +26,6 @@ def init():
     if r != 0:
         return False
 
-    xmlSecErrorsSetCallback(<void*>_error_callback)
     return True
 
 

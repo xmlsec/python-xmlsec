@@ -81,6 +81,6 @@ cdef extern from "xmlsec.h":  # xmlsec/keys.h
 
     const_xmlChar* xmlSecKeyGetName(xmlSecKeyPtr) nogil
 
-cdef class Key:
+cdef class Key(object):
     cdef xmlSecKeyPtr _handle
     cdef bint _owner

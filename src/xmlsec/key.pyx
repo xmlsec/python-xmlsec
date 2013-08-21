@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, unicode_literals, division
+
 from key cimport *
 from utils cimport *
 
@@ -19,7 +22,7 @@ class KeyFormat:
     CERT_DER = xmlSecKeyDataFormatCertDer
 
 
-cdef class Key:
+cdef class Key(object):
 
     def __dealloc__(self):
         if self._owner and self._handle != NULL:

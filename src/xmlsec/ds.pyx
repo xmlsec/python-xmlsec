@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, unicode_literals, division
+
 from lxml.includes.etreepublic cimport import_lxml__etree
 import_lxml__etree()
 
@@ -14,7 +17,7 @@ __all__ = [
 
 
 
-cdef class SignatureContext:
+cdef class SignatureContext(object):
     """Digital signature context.
     """
 
