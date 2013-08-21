@@ -93,8 +93,11 @@ XMLSEC_CRYPTO = 'openssl'
 # Process the `pkg-config` utility and discover include and library
 # directories.
 config = pkgconfig('libxml-2.0', 'xmlsec1-%s' % XMLSEC_CRYPTO)
-config['include_dirs'].insert(0, 'src/xmlsec')
-config['include_dirs'].insert(0, 'src')
+
+# Add the source directories for inclusion.
+BASE_DIR = path.abspath(path.dirname(__file__))
+config['include_dirs'].insert(0, path.join(BASE_DIR, 'src', 'xmlsec'))
+config['include_dirs'].insert(0, path.join(BASE_DIR, 'src'))
 
 
 def make_extension(name, cython=True):
@@ -107,8 +110,6 @@ def make_extension(name, cython=True):
 
 
 # Load the metadata for inclusion in the package.
-BASE_DIR = path.abspath(path.dirname(__file__))
-
 # Navigate, import, and retrieve the metadata of the project.
 _imp = get_importer(path.join(BASE_DIR, 'src', 'xmlsec'))
 meta = _imp.find_module('meta').load_module('meta')
