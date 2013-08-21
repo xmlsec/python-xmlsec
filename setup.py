@@ -145,5 +145,6 @@ setup(
         make_extension('xmlsec.tree'),
         make_extension('xmlsec.key'),
         make_extension('xmlsec.ds'),
+        make_extension('xmlsec.template'),
     ]
 )

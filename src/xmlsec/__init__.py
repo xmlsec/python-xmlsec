@@ -4,7 +4,7 @@ from .constants import *
 from .utils import *
 from .key import *
 from .ds import *
-from . import tree
+from . import tree, template
 
 
 if not init():
