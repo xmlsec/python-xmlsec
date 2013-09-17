@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals, division
 
-from key cimport *
-from utils cimport *
+from xmlsec.key cimport *
+from xmlsec.utils cimport *
 
 __all__ = [
     'KeyFormat',

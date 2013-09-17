@@ -1,5 +1,5 @@
 from lxml.includes.tree cimport xmlNode
-from key cimport xmlSecKeyPtr
+from xmlsec.key cimport xmlSecKeyPtr
 
 
 cdef extern from "xmlsec.h":  # xmlsec/keys.h

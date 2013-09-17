@@ -7,60 +7,47 @@ from os import path
 from pkgutil import get_importer
 from collections import defaultdict
 from setuptools import setup, Extension
-# from distutils.extension import Extension
-from Cython.Distutils import build_ext
+from functools import wraps
 
 
-PKGCONFIG_TOKEN_MAP = {
-    '-D': 'define_macros',
-    '-I': 'include_dirs',
-    '-L': 'library_dirs',
-    '-l': 'libraries'
-}
 
-def pkgconfig(*packages):
-    """
-    Run the `pkg-config` utility to determine locations of includes,
-    libraries, etc. for dependencies.
-    """
-    config = defaultdict(set)
+def lazy(function):
 
-    # Execute the command in a subprocess and communicate the output.
-    command = "pkg-config --libs --cflags %s" % ' '.join(packages)
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-    out, _ = process.communicate()
+    @wraps(function)
+    def wrapped(*args, **kwargs):
 
-    # Clean the output.
-    out = out.decode('utf8')
-    out = out.replace('\\\"', "")
+        class LazyProxy(object):
 
-    # Iterate throught the tokens of the output.
-    for token in out.split():
-        key = PKGCONFIG_TOKEN_MAP.get(token[:2])
-        if key:
-            config[key].add(token[2:].strip())
+            def __init__(self, function, args, kwargs):
+                self._function = function
+                self._args = args
+                self._kwargs = kwargs
+                self._result = None
 
-    # Convert sets to lists.
-    for name in config:
-        config[name] = list(config[name])
+            def __getattribute__(self, name):
+                if name in ['_function', '_args', '_kwargs', '_result']:
+                    return super(LazyProxy, self).__getattribute__(name)
 
-    # Iterate and resolve define macros.
-    macros = []
-    for declaration in config['define_macros']:
-        macro = tuple(declaration.split('='))
-        if len(macro) == 1:
-            macro += '',
+                if self._result is None:
+                    self._result = self._function(*self._args, **self._kwargs)
 
-        macros.append(macro)
+                return object.__getattribute__(self._result, name)
 
-    config['define_macros'] = macros
+            def __setattr__(self, name, value):
+                if name in ['_function', '_args', '_kwargs', '_result']:
+                    super(LazyProxy, self).__setattr__(name, value)
+                    return
 
-    # Return discovered configuration.
-    return config
+                if self._result is None:
+                    self._result = self._function(*self._args, **self._kwargs)
+
+                setattr(self._result, name, value)
+
+        return LazyProxy(function, args, kwargs)
+
+    return wrapped
 
 
-# we must extend our cflags once `lxml` is installed.
-#  To this end, we override `Extension`
 class Extension(Extension, object):
 
     lxml_extended = False
@@ -87,20 +74,26 @@ class Extension(Extension, object):
         self.__dict__['include_dirs'] = dirs
 
 
-# Declare the crypto implementation.
-XMLSEC_CRYPTO = 'openssl'
-
-# Process the `pkg-config` utility and discover include and library
-# directories.
-config = pkgconfig('libxml-2.0', 'xmlsec1-%s' % XMLSEC_CRYPTO)
-
-# Add the source directories for inclusion.
-BASE_DIR = path.abspath(path.dirname(__file__))
-config['include_dirs'].insert(0, path.join(BASE_DIR, 'src', 'xmlsec'))
-config['include_dirs'].insert(0, path.join(BASE_DIR, 'src'))
-
-
+@lazy
 def make_extension(name, cython=True):
+    from pkgconfig import parse
+
+    # Declare the crypto implementation.
+    XMLSEC_CRYPTO = 'openssl'
+
+    # Process the `pkg-config` utility and discover include and library
+    # directories.
+    config = {}
+    for lib in ['libxml-2.0', 'xmlsec1-%s' % XMLSEC_CRYPTO]:
+        config.update(parse(lib))
+
+    # List-ify config for setuptools.
+    for key in config:
+        config[key] = list(config[key])
+
+    # Add the source directories for inclusion.
+    config['include_dirs'].insert(0, 'src')
+
     # Resolve extension location from name.
     location = path.join('src', *name.split('.'))
     location += '.pyx' if cython else '.c'
@@ -109,10 +102,8 @@ def make_extension(name, cython=True):
     return Extension(name, [location], **config)
 
 
-# Load the metadata for inclusion in the package.
 # Navigate, import, and retrieve the metadata of the project.
-_imp = get_importer(path.join(BASE_DIR, 'src', 'xmlsec'))
-meta = _imp.find_module('meta').load_module('meta')
+meta = get_importer('src/xmlsec').find_module('meta').load_module('meta')
 
 
 setup(
@@ -134,6 +125,8 @@ setup(
     author_email='support@concordusapps.com',
     url='https://github.com/concordusapps/python-xmlsec',
     setup_requires=[
+        'setuptools_cython',
+        'pkgconfig',
         'lxml >= 3.0',
     ],
     install_requires=[
@@ -144,7 +137,6 @@ setup(
     },
     package_dir={'xmlsec': 'src/xmlsec'},
     packages=['xmlsec'],
-    cmdclass={'build_ext': build_ext},
     ext_modules=[
         make_extension('xmlsec.constants'),
         make_extension('xmlsec.utils'),

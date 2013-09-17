@@ -5,8 +5,8 @@ from lxml.includes.etreepublic cimport import_lxml__etree
 import_lxml__etree()
 
 from lxml.includes.etreepublic cimport _Element
-from ds cimport *
-from key cimport Key as _Key, xmlSecKeyDuplicate, xmlSecKeyDestroy
+from xmlsec.ds cimport *
+from xmlsec.key cimport Key as _Key, xmlSecKeyDuplicate, xmlSecKeyDestroy
 
 from copy import copy
 from .key import Key

@@ -1,5 +1,5 @@
 from lxml.includes.tree cimport const_xmlChar, xmlNode, xmlDoc
-from constants cimport xmlSecTransformId
+from xmlsec.constants cimport xmlSecTransformId
 
 
 cdef extern from "xmlsec.h":  # xmlsec/templates.h

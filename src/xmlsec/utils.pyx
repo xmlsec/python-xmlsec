@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals, division
-from utils cimport *
+from xmlsec.utils cimport *
 
 __all__ = [
     'init',
