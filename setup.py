@@ -1,14 +1,10 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # from __future__ import absolute_import, unicode_literals, division
-import sys
-import subprocess
 from os import path
 from pkgutil import get_importer
-from collections import defaultdict
 from setuptools import setup, Extension
 from functools import wraps
-
 
 
 def lazy(function):
