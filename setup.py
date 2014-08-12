@@ -79,7 +79,9 @@ def make_extension(name, cython=True):
 
     # Process the `pkg-config` utility and discover include and library
     # directories.
-    config = {}
+    config = {
+        'include_dirs': [],
+    }
     for lib in ['libxml-2.0', 'xmlsec1-%s' % XMLSEC_CRYPTO]:
         config.update(parse(lib))
 
