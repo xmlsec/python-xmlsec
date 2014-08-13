@@ -8,6 +8,20 @@ Check the [examples](https://github.com/concordusapps/python-xmlsec/tree/master/
 
 ## Install
 
+### Pre-Install
+
+#### Linux
+
+    ```sh
+    apt-get install libxml2-dev libxmlsec1-dev
+    ```
+
+#### Mac
+
+    ```sh
+    brew install libxml2 libxmlsec1
+    ```
+
 ### Automated
 
 1. **xmlsec** can be installed through `easy_install` or `pip`.
@@ -15,6 +29,11 @@ Check the [examples](https://github.com/concordusapps/python-xmlsec/tree/master/
    ```sh
    pip install xmlsec
    ```
+   
+#### Mac
+
+If you get any fatal errors about missing .h files, update your C_INCLUDE_PATH environment variable to
+include the appropriate files from the libxml2 and libxmlsec1 libraries.
 
 ### Manual
 

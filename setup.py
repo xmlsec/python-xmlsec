@@ -79,15 +79,18 @@ def make_extension(name, cython=True):
 
     # Process the `pkg-config` utility and discover include and library
     # directories.
-    config = {
-        'include_dirs': [],
-    }
+    config = {}
     for lib in ['libxml-2.0', 'xmlsec1-%s' % XMLSEC_CRYPTO]:
         config.update(parse(lib))
+
+    config['extra_compile_args'] = ['-DXMLSEC_CRYPTO_OPENSSL=1']
 
     # List-ify config for setuptools.
     for key in config:
         config[key] = list(config[key])
+
+    if 'include_dirs' not in config:
+        config['include_dirs'] = []
 
     # Add the source directories for inclusion.
     config['include_dirs'].insert(0, 'src')
