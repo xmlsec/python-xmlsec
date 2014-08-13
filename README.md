@@ -12,15 +12,15 @@ Check the [examples](https://github.com/concordusapps/python-xmlsec/tree/master/
 
 #### Linux
 
-    ```sh
-    apt-get install libxml2-dev libxmlsec1-dev
-    ```
+   ```sh
+   apt-get install libxml2-dev libxmlsec1-dev
+   ```
 
 #### Mac
 
-    ```sh
-    brew install libxml2 libxmlsec1
-    ```
+   ```sh
+   brew install libxml2 libxmlsec1
+   ```
 
 ### Automated
 
