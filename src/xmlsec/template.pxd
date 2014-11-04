@@ -20,4 +20,6 @@ cdef extern from "xmlsec.h":  # xmlsec/templates.h
 
     xmlNode* xmlSecTmplKeyInfoAddKeyName(xmlNode* node, const_xmlChar* name) nogil
 
+    xmlNode* xmlSecTmplKeyInfoAddKeyValue(xmlNode* node) nogil
+
     xmlNode* xmlSecTmplKeyInfoAddX509Data(xmlNode* node) nogil
