@@ -71,6 +71,15 @@ def add_key_name(_Element node not None, name=None):
     return elementFactory(node._doc, c_node)
 
 
+def add_key_value(_Element node not None):
+
+    cdef xmlNode* c_node
+
+    c_node = xmlSecTmplKeyInfoAddKeyValue(node._c_node)
+
+    return elementFactory(node._doc, c_node)
+
+
 def add_x509_data(_Element node not None):
 
     cdef xmlNode* c_node
