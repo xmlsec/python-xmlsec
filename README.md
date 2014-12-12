@@ -1,3 +1,8 @@
+# This has been moved to https://github.com/mehcode/python-xmlsec
+
+
+-----
+
 # python-xmlsec
 [![Build Status](https://travis-ci.org/concordusapps/python-xmlsec.png?branch=master)](https://travis-ci.org/concordusapps/python-xmlsec)
 > Python bindings for the XML Security Library.
