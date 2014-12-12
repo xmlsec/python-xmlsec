@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals, division
 
+from lxml.includes.tree cimport xmlHasProp, xmlAttr
 from lxml.includes.etreepublic cimport import_lxml__etree
 import_lxml__etree()
 
@@ -10,6 +11,7 @@ from xmlsec.key cimport Key as _Key, xmlSecKeyDuplicate, xmlSecKeyDestroy
 
 from copy import copy
 from .key import Key
+from xmlsec.utils cimport _b
 
 __all__ = [
     'SignatureContext'
@@ -58,6 +60,14 @@ cdef class SignatureContext(object):
         rv = xmlSecDSigCtxSign(self._handle, node._c_node)
         if rv != 0:
             raise RuntimeError('sign failed with return value %r' % rv)
+
+    def registerId(self, _Element node not None):
+        cdef xmlAttr* attr
+
+        attr = xmlHasProp(node._c_node, _b("ID"))
+        value = node.attrib.get("ID")
+
+        xmlAddID(NULL, node._doc._c_doc, _b(value), attr)
 
     def verify(self, _Element node not None):
         """Verify according to the signature template.

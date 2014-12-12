@@ -1,4 +1,6 @@
 from lxml.includes.tree cimport xmlNode
+from lxml.includes.tree cimport const_xmlChar, xmlNode, xmlID, xmlDoc, xmlAttr
+from lxml.includes.dtdvalid cimport xmlValidCtxt
 from xmlsec.key cimport xmlSecKeyPtr
 
 
@@ -55,3 +57,6 @@ cdef extern from "xmlsec.h":  # xmlsec/keys.h
     #     xmlSecDSigCtxPtr, xmlSecTransformId) nogil
 
     void xmlSecDSigCtxDestroy(xmlSecDSigCtxPtr) nogil
+
+    xmlID* xmlAddID(
+        xmlValidCtxt* ctx, xmlDoc* doc, const_xmlChar* value, xmlAttr* attr);

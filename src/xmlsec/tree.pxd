@@ -1,4 +1,5 @@
-from lxml.includes.tree cimport const_xmlChar, xmlNode
+from lxml.includes.tree cimport const_xmlChar, xmlNode, xmlID, xmlDoc, xmlAttr
+from lxml.includes.dtdvalid cimport xmlValidCtxt
 
 
 cdef extern from "xmlsec.h":  # xmlsec/xmltree.h
@@ -50,7 +51,7 @@ cdef extern from "xmlsec.h":  # xmlsec/xmltree.h
     # int xmlSecNodeEncodeAndSetContent(xmlNode* node, const_xmlChar* buffer)
 
     # int xmlSecAddIDs(xmlDoc* document, xmlNode* node, const_xmlChar** ids)
-
+    
     # int xmlSecGenerateAndAddID(
     #     xmlNode* node, const_xmlChar* name, const_xmlChar* prefix)
 
