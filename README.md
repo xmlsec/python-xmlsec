@@ -1,5 +1,7 @@
 # python-xmlsec
 [![Build Status](https://travis-ci.org/concordusapps/python-xmlsec.png?branch=master)](https://travis-ci.org/concordusapps/python-xmlsec)
+[![PyPi Version](https://pypip.in/v/xmlsec/badge.png)](https://pypi.python.org/pypi/xmlsec)
+![PyPi Downloads](https://pypip.in/d/xmlsec/badge.png)
 > Python bindings for the XML Security Library.
 
 ## Usage
@@ -29,7 +31,7 @@ Check the [examples](https://github.com/concordusapps/python-xmlsec/tree/master/
    ```sh
    pip install xmlsec
    ```
-   
+
 #### Mac
 
 If you get any fatal errors about missing .h files, update your C_INCLUDE_PATH environment variable to
