@@ -122,9 +122,9 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Topic :: Text Processing :: Markup :: XML'
     ],
-    author='Concordus Applications',
-    author_email='support@concordusapps.com',
-    url='https://github.com/concordusapps/python-xmlsec',
+    author='Ryan Leckey',
+    author_email='support@mehcode.com',
+    url='https://github.com/mehcode/python-xmlsec',
     setup_requires=[
         'setuptools_cython',
         'pkgconfig',
