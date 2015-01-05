@@ -3,7 +3,7 @@
 # from __future__ import absolute_import, unicode_literals, division
 from os import path
 from pkgutil import get_importer
-from setuptools import setup, Extension
+from setuptools import setup, Extension as _Extension
 from functools import wraps
 
 
@@ -44,7 +44,7 @@ def lazy(function):
     return wrapped
 
 
-class Extension(Extension, object):
+class Extension(_Extension):
 
     lxml_extended = False
 
@@ -75,12 +75,12 @@ def make_extension(name, cython=True):
     from pkgconfig import parse
 
     # Declare the crypto implementation.
-    XMLSEC_CRYPTO = 'openssl'
+    xmlsec_crypto = 'openssl'
 
     # Process the `pkg-config` utility and discover include and library
     # directories.
     config = {}
-    for lib in ['libxml-2.0', 'xmlsec1-%s' % XMLSEC_CRYPTO]:
+    for lib in ['libxml-2.0', 'xmlsec1-%s' % xmlsec_crypto]:
         config.update(parse(lib))
 
     # List-ify config for setuptools.
@@ -128,9 +128,6 @@ setup(
     install_requires=[
         'lxml >= 3.0',
     ],
-    extras_require={
-        'test': ['pytest']
-    },
     package_dir={'xmlsec': 'src/xmlsec'},
     packages=['xmlsec'],
     ext_modules=[
@@ -139,6 +136,7 @@ setup(
         make_extension('xmlsec.tree'),
         make_extension('xmlsec.key'),
         make_extension('xmlsec.ds'),
+        make_extension('xmlsec.enc'),
         make_extension('xmlsec.template'),
     ]
 )
