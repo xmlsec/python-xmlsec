@@ -4,9 +4,9 @@ from .constants cimport xmlSecTransformId
 
 cdef extern from "xmlsec.h":  # xmlsec/templates.h
 
-    xmlNode* xmlSecTmplSignatureCreate(
+    xmlNode* xmlSecTmplSignatureCreateNsPref(
         xmlDoc* document, xmlSecTransformId c14n, xmlSecTransformId sign,
-        const_xmlChar* id) nogil
+        const_xmlChar* id, const_xmlChar* ns) nogil
 
     xmlNode* xmlSecTmplSignatureAddReference(
         xmlNode* node, xmlSecTransformId digest,

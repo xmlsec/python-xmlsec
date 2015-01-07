@@ -14,13 +14,15 @@ from .template cimport *
 def create(_Element node not None,
            _Transform c14n_method not None,
            _Transform sign_method not None,
-           name=None):
+           name=None,
+           ns=None):
 
     cdef xmlNode* c_node
     cdef const_xmlChar* c_name = _b(name)
+    cdef const_xmlChar* c_ns = _b(ns)
 
-    c_node = xmlSecTmplSignatureCreate(
-        node._doc._c_doc, c14n_method.target, sign_method.target, c_name)
+    c_node = xmlSecTmplSignatureCreateNsPref(
+        node._doc._c_doc, c14n_method.target, sign_method.target, c_name, c_ns)
 
     return elementFactory(node._doc, c_node)
 
