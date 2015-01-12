@@ -6,7 +6,6 @@ from lxml.includes.etreepublic cimport import_lxml__etree
 import_lxml__etree()
 
 from lxml.includes.etreepublic cimport _ElementTree, _Element, elementFactory
-from lxml.includes.tree cimport const_xmlChar, xmlNode
 from .tree cimport *
 from .utils cimport *
 from .constants import Namespace

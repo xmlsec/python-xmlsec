@@ -116,7 +116,7 @@ cdef class SignatureContext(object):
         """common helper used for `sign_binary` and `verify_binary`."""
 
         cdef int rv
-        cdef const_xmlSecByte* c_data = <const_xmlSecByte*>data;
+        cdef const_xmlSecByte* c_data = <const_xmlSecByte*>data
         cdef xmlSecSize c_size = <xmlSecSize>len(data)
 
         if not (algorithm.target.usage & xmlSecTransformUsageSignatureMethod):

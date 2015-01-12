@@ -5,7 +5,7 @@ from lxml.includes.etreepublic cimport import_lxml__etree
 import_lxml__etree()
 
 from lxml.includes.etreepublic cimport _Document, _Element, elementFactory
-from tree cimport xmlDocCopyNode, xmlFreeNode, xmlNode, xmlDoc, xmlDocGetRootElement
+from lxml.includes.tree cimport xmlDocCopyNode, xmlFreeNode, xmlNode, xmlDoc, xmlDocGetRootElement
 
 from .enc cimport *
 from .constants import EncryptionType
@@ -100,7 +100,8 @@ cdef class EncryptionContext:
         """
 
         cdef int rv
-        cdef xmlNode *n, *nn
+        cdef xmlNode *n
+        cdef xmlNode *nn
         cdef xmlSecEncCtxPtr context = self._handle
         cdef xmlNode *c_node = template._c_node
 
@@ -183,9 +184,13 @@ cdef class EncryptionContext:
 
         cdef int rv
         cdef xmlSecEncCtxPtr context = self._handle
-        cdef bint decrypt_content = node.get("Type") == EncryptionType.CONTENT
-        cdef xmlNode *n, *nn, *c_root
+        cdef bint decrypt_content
+        cdef xmlNode *n
+        cdef xmlNode *nn
+        cdef xmlNode *c_root
         cdef xmlSecBufferPtr result
+
+        decrypt_content = node.get("Type") == EncryptionType.CONTENT
 
         # must provide sufficient context to find the decrypted node
         parent = node.getparent()
