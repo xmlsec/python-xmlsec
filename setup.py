@@ -106,6 +106,9 @@ setup(
     install_requires=[
         'lxml >= 3.0',
     ],
+    extras_require={
+        'test': ['pytest']
+    },
     package_dir={'xmlsec': 'src/xmlsec'},
     packages=['xmlsec'],
     ext_modules=[
