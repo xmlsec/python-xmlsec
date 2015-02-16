@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals, division
-from xmlsec.utils cimport *
+
+from .utils cimport *
 
 __all__ = [
     'init',
-    'shutdown'
+    'shutdown',
+    'enable_debug_trace'
 ]
 
 
@@ -45,3 +47,7 @@ def shutdown():
 
     r = xmlSecShutdown()
     return r == 0
+
+
+def enable_debug_trace(flag):
+    xmlSecErrorsDefaultCallbackEnableOutput(<int>flag)

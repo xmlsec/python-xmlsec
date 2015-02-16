@@ -1,12 +1,12 @@
 from lxml.includes.tree cimport const_xmlChar, xmlNode, xmlDoc
-from xmlsec.constants cimport xmlSecTransformId
+from .constants cimport xmlSecTransformId
 
 
 cdef extern from "xmlsec.h":  # xmlsec/templates.h
 
-    xmlNode* xmlSecTmplSignatureCreate(
+    xmlNode* xmlSecTmplSignatureCreateNsPref(
         xmlDoc* document, xmlSecTransformId c14n, xmlSecTransformId sign,
-        const_xmlChar* id) nogil
+        const_xmlChar* id, const_xmlChar* ns) nogil
 
     xmlNode* xmlSecTmplSignatureAddReference(
         xmlNode* node, xmlSecTransformId digest,
@@ -23,3 +23,15 @@ cdef extern from "xmlsec.h":  # xmlsec/templates.h
     xmlNode* xmlSecTmplKeyInfoAddKeyValue(xmlNode* node) nogil
 
     xmlNode* xmlSecTmplKeyInfoAddX509Data(xmlNode* node) nogil
+
+    xmlNode* xmlSecTmplKeyInfoAddEncryptedKey(
+        xmlNode* keyInfoNode, xmlSecTransformId encMethodId,
+        const_xmlChar *id, const_xmlChar *type, const_xmlChar *recipient) nogil
+
+    xmlNode* xmlSecTmplEncDataCreate(
+        xmlDoc* doc, xmlSecTransformId encMethodId, const_xmlChar *id,
+        const_xmlChar *type, const_xmlChar *mimeType, const_xmlChar *encoding) nogil
+
+    xmlNode* xmlSecTmplEncDataEnsureKeyInfo(xmlNode* encNode, const_xmlChar *id) nogil
+
+    xmlNode* xmlSecTmplEncDataEnsureCipherValue(xmlNode* encNode) nogil
