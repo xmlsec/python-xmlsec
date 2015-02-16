@@ -1,5 +1,6 @@
 from lxml.includes.tree cimport xmlNode
 from lxml.includes.tree cimport const_xmlChar, xmlNode, xmlID, xmlDoc, xmlAttr
+from lxml.includes.dtdvalid cimport xmlValidCtxt
 from .key cimport xmlSecKeyPtr, xmlSecKeyReq, xmlSecKeyReqPtr, xmlSecKeysMngrPtr
 from .constants cimport xmlSecTransformId
 

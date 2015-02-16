@@ -1,8 +1,10 @@
 from os import path
+from pytest import mark
 import xmlsec
-from tests.examples.base import parse_xml, BASE_DIR
+from .base import parse_xml, BASE_DIR
 
 
+@mark.parametrize('index', range(1, 4))
 def test_verify_with_pem_file(index):
     """Should verify a signed file using a key from a PEM file.
     """
@@ -36,9 +38,3 @@ def test_verify_with_pem_file(index):
 
     # Verify the signature.
     ctx.verify(signature_node)
-    print('done:', index)
-
-
-if __name__ == '__main__':
-    for i in range(1, 4):
-        test_verify_with_pem_file(i)

@@ -1,7 +1,7 @@
 from os import path
 import xmlsec
 from lxml import etree
-from tests.examples.base import parse_xml, BASE_DIR
+from .base import parse_xml, BASE_DIR
 
 
 def compare(name, result):
@@ -169,9 +169,3 @@ def test_sign_generated_template_pem_with_x509():
 
     # Assert the contents of the XML document against the expected result.
     compare('sign3-res.xml', template)
-    print('done')
-
-
-test_sign_template_pem()
-test_sign_generated_template_pem()
-test_sign_generated_template_pem_with_x509()
