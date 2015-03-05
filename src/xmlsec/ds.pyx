@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals, division
 
+from lxml.includes.tree cimport xmlHasProp, xmlAttr
 from lxml.includes.etreepublic cimport import_lxml__etree
 import_lxml__etree()
 
@@ -10,9 +11,8 @@ from .ds cimport *
 from .constants cimport _Transform, xmlSecTransformUsageSignatureMethod
 from .key cimport Key as _Key, KeysManager as _KeysManager, _KeyData, \
     xmlSecKeyDuplicate, xmlSecKeyMatch, xmlSecKeyDestroy
-
 from .error import *
-from copy import copy
+from .utils cimport _b
 
 
 __all__ = [
@@ -54,6 +54,14 @@ cdef class SignatureContext(object):
             instance._owner = False
             instance._handle = self._handle.signKey
             return instance
+
+    def register_id(self, _Element node not None):
+        cdef xmlAttr* attr
+
+        attr = xmlHasProp(node._c_node, _b("ID"))
+        value = node.attrib.get("ID")
+
+        xmlAddID(NULL, node._doc._c_doc, _b(value), attr)
 
     def sign(self, _Element node not None):
         """Sign according to the signature template.

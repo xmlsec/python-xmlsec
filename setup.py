@@ -53,9 +53,14 @@ def make_extension(name, cython=True):
     for lib in ['libxml-2.0', 'xmlsec1-%s' % xmlsec_crypto]:
         config.update(parse(lib))
 
+    config['extra_compile_args'] = ['-DXMLSEC_CRYPTO_OPENSSL=1']
+
     # List-ify config for setuptools.
     for key in config:
         config[key] = list(config[key])
+
+    if 'include_dirs' not in config:
+        config['include_dirs'] = []
 
     # Add the source directories for inclusion.
     import lxml
@@ -90,9 +95,9 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Topic :: Text Processing :: Markup :: XML'
     ],
-    author='Concordus Applications',
-    author_email='support@concordusapps.com',
-    url='https://github.com/concordusapps/python-xmlsec',
+    author='Ryan Leckey',
+    author_email='support@mehcode.com',
+    url='https://github.com/mehcode/python-xmlsec',
     setup_requires=[
         'setuptools_cython',
         'pkgconfig',
@@ -101,6 +106,9 @@ setup(
     install_requires=[
         'lxml >= 3.0',
     ],
+    extras_require={
+        'test': ['pytest']
+    },
     package_dir={'xmlsec': 'src/xmlsec'},
     packages=['xmlsec'],
     ext_modules=[

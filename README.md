@@ -1,17 +1,28 @@
-# This has been moved to https://github.com/mehcode/python-xmlsec
-
-
------
-
 # python-xmlsec
-[![Build Status](https://travis-ci.org/concordusapps/python-xmlsec.png?branch=master)](https://travis-ci.org/concordusapps/python-xmlsec)
+[![Build Status](https://travis-ci.org/mehcode/python-xmlsec.png?branch=master)](https://travis-ci.org/mehcode/python-xmlsec)
+[![PyPi Version](https://pypip.in/v/xmlsec/badge.png)](https://pypi.python.org/pypi/xmlsec)
+![PyPi Downloads](https://pypip.in/d/xmlsec/badge.png)
 > Python bindings for the XML Security Library.
 
 ## Usage
 
-Check the [examples](https://github.com/concordusapps/python-xmlsec/tree/master/tests/examples) to see various examples of signing and verifying using the library.
+Check the [examples](https://github.com/mehcode/python-xmlsec/tree/master/tests/examples) to see various examples of signing and verifying using the library.
 
 ## Install
+
+### Pre-Install
+
+#### Linux
+
+   ```sh
+   apt-get install libxml2-dev libxmlsec1-dev
+   ```
+
+#### Mac
+
+   ```sh
+   brew install libxml2 libxmlsec1
+   ```
 
 ### Automated
 
@@ -21,12 +32,17 @@ Check the [examples](https://github.com/concordusapps/python-xmlsec/tree/master/
    pip install xmlsec
    ```
 
+#### Mac
+
+If you get any fatal errors about missing .h files, update your C_INCLUDE_PATH environment variable to
+include the appropriate files from the libxml2 and libxmlsec1 libraries.
+
 ### Manual
 
 1. Clone the **xmlsec** repository to your local computer.
 
    ```sh
-   git clone git://github.com/concordusapps/python-xmlsec.git
+   git clone git://github.com/mehcode/python-xmlsec.git
    ```
 
 2. Change into the **xmlsec** root directory.
