@@ -112,7 +112,9 @@ def encrypted_data_create(_Element node not None,
                           type=None,
                           mime_type=None,
                           encoding=None):
-
+    """
+    Creates new <enc:EncryptedData /> node for encryption template.
+    """
     cdef xmlNode* c_node
     cdef const_xmlChar* c_id = _b(id)
     cdef const_xmlChar* c_type = _b(type)

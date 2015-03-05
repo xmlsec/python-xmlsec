@@ -38,7 +38,9 @@ cdef extern from "xmlsec.h":  # xmlsec/keys.h
     ctypedef _xmlSecEncCtx* xmlSecEncCtxPtr
 
     xmlSecEncCtxPtr xmlSecEncCtxCreate(xmlSecKeysMngrPtr) nogil
+    int xmlSecEncCtxInitialize(xmlSecEncCtxPtr encCtx, xmlSecKeysMngrPtr keysMngr) nogil
 
+    void xmlSecEncCtxFinalize(xmlSecEncCtxPtr) nogil
     void xmlSecEncCtxDestroy(xmlSecEncCtxPtr) nogil
 
     int xmlSecEncCtxBinaryEncrypt(

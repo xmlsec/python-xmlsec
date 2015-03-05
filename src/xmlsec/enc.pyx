@@ -45,10 +45,15 @@ cdef class EncryptionContext:
         cdef xmlSecEncCtxPtr handle = xmlSecEncCtxCreate(_manager)
         if handle == NULL:
             raise InternalError("failed to create encryption context")
+        if xmlSecEncCtxInitialize(handle, _manager) < 0:
+            xmlSecEncCtxDestroy(handle)
+            raise InternalError("failed to init encryption context")
+
         self._handle = handle
 
     def __dealloc__(self):
         if self._handle != NULL:
+            xmlSecEncCtxFinalize(self._handle)
             xmlSecEncCtxDestroy(self._handle)
 
     property key:
