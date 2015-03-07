@@ -24,8 +24,21 @@ cdef extern from "xmlsec.h":  # xmlsec/strings.h
     const_xmlChar* xmlSecNodeObject
     const_xmlChar* xmlSecNodeManifest
     const_xmlChar* xmlSecNodeSignatureProperties
+
+    # Encypted nodes
     const_xmlChar* xmlSecNodeEncryptedData
     const_xmlChar* xmlSecNodeEncryptedKey
+    const_xmlChar* xmlSecNodeEncryptionMethod
+    const_xmlChar* xmlSecNodeEncryptionProperties
+    const_xmlChar* xmlSecNodeEncryptionProperty
+    const_xmlChar* xmlSecNodeCipherData
+    const_xmlChar* xmlSecNodeCipherValue
+    const_xmlChar* xmlSecNodeCipherReference
+    const_xmlChar* xmlSecNodeReferenceList
+    const_xmlChar* xmlSecNodeDataReference
+    const_xmlChar* xmlSecNodeKeyReference
+    const_xmlChar* xmlSecNodeKeyInfo
+
 
     # encryption types
     const_xmlChar* xmlSecTypeEncContent

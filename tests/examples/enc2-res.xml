@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Envelope>
+<xenc:EncryptedData xmlns:xenc="http://www.w3.org/2001/04/xmlenc#" Type="http://www.w3.org/2001/04/xmlenc#Content" MimeType="binary/octet-stream">
+<xenc:EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#aes128-cbc"/>
+<dsig:KeyInfo xmlns:dsig="http://www.w3.org/2000/09/xmldsig#">
+<xenc:EncryptedKey>
+<xenc:EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p"/>
+<xenc:CipherData>
+<xenc:CipherValue>HJwrfL7kOIB0QaldMJdza1HitpLCjw+eoult1C6yExDXJ09zKaSQER+pUL9Vt5fm
+d4Oitsf0CUNkjG1xWJdFsftqUIuvYGnkUNhT0vtqoYbdhJkCcB9cCwvTrww2+VTF
+NIasTdechlSD1qQOR8uf6+S94Ae4PVSfWU+5YLTJFpMjR+OT7f6BSbYNv1By6Cko
+G39WTSKTRcVDzcMxRepAGb59r508yKIJhwabCf3Opu+Ams7ia7BH4oa4ro9YSWwm
+hAJ0CN4a6b5odcRbNvuHcwWSxpoysWKbOROQ0H4xC4nGZeL/AXlpSc8eNuNG+g6D
+CTBwsOXCAEJYXPkTrnB3qQ==</xenc:CipherValue>
+</xenc:CipherData>
+</xenc:EncryptedKey>
+</dsig:KeyInfo>
+<xenc:CipherData>
+<xenc:CipherValue>4m5BRKEswOe8JISY7NrPGLBYv7Ay5pBV+nG6it51gz0=</xenc:CipherValue>
+</xenc:CipherData>
+</xenc:EncryptedData>
+</Envelope>

@@ -5,7 +5,7 @@ from lxml.includes.etreepublic cimport import_lxml__etree
 import_lxml__etree()
 
 from lxml.includes.etreepublic cimport _Element, elementFactory
-from lxml.includes.tree cimport const_xmlChar, xmlNode
+from lxml.includes.tree cimport const_xmlChar, xmlNode, xmlStrdup
 from .constants cimport _Transform
 from .utils cimport *
 from .template cimport *
@@ -111,9 +111,10 @@ def encrypted_data_create(_Element node not None,
                           id=None,
                           type=None,
                           mime_type=None,
-                          encoding=None):
+                          encoding=None,
+                          ns=None):
     """
-    Creates new <enc:EncryptedData /> node for encryption template.
+    Creates new <{ns}:EncryptedData /> node for encryption template.
     """
     cdef xmlNode* c_node
     cdef const_xmlChar* c_id = _b(id)
@@ -124,14 +125,22 @@ def encrypted_data_create(_Element node not None,
     c_node = xmlSecTmplEncDataCreate(
         node._doc._c_doc, method.target, c_id, c_type, c_mtype, c_encoding)
 
+    if ns is not None:
+        c_node.ns.prefix = xmlStrdup(_b(ns))
     return elementFactory(node._doc, c_node)
 
 
-def encrypted_data_ensure_key_info(_Element node not None, id=None):
+def encrypted_data_ensure_key_info(_Element node not None, id=None, ns=None):
+    """
+        Adds <{ns}:KeyInfo/> to the <enc:EncryptedData/> node encNode.
+    """
+
     cdef xmlNode* c_node
     cdef const_xmlChar* c_id = _b(id)
 
     c_node = xmlSecTmplEncDataEnsureKeyInfo(node._c_node, c_id)
+    if ns is not None:
+        c_node.ns.prefix = xmlStrdup(_b(ns))
 
     return elementFactory(node._doc, c_node)
 

@@ -45,15 +45,11 @@ cdef class EncryptionContext:
         cdef xmlSecEncCtxPtr handle = xmlSecEncCtxCreate(_manager)
         if handle == NULL:
             raise InternalError("failed to create encryption context")
-        if xmlSecEncCtxInitialize(handle, _manager) < 0:
-            xmlSecEncCtxDestroy(handle)
-            raise InternalError("failed to init encryption context")
 
         self._handle = handle
 
     def __dealloc__(self):
         if self._handle != NULL:
-            xmlSecEncCtxFinalize(self._handle)
             xmlSecEncCtxDestroy(self._handle)
 
     property key:
@@ -77,13 +73,10 @@ cdef class EncryptionContext:
         Note: *template* is modified in place.
         """
         cdef int rv
-        cdef size_t c_size
-        cdef const_xmlSecByte* c_data
 
         # Data to bytes
-        text = _b(data)
-        c_data = <const_xmlSecByte*>text
-        c_size = len(text)
+        cdef const_xmlSecByte* c_data = <const_xmlSecByte*>data
+        cdef size_t c_size = len(data)
 
         with nogil:
             rv = xmlSecEncCtxBinaryEncrypt(self._handle, template._c_node, c_data, c_size)
