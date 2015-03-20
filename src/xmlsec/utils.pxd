@@ -21,6 +21,10 @@ cdef extern from "xmlsec.h":  # xmlsec/xmlsec.h
     int xmlSecShutdown() nogil
 
 
+cdef extern from "xmlsec.h":  # xmlsec/errors.h
+    int xmlSecErrorsDefaultCallbackEnableOutput(int) nogil
+
+
 cdef extern from "xmlsec.h":  # xmlsec/app.h
     int xmlSecCryptoInit() nogil
     int xmlSecCryptoShutdown() nogil

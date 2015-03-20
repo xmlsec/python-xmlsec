@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals, division
 
-from xmlsec.constants cimport *
-from xmlsec.utils cimport *
+from .constants cimport *
+from .utils cimport *
 
 __all__ = [
     'Namespace',
     'Node',
-    'Transform'
+    'Transform',
+    'EncryptionType'
 ]
 
 
@@ -24,6 +25,11 @@ class Namespace:
     SOAP12 = _u(xmlSecSoap12Ns)
 
 
+class EncryptionType:
+    CONTENT = _u(xmlSecTypeEncContent)
+    ELEMENT = _u(xmlSecTypeEncElement)
+
+
 class Node:
     """Digital signature nodes."""
     SIGNATURE = _u(xmlSecNodeSignature)
@@ -36,6 +42,32 @@ class Node:
     OBJECT = _u(xmlSecNodeObject)
     MANIFEST = _u(xmlSecNodeManifest)
     SIGNATURE_PROPERTIES = _u(xmlSecNodeSignatureProperties)
+    ENCRYPTED_DATA = _u(xmlSecNodeEncryptedData)
+    ENCRYPTED_KEY = _u(xmlSecNodeEncryptedKey)
+    ENCRYPTION_METHOD = _u(xmlSecNodeEncryptionMethod)
+    ENCRYPTION_PROPERTIES = _u(xmlSecNodeEncryptionProperties)
+    ENCRYPTION_PROPERTY = _u(xmlSecNodeEncryptionProperty)
+    CIPHER_DATA = _u(xmlSecNodeCipherData)
+    CIPHER_VALUE = _u(xmlSecNodeCipherValue)
+    CIPHER_REFERENCE = _u(xmlSecNodeCipherReference)
+    REFERENCE_LIST = _u(xmlSecNodeReferenceList)
+    DATA_REFERENCE = _u(xmlSecNodeDataReference)
+    KEY_REFERENCE = _u(xmlSecNodeKeyReference)
+    KEY_INFO = _u(xmlSecNodeKeyInfo)
+
+
+cdef class _Transform:
+    property name:
+        def __get__(self):
+            return _u(self.target.name)
+
+    property href:
+        def __get__(self):
+            return _u(self.target.href)
+
+    property usage:
+        def __get__(self):
+            return self.target.usage
 
 
 cdef _Transform _mkti(xmlSecTransformId target):

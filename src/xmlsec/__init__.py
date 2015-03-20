@@ -6,6 +6,8 @@ from .constants import *
 from .utils import *
 from .key import *
 from .ds import *
+from .enc import *
+from .error import *
 from . import tree, template
 
 
