@@ -98,8 +98,12 @@ cdef class Key(object):
         cdef const_char* c_password = <const_char*>_b(password)
         cdef Key instance
 
+        if hasattr(data, "read"):
+            data = data.read()
+
         if isinstance(data, str):
             data = data.encode('utf8')
+
         c_size = len(data)
         c_data = <const_unsigned_char*><char*>data
 

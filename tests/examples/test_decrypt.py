@@ -6,7 +6,7 @@ from .base import parse_xml, BASE_DIR, compare
 def test_decrypt1():
     manager = xmlsec.KeysManager()
     filename = path.join(BASE_DIR, 'rsakey.pem')
-    key = xmlsec.Key.from_memory(open(filename, 'rb').read(), xmlsec.KeyFormat.PEM, None)
+    key = xmlsec.Key.from_memory(open(filename, 'rb'), xmlsec.KeyFormat.PEM, None)
     assert key is not None
     manager.add_key(key)
 
@@ -24,7 +24,7 @@ def test_decrypt1():
 def test_decrypt2():
     manager = xmlsec.KeysManager()
     filename = path.join(BASE_DIR, 'rsakey.pem')
-    key = xmlsec.Key.from_memory(open(filename, 'rb').read(), xmlsec.KeyFormat.PEM, None)
+    key = xmlsec.Key.from_memory(open(filename, 'rb'), xmlsec.KeyFormat.PEM, None)
     assert key is not None
     manager.add_key(key)
 
