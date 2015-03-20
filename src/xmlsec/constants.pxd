@@ -25,10 +25,40 @@ cdef extern from "xmlsec.h":  # xmlsec/strings.h
     const_xmlChar* xmlSecNodeManifest
     const_xmlChar* xmlSecNodeSignatureProperties
 
+    # Encypted nodes
+    const_xmlChar* xmlSecNodeEncryptedData
+    const_xmlChar* xmlSecNodeEncryptedKey
+    const_xmlChar* xmlSecNodeEncryptionMethod
+    const_xmlChar* xmlSecNodeEncryptionProperties
+    const_xmlChar* xmlSecNodeEncryptionProperty
+    const_xmlChar* xmlSecNodeCipherData
+    const_xmlChar* xmlSecNodeCipherValue
+    const_xmlChar* xmlSecNodeCipherReference
+    const_xmlChar* xmlSecNodeReferenceList
+    const_xmlChar* xmlSecNodeDataReference
+    const_xmlChar* xmlSecNodeKeyReference
+    const_xmlChar* xmlSecNodeKeyInfo
+
+
+    # encryption types
+    const_xmlChar* xmlSecTypeEncContent
+    const_xmlChar* xmlSecTypeEncElement
+
+    ctypedef unsigned int xmlSecTransformUsage
+    cdef enum:
+        xmlSecTransformUsageUnknown=0x0000
+        xmlSecTransformUsageDSigTransform=0x0001
+        xmlSecTransformUsageC14NMethod=0x0002
+        xmlSecTransformUsageDigestMethod=0x0004
+        xmlSecTransformUsageSignatureMethod=0x0008
+        xmlSecTransformUsageEncryptionMethod=0x0010
+        xmlSecTransformUsageAny=0xFFFF
+
     # Transform ids
     cdef struct _xmlSecTransformKlass:
         const_xmlChar* name
         const_xmlChar* href
+        xmlSecTransformUsage usage
 
     ctypedef _xmlSecTransformKlass *xmlSecTransformId
 

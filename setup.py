@@ -12,62 +12,32 @@ def lazy(function):
     @wraps(function)
     def wrapped(*args, **kwargs):
 
-        class LazyProxy(object):
+        class LazyProxy(Extension):
+            __arguments = dict()
 
             def __init__(self, function, args, kwargs):
-                self._function = function
-                self._args = args
-                self._kwargs = kwargs
-                self._result = None
+                self.__arguments["function"] = function
+                self.__arguments["args"] = args
+                self.__arguments["kwargs"] = kwargs
+                self.__arguments["result"] = None
 
-            def __getattribute__(self, name):
-                if name in ['_function', '_args', '_kwargs', '_result']:
-                    return super(LazyProxy, self).__getattribute__(name)
+            def __getattr__(self, item):
+                if self.__arguments["result"] is None:
+                    self.__arguments["result"] = self.__arguments["function"](*self.__arguments["args"],
+                                                                              **self.__arguments["kwargs"])
 
-                if self._result is None:
-                    self._result = self._function(*self._args, **self._kwargs)
-
-                return object.__getattribute__(self._result, name)
+                return getattr(self.__arguments["result"], item)
 
             def __setattr__(self, name, value):
-                if name in ['_function', '_args', '_kwargs', '_result']:
-                    super(LazyProxy, self).__setattr__(name, value)
-                    return
+                if self.__arguments["result"] is None:
+                    self.__arguments["result"] = self.__arguments["function"](*self.__arguments["args"],
+                                                                              **self.__arguments["kwargs"])
 
-                if self._result is None:
-                    self._result = self._function(*self._args, **self._kwargs)
-
-                setattr(self._result, name, value)
+                setattr(self.__arguments["result"], name, value)
 
         return LazyProxy(function, args, kwargs)
 
     return wrapped
-
-
-class Extension(Extension, object):
-
-    lxml_extended = False
-
-    @property
-    def include_dirs(self):
-        dirs = self.__dict__['include_dirs']
-        if self.lxml_extended:
-            return dirs
-
-        # Resolve lxml include directories.
-        import lxml
-        lxml_base = path.dirname(lxml.__file__)
-        lxml_include = path.join(lxml_base, 'includes')
-
-        dirs.insert(0, lxml_include)
-        dirs.insert(0, lxml_base)
-
-        self.lxml_extended = True
-        return dirs
-
-    @include_dirs.setter
-    def include_dirs(self, dirs):
-        self.__dict__['include_dirs'] = dirs
 
 
 @lazy
@@ -75,12 +45,12 @@ def make_extension(name, cython=True):
     from pkgconfig import parse
 
     # Declare the crypto implementation.
-    XMLSEC_CRYPTO = 'openssl'
+    xmlsec_crypto = 'openssl'
 
     # Process the `pkg-config` utility and discover include and library
     # directories.
     config = {}
-    for lib in ['libxml-2.0', 'xmlsec1-%s' % XMLSEC_CRYPTO]:
+    for lib in ['libxml-2.0', 'xmlsec1-%s' % xmlsec_crypto]:
         config.update(parse(lib))
 
     config['extra_compile_args'] = ['-DXMLSEC_CRYPTO_OPENSSL=1']
@@ -93,6 +63,9 @@ def make_extension(name, cython=True):
         config['include_dirs'] = []
 
     # Add the source directories for inclusion.
+    import lxml
+    config['include_dirs'].insert(0, path.dirname(lxml.__file__))
+    config['include_dirs'].insert(0, path.join(path.dirname(lxml.__file__), 'includes'))
     config['include_dirs'].insert(0, 'src')
 
     # Resolve extension location from name.
@@ -144,6 +117,7 @@ setup(
         make_extension('xmlsec.tree'),
         make_extension('xmlsec.key'),
         make_extension('xmlsec.ds'),
+        make_extension('xmlsec.enc'),
         make_extension('xmlsec.template'),
     ]
 )
