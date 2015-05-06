@@ -51,6 +51,7 @@ cdef class KeyData(object):
     AES = _mkkdi(xmlSecKeyDataAesId)
     DES = _mkkdi(xmlSecKeyDataDesId)
     DSA = _mkkdi(xmlSecKeyDataDsaId)
+    ECDSA = _mkkdi(xmlSecKeyDataEcdsaId)
     HMAC = _mkkdi(xmlSecKeyDataHmacId)
     RSA = _mkkdi(xmlSecKeyDataRsaId)
     X509 = _mkkdi(xmlSecKeyDataX509Id)

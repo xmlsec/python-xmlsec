@@ -21,6 +21,7 @@ cdef extern from "xmlsec.h":  # xmlsec/keys.h
     xmlSecKeyDataId xmlSecKeyDataAesId
     xmlSecKeyDataId xmlSecKeyDataDesId
     xmlSecKeyDataId xmlSecKeyDataDsaId
+    xmlSecKeyDataId xmlSecKeyDataEcdsaId
     xmlSecKeyDataId xmlSecKeyDataHmacId
     xmlSecKeyDataId xmlSecKeyDataRsaId
     xmlSecKeyDataId xmlSecKeyDataX509Id
