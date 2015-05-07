@@ -6,8 +6,10 @@ python:
 
 before_install:
   - 'travis_retry sudo apt-get update'
-  - 'travis_retry sudo apt-get install --fix-missing -y python-dev libxml2-dev libxmlsec1-dev'
+  - 'travis_retry sudo apt-get install --fix-missing -y python-dev libxslt1-dev libssl-dev'
   - 'travis_retry pip install Cython --use-mirrors'
+  - 'travis_retry wget -O /dev/stdout https://www.aleksey.com/xmlsec/download/xmlsec1-1.2.20.tar.gz | tar xzv'
+  - 'cd xmlsec1-1.2.20 && ./configure && make && sudo make install && sudo ldconfig && cd ..'
 
 install:
   - 'travis_retry pip install -e ".[test]" --use-mirrors'
