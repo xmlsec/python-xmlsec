@@ -85,6 +85,11 @@ cdef extern from "xmlsec.h":  # xmlsec/strings.h
     xmlSecTransformId xmlSecTransformDes3CbcId
     xmlSecTransformId xmlSecTransformKWDes3Id
     xmlSecTransformId xmlSecTransformDsaSha1Id
+    xmlSecTransformId xmlSecTransformEcdsaSha1Id
+    xmlSecTransformId xmlSecTransformEcdsaSha224Id
+    xmlSecTransformId xmlSecTransformEcdsaSha256Id
+    xmlSecTransformId xmlSecTransformEcdsaSha384Id
+    xmlSecTransformId xmlSecTransformEcdsaSha512Id
     xmlSecTransformId xmlSecTransformHmacMd5Id
     xmlSecTransformId xmlSecTransformHmacRipemd160Id
     xmlSecTransformId xmlSecTransformHmacSha1Id
