@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals, division
 
-from lxml.includes.tree cimport xmlHasProp, xmlAttr
+from lxml.includes.tree cimport xmlHasProp, xmlHasNsProp, xmlAttr
 from lxml.includes.etreepublic cimport import_lxml__etree
 import_lxml__etree()
 
@@ -55,11 +55,16 @@ cdef class SignatureContext(object):
             instance._handle = self._handle.signKey
             return instance
 
-    def register_id(self, _Element node not None):
+    def register_id(self, _Element node not None, id_attr="ID", id_ns=None):
         cdef xmlAttr* attr
 
-        attr = xmlHasProp(node._c_node, _b("ID"))
-        value = node.attrib.get("ID")
+        if id_ns:
+           attr = xmlHasNsProp(node._c_node, _b(id_attr), _b(id_ns))
+           attrname = '{%s}%s' % (id_ns, id_attr)
+        else:
+           attr = xmlHasProp(node._c_node, _b(id_attr))
+           attrname = id_attr
+        value = node.attrib.get(attrname)
 
         xmlAddID(NULL, node._doc._c_doc, _b(value), attr)
 
