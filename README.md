@@ -12,10 +12,16 @@ Check the [examples](https://github.com/mehcode/python-xmlsec/tree/master/tests/
 
 ### Pre-Install
 
-#### Linux
+#### Linux (Debian)
 
    ```sh
    apt-get install libxml2-dev libxmlsec1-dev
+   ```
+   
+#### Linux (CentOS)
+
+   ```sh
+   yum install libxml2-devel xmlsec1-devel xmlsec1-openssl-devel libtool-ltdl-devel
    ```
 
 #### Mac
