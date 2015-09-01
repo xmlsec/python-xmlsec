@@ -3,12 +3,16 @@ import xmlsec
 from .base import parse_xml, BASE_DIR
 from lxml import etree
 
+def read_from_file(filename):
+    with open(filename, "rb") as stream:
+        return stream.read()
+
 
 def test_encrypt_xml():
     # Load the public cert
     manager = xmlsec.KeysManager()
     filename = path.join(BASE_DIR, 'rsacert.pem')
-    key = xmlsec.Key.from_memory(open(filename, 'rb').read(), xmlsec.KeyFormat.CERT_PEM, None)
+    key = xmlsec.Key.from_memory(read_from_file(filename), xmlsec.KeyFormat.CERT_PEM, None)
     assert key is not None
     manager.add_key(key)
     template = parse_xml('enc1-doc.xml')
@@ -46,7 +50,7 @@ def test_encrypt_binary():
     # Load the public cert
     manager = xmlsec.KeysManager()
     filename = path.join(BASE_DIR, 'rsacert.pem')
-    key = xmlsec.Key.from_memory(open(filename, 'rb').read(), xmlsec.KeyFormat.CERT_PEM, None)
+    key = xmlsec.Key.from_memory(read_from_file(filename), xmlsec.KeyFormat.CERT_PEM, None)
     assert key is not None
     manager.add_key(key)
     template = etree.Element("root")

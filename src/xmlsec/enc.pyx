@@ -5,17 +5,14 @@ from lxml.includes.etreepublic cimport import_lxml__etree
 import_lxml__etree()
 
 from lxml.includes.etreepublic cimport _Document, _Element, elementFactory
-from lxml.includes.tree cimport xmlDocCopyNode, xmlFreeNode, xmlNode, xmlDoc, xmlDocGetRootElement
+from lxml.includes.tree cimport xmlDocCopyNode, xmlFreeNode, xmlDoc, xmlDocGetRootElement
 
-from .enc cimport *
 from .constants import EncryptionType
-from .utils cimport *
 from .key cimport Key as _Key, KeysManager as _KeysManager, _KeyData, \
     xmlSecKeyDuplicate, xmlSecKeyMatch, xmlSecKeyDestroy
-
+from .utils cimport _b
 from .error import *
 from copy import copy
-
 
 __all__ = [
     'EncryptionContext'
@@ -47,6 +44,7 @@ cdef class EncryptionContext:
             raise InternalError("failed to create encryption context")
 
         self._handle = handle
+        print("!!!", XMLSEC_ENC_RETURN_REPLACED_NODE)
 
     def __dealloc__(self):
         if self._handle != NULL:

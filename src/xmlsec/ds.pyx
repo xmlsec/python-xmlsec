@@ -7,12 +7,11 @@ import_lxml__etree()
 
 from lxml.includes.etreepublic cimport _Element
 
-from .ds cimport *
 from .constants cimport _Transform, xmlSecTransformUsageSignatureMethod
 from .key cimport Key as _Key, KeysManager as _KeysManager, _KeyData, \
     xmlSecKeyDuplicate, xmlSecKeyMatch, xmlSecKeyDestroy
-from .error import *
 from .utils cimport _b
+from .error import *
 
 
 __all__ = [

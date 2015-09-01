@@ -1,12 +1,17 @@
+from __future__ import with_statement
 from os import path
 import xmlsec
 from .base import parse_xml, BASE_DIR, compare
+
+def read_from_file(filename):
+    with open(filename, "rb") as stream:
+        return stream.read()
 
 
 def test_decrypt1():
     manager = xmlsec.KeysManager()
     filename = path.join(BASE_DIR, 'rsakey.pem')
-    key = xmlsec.Key.from_memory(open(filename, 'rb'), xmlsec.KeyFormat.PEM, None)
+    key = xmlsec.Key.from_memory(read_from_file(filename), xmlsec.KeyFormat.PEM, None)
     assert key is not None
     manager.add_key(key)
 
@@ -24,7 +29,7 @@ def test_decrypt1():
 def test_decrypt2():
     manager = xmlsec.KeysManager()
     filename = path.join(BASE_DIR, 'rsakey.pem')
-    key = xmlsec.Key.from_memory(open(filename, 'rb'), xmlsec.KeyFormat.PEM, None)
+    key = xmlsec.Key.from_memory(read_from_file(filename), xmlsec.KeyFormat.PEM, None)
     assert key is not None
     manager.add_key(key)
 

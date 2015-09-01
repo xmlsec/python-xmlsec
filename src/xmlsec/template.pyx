@@ -5,10 +5,9 @@ from lxml.includes.etreepublic cimport import_lxml__etree
 import_lxml__etree()
 
 from lxml.includes.etreepublic cimport _Element, elementFactory
-from lxml.includes.tree cimport const_xmlChar, xmlNode, xmlStrdup
+from lxml.includes.tree cimport xmlStrdup
 from .constants cimport _Transform
-from .utils cimport *
-from .template cimport *
+from .utils cimport _b
 
 
 def create(_Element node not None,

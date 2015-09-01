@@ -6,9 +6,9 @@ from lxml.includes.etreepublic cimport import_lxml__etree
 import_lxml__etree()
 
 from lxml.includes.etreepublic cimport _ElementTree, _Element, elementFactory
-from .tree cimport *
-from .utils cimport *
 from .constants import Namespace
+from .utils cimport _b
+
 
 __all__ = [
     'find_child',
