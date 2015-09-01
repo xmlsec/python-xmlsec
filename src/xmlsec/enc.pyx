@@ -44,7 +44,6 @@ cdef class EncryptionContext:
             raise InternalError("failed to create encryption context")
 
         self._handle = handle
-        print("!!!", XMLSEC_ENC_RETURN_REPLACED_NODE)
 
     def __dealloc__(self):
         if self._handle != NULL:
