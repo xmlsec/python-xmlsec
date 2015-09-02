@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals, division
 
+from .key cimport *
 from .utils cimport _b, _u
 from .error import *
 from copy import copy

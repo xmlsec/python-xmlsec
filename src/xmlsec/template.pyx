@@ -4,6 +4,7 @@ from __future__ import absolute_import, unicode_literals, division
 from lxml.includes.etreepublic cimport import_lxml__etree
 import_lxml__etree()
 
+from .template cimport *
 from lxml.includes.etreepublic cimport _Element, elementFactory
 from lxml.includes.tree cimport xmlStrdup
 from .constants cimport _Transform

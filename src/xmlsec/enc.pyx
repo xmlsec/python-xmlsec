@@ -7,10 +7,12 @@ import_lxml__etree()
 from lxml.includes.etreepublic cimport _Document, _Element, elementFactory
 from lxml.includes.tree cimport xmlDocCopyNode, xmlFreeNode, xmlDoc, xmlDocGetRootElement
 
-from .constants import EncryptionType
+from .enc cimport *
 from .key cimport Key as _Key, KeysManager as _KeysManager, _KeyData, \
     xmlSecKeyDuplicate, xmlSecKeyMatch, xmlSecKeyDestroy
 from .utils cimport _b
+
+from .constants import EncryptionType
 from .error import *
 from copy import copy
 
