@@ -2,7 +2,7 @@
 from __future__ import absolute_import, unicode_literals, division
 
 from .constants cimport *
-from .utils cimport *
+from .utils cimport _u
 
 __all__ = [
     'Namespace',

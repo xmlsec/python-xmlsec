@@ -5,7 +5,7 @@ from .ds cimport const_xmlSecByte, xmlSecBufferPtr
 
 cdef extern from "xmlsec.h":  # xmlsec/keys.h
 
-    unsigned int XMLSEC_ENC_RETURN_REPLACED_NODE
+    cdef enum: XMLSEC_ENC_RETURN_REPLACED_NODE
 
     cdef struct _xmlSecEncCtx:
         # void * userData
