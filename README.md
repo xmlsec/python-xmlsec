@@ -1,7 +1,7 @@
 # python-xmlsec
 [![Build Status](https://travis-ci.org/mehcode/python-xmlsec.png?branch=master)](https://travis-ci.org/mehcode/python-xmlsec)
-[![PyPi Version](https://pypip.in/v/xmlsec/badge.png)](https://pypi.python.org/pypi/xmlsec)
-![PyPi Downloads](https://pypip.in/d/xmlsec/badge.png)
+[![PyPi Version](https://img.shields.io/pypi/v/xmlsec.svg)](https://pypi.python.org/pypi/xmlsec)
+![PyPi Downloads](https://img.shields.io/pypi/dm/xmlsec.svg)
 > Python bindings for the XML Security Library.
 
 ## Usage
