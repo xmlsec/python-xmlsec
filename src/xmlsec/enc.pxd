@@ -3,10 +3,9 @@ from .key cimport xmlSecKeyPtr, xmlSecKeyReqPtr, xmlSecKeysMngrPtr
 from .ds cimport const_xmlSecByte, xmlSecBufferPtr
 
 
-cdef unsigned int XMLSEC_ENC_RETURN_REPLACED_NODE
-
-
 cdef extern from "xmlsec.h":  # xmlsec/keys.h
+
+    unsigned int XMLSEC_ENC_RETURN_REPLACED_NODE
 
     cdef struct _xmlSecEncCtx:
         # void * userData
