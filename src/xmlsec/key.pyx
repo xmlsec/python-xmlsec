@@ -44,18 +44,18 @@ cdef _KeyData _mkkdi(xmlSecKeyDataId target):
 
 
 cdef class KeyData(object):
-    NAME = _mkkdi(xmlSecKeyDataNameId)
-    VALUE = _mkkdi(xmlSecKeyDataValueId)
-    RETRIEVALMETHOD = _mkkdi(xmlSecKeyDataRetrievalMethodId)
-    ENCRYPTEDKEY = _mkkdi(xmlSecKeyDataEncryptedKeyId)
-    AES = _mkkdi(xmlSecKeyDataAesId)
-    DES = _mkkdi(xmlSecKeyDataDesId)
-    DSA = _mkkdi(xmlSecKeyDataDsaId)
-    ECDSA = _mkkdi(xmlSecKeyDataEcdsaId)
-    HMAC = _mkkdi(xmlSecKeyDataHmacId)
-    RSA = _mkkdi(xmlSecKeyDataRsaId)
-    X509 = _mkkdi(xmlSecKeyDataX509Id)
-    RAWX509CERT = _mkkdi(xmlSecKeyDataRawX509CertId)
+    NAME = _mkkdi(xmlSecKeyDataNameGetKlass())
+    VALUE = _mkkdi(xmlSecKeyDataValueGetKlass())
+    RETRIEVALMETHOD = _mkkdi(xmlSecKeyDataRetrievalMethodGetKlass())
+    ENCRYPTEDKEY = _mkkdi(xmlSecKeyDataEncryptedKeyGetKlass())
+    AES = _mkkdi(xmlSecKeyDataAesGetKlass())
+    DES = _mkkdi(xmlSecKeyDataDesGetKlass())
+    DSA = _mkkdi(xmlSecKeyDataDsaGetKlass())
+    ECDSA = _mkkdi(xmlSecKeyDataEcdsaGetKlass())
+    HMAC = _mkkdi(xmlSecKeyDataHmacGetKlass())
+    RSA = _mkkdi(xmlSecKeyDataRsaGetKlass())
+    X509 = _mkkdi(xmlSecKeyDataX509GetKlass())
+    RAWX509CERT = _mkkdi(xmlSecKeyDataRawX509CertGetKlass())
 
 
 
