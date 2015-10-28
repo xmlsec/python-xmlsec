@@ -14,18 +14,18 @@ cdef extern from "xmlsec.h":  # xmlsec/keys.h
 
     ctypedef _xmlSecKeyDataKlass *xmlSecKeyDataId
 
-    xmlSecKeyDataId xmlSecKeyDataNameId
-    xmlSecKeyDataId xmlSecKeyDataValueId
-    xmlSecKeyDataId xmlSecKeyDataRetrievalMethodId
-    xmlSecKeyDataId xmlSecKeyDataEncryptedKeyId
-    xmlSecKeyDataId xmlSecKeyDataAesId
-    xmlSecKeyDataId xmlSecKeyDataDesId
-    xmlSecKeyDataId xmlSecKeyDataDsaId
-    xmlSecKeyDataId xmlSecKeyDataEcdsaId
-    xmlSecKeyDataId xmlSecKeyDataHmacId
-    xmlSecKeyDataId xmlSecKeyDataRsaId
-    xmlSecKeyDataId xmlSecKeyDataX509Id
-    xmlSecKeyDataId xmlSecKeyDataRawX509CertId
+    xmlSecKeyDataId xmlSecKeyDataNameGetKlass()
+    xmlSecKeyDataId xmlSecKeyDataValueGetKlass()
+    xmlSecKeyDataId xmlSecKeyDataRetrievalMethodGetKlass()
+    xmlSecKeyDataId xmlSecKeyDataEncryptedKeyGetKlass()
+    xmlSecKeyDataId xmlSecKeyDataAesGetKlass()
+    xmlSecKeyDataId xmlSecKeyDataDesGetKlass()
+    xmlSecKeyDataId xmlSecKeyDataDsaGetKlass()
+    xmlSecKeyDataId xmlSecKeyDataEcdsaGetKlass()
+    xmlSecKeyDataId xmlSecKeyDataHmacGetKlass()
+    xmlSecKeyDataId xmlSecKeyDataRsaGetKlass()
+    xmlSecKeyDataId xmlSecKeyDataX509GetKlass()
+    xmlSecKeyDataId xmlSecKeyDataRawX509CertGetKlass()
 
     ctypedef enum xmlSecKeyDataFormat:
         xmlSecKeyDataFormatUnknown = 0
