@@ -9,7 +9,11 @@ addons:
     packages:
       - libxslt1-dev
       - libssl-dev
-      - libxmlsec1-dev
+
+# Not sure how to install a more recent version of this
+before_install:
+  - travis_retry wget -O /dev/stdout http://www.aleksey.com/xmlsec/download/xmlsec1-1.2.20.tar.gz | tar xzv
+  - cd xmlsec1-1.2.20 && ./configure && make && sudo make install && sudo ldconfig && cd ..
 
 install:
   - travis_retry pip install -e ".[test]"
