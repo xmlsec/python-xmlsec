@@ -12,7 +12,7 @@ addons:
 
 # Not sure how to install a more recent version of this
 before_install:
-  - travis_retry wget -O /dev/stdout http://www.aleksey.com/xmlsec/download/xmlsec1-1.2.20.tar.gz | tar xzv
+  - travis_retry wget --no-check-certificate -O /dev/stdout http://www.aleksey.com/xmlsec/download/xmlsec1-1.2.20.tar.gz | tar xzv
   - cd xmlsec1-1.2.20 && ./configure && make && sudo make install && sudo ldconfig && cd ..
 
 install:
