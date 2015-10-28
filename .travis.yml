@@ -4,14 +4,14 @@ python:
   - '3.3'
   - '3.4'
 
-before_install:
-  - 'travis_retry sudo apt-get update'
-  - 'travis_retry sudo apt-get install --fix-missing -y python-dev libxslt1-dev libssl-dev'
-  - 'travis_retry pip install Cython --use-mirrors'
-  - 'travis_retry wget -O /dev/stdout https://www.aleksey.com/xmlsec/download/xmlsec1-1.2.20.tar.gz | tar xzv'
-  - 'cd xmlsec1-1.2.20 && ./configure && make && sudo make install && sudo ldconfig && cd ..'
+addons:
+  apt:
+    packages:
+      - libxslt1-dev
+      - libssl-dev
+      - libxmlsec1-dev
 
 install:
-  - 'travis_retry pip install -e ".[test]" --use-mirrors'
+  - travis_retry pip install -e ".[test]"
 
-script: 'py.test'
+script: py.test
