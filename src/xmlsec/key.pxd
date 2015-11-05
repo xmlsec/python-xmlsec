@@ -14,18 +14,18 @@ cdef extern from "xmlsec.h":  # xmlsec/keys.h
 
     ctypedef _xmlSecKeyDataKlass *xmlSecKeyDataId
 
-    xmlSecKeyDataId xmlSecKeyDataNameGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataValueGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataRetrievalMethodGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataEncryptedKeyGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataAesGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataDesGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataDsaGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataEcdsaGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataHmacGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataRsaGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataX509GetKlass()
-    xmlSecKeyDataId xmlSecKeyDataRawX509CertGetKlass()
+    xmlSecKeyDataId xmlSecKeyDataNameGetKlass() nogil
+    xmlSecKeyDataId xmlSecKeyDataValueGetKlass() nogil
+    xmlSecKeyDataId xmlSecKeyDataRetrievalMethodGetKlass() nogil
+    xmlSecKeyDataId xmlSecKeyDataEncryptedKeyGetKlass() nogil
+    xmlSecKeyDataId xmlSecKeyDataAesGetKlass() nogil
+    xmlSecKeyDataId xmlSecKeyDataDesGetKlass() nogil
+    xmlSecKeyDataId xmlSecKeyDataDsaGetKlass() nogil
+    xmlSecKeyDataId xmlSecKeyDataEcdsaGetKlass() nogil
+    xmlSecKeyDataId xmlSecKeyDataHmacGetKlass() nogil
+    xmlSecKeyDataId xmlSecKeyDataRsaGetKlass() nogil
+    xmlSecKeyDataId xmlSecKeyDataX509GetKlass() nogil
+    xmlSecKeyDataId xmlSecKeyDataRawX509CertGetKlass() nogil
 
     ctypedef enum xmlSecKeyDataFormat:
         xmlSecKeyDataFormatUnknown = 0

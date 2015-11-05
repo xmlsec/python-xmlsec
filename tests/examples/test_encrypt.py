@@ -3,6 +3,7 @@ import xmlsec
 from .base import parse_xml, BASE_DIR
 from lxml import etree
 
+
 def read_from_file(filename):
     with open(filename, "rb") as stream:
         return stream.read()
@@ -32,7 +33,7 @@ def test_encrypt_xml():
     # Encrypt!
     enc_ctx = xmlsec.EncryptionContext(manager)
     enc_ctx.key = xmlsec.Key.generate(xmlsec.KeyData.AES, 128, xmlsec.KeyDataType.SESSION)
-    enc_data = enc_ctx.encrypt_xml(enc_data, data)
+    enc_datsa = enc_ctx.encrypt_xml(enc_data, data)
     assert enc_data is not None
     enc_method = xmlsec.tree.find_child(enc_data, xmlsec.Node.ENCRYPTION_METHOD, xmlsec.Namespace.ENC)
     assert enc_method is not None

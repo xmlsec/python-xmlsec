@@ -54,7 +54,7 @@ cdef extern from "xmlsec.h":  # xmlsec/strings.h
         xmlSecTransformUsageEncryptionMethod=0x0010
         xmlSecTransformUsageAny=0xFFFF
 
-    # Transform ids
+    # Transform ids  # xmlsec/app.h
     cdef struct _xmlSecTransformKlass:
         const_xmlChar* name
         const_xmlChar* href
@@ -62,57 +62,57 @@ cdef extern from "xmlsec.h":  # xmlsec/strings.h
 
     ctypedef _xmlSecTransformKlass *xmlSecTransformId
 
-    xmlSecTransformId xmlSecTransformInclC14NGetKlass()
-    xmlSecTransformId xmlSecTransformInclC14NWithCommentsGetKlass()
-    xmlSecTransformId xmlSecTransformInclC14N11GetKlass()
-    xmlSecTransformId xmlSecTransformInclC14N11WithCommentsGetKlass()
-    xmlSecTransformId xmlSecTransformExclC14NGetKlass()
-    xmlSecTransformId xmlSecTransformExclC14NWithCommentsGetKlass()
-    xmlSecTransformId xmlSecTransformEnvelopedGetKlass()
-    xmlSecTransformId xmlSecTransformXPathGetKlass()
-    xmlSecTransformId xmlSecTransformXPath2GetKlass()
-    xmlSecTransformId xmlSecTransformXPointerGetKlass()
-    xmlSecTransformId xmlSecTransformXsltGetKlass()
-    xmlSecTransformId xmlSecTransformRemoveXmlTagsC14NGetKlass()
-    xmlSecTransformId xmlSecTransformVisa3DHackGetKlass()
+    xmlSecTransformId xmlSecTransformInclC14NGetKlass() nogil
+    xmlSecTransformId xmlSecTransformInclC14NWithCommentsGetKlass() nogil
+    xmlSecTransformId xmlSecTransformInclC14N11GetKlass() nogil
+    xmlSecTransformId xmlSecTransformInclC14N11WithCommentsGetKlass() nogil
+    xmlSecTransformId xmlSecTransformExclC14NGetKlass() nogil
+    xmlSecTransformId xmlSecTransformExclC14NWithCommentsGetKlass() nogil
+    xmlSecTransformId xmlSecTransformEnvelopedGetKlass() nogil
+    xmlSecTransformId xmlSecTransformXPathGetKlass() nogil
+    xmlSecTransformId xmlSecTransformXPath2GetKlass() nogil
+    xmlSecTransformId xmlSecTransformXPointerGetKlass() nogil
+    xmlSecTransformId xmlSecTransformXsltGetKlass() nogil
+    xmlSecTransformId xmlSecTransformRemoveXmlTagsC14NGetKlass() nogil
+    xmlSecTransformId xmlSecTransformVisa3DHackGetKlass() nogil
 
-    xmlSecTransformId xmlSecTransformAes128CbcGetKlass()
-    xmlSecTransformId xmlSecTransformAes192CbcGetKlass()
-    xmlSecTransformId xmlSecTransformAes256CbcGetKlass()
-    xmlSecTransformId xmlSecTransformKWAes128GetKlass()
-    xmlSecTransformId xmlSecTransformKWAes192GetKlass()
-    xmlSecTransformId xmlSecTransformKWAes256GetKlass()
-    xmlSecTransformId xmlSecTransformDes3CbcGetKlass()
-    xmlSecTransformId xmlSecTransformKWDes3GetKlass()
-    xmlSecTransformId xmlSecTransformDsaSha1GetKlass()
-    xmlSecTransformId xmlSecTransformEcdsaSha1GetKlass()
-    xmlSecTransformId xmlSecTransformEcdsaSha224GetKlass()
-    xmlSecTransformId xmlSecTransformEcdsaSha256GetKlass()
-    xmlSecTransformId xmlSecTransformEcdsaSha384GetKlass()
-    xmlSecTransformId xmlSecTransformEcdsaSha512GetKlass()
-    xmlSecTransformId xmlSecTransformHmacMd5GetKlass()
-    xmlSecTransformId xmlSecTransformHmacRipemd160GetKlass()
-    xmlSecTransformId xmlSecTransformHmacSha1GetKlass()
-    xmlSecTransformId xmlSecTransformHmacSha224GetKlass()
-    xmlSecTransformId xmlSecTransformHmacSha256GetKlass()
-    xmlSecTransformId xmlSecTransformHmacSha384GetKlass()
-    xmlSecTransformId xmlSecTransformHmacSha512GetKlass()
-    xmlSecTransformId xmlSecTransformMd5GetKlass()
-    xmlSecTransformId xmlSecTransformRipemd160GetKlass()
-    xmlSecTransformId xmlSecTransformRsaMd5GetKlass()
-    xmlSecTransformId xmlSecTransformRsaRipemd160GetKlass()
-    xmlSecTransformId xmlSecTransformRsaSha1GetKlass()
-    xmlSecTransformId xmlSecTransformRsaSha224GetKlass()
-    xmlSecTransformId xmlSecTransformRsaSha256GetKlass()
-    xmlSecTransformId xmlSecTransformRsaSha384GetKlass()
-    xmlSecTransformId xmlSecTransformRsaSha512GetKlass()
-    xmlSecTransformId xmlSecTransformRsaPkcs1GetKlass()
-    xmlSecTransformId xmlSecTransformRsaOaepGetKlass()
-    xmlSecTransformId xmlSecTransformSha1GetKlass()
-    xmlSecTransformId xmlSecTransformSha224GetKlass()
-    xmlSecTransformId xmlSecTransformSha256GetKlass()
-    xmlSecTransformId xmlSecTransformSha384GetKlass()
-    xmlSecTransformId xmlSecTransformSha512GetKlass()
+    xmlSecTransformId xmlSecTransformAes128CbcGetKlass() nogil
+    xmlSecTransformId xmlSecTransformAes192CbcGetKlass() nogil
+    xmlSecTransformId xmlSecTransformAes256CbcGetKlass() nogil
+    xmlSecTransformId xmlSecTransformKWAes128GetKlass() nogil
+    xmlSecTransformId xmlSecTransformKWAes192GetKlass() nogil
+    xmlSecTransformId xmlSecTransformKWAes256GetKlass() nogil
+    xmlSecTransformId xmlSecTransformDes3CbcGetKlass() nogil
+    xmlSecTransformId xmlSecTransformKWDes3GetKlass() nogil
+    xmlSecTransformId xmlSecTransformDsaSha1GetKlass() nogil
+    xmlSecTransformId xmlSecTransformEcdsaSha1GetKlass() nogil
+    xmlSecTransformId xmlSecTransformEcdsaSha224GetKlass() nogil
+    xmlSecTransformId xmlSecTransformEcdsaSha256GetKlass() nogil
+    xmlSecTransformId xmlSecTransformEcdsaSha384GetKlass() nogil
+    xmlSecTransformId xmlSecTransformEcdsaSha512GetKlass() nogil
+    xmlSecTransformId xmlSecTransformHmacMd5GetKlass() nogil
+    xmlSecTransformId xmlSecTransformHmacRipemd160GetKlass() nogil
+    xmlSecTransformId xmlSecTransformHmacSha1GetKlass() nogil
+    xmlSecTransformId xmlSecTransformHmacSha224GetKlass() nogil
+    xmlSecTransformId xmlSecTransformHmacSha256GetKlass() nogil
+    xmlSecTransformId xmlSecTransformHmacSha384GetKlass() nogil
+    xmlSecTransformId xmlSecTransformHmacSha512GetKlass() nogil
+    xmlSecTransformId xmlSecTransformMd5GetKlass() nogil
+    xmlSecTransformId xmlSecTransformRipemd160GetKlass() nogil
+    xmlSecTransformId xmlSecTransformRsaMd5GetKlass() nogil
+    xmlSecTransformId xmlSecTransformRsaRipemd160GetKlass() nogil
+    xmlSecTransformId xmlSecTransformRsaSha1GetKlass() nogil
+    xmlSecTransformId xmlSecTransformRsaSha224GetKlass() nogil
+    xmlSecTransformId xmlSecTransformRsaSha256GetKlass() nogil
+    xmlSecTransformId xmlSecTransformRsaSha384GetKlass() nogil
+    xmlSecTransformId xmlSecTransformRsaSha512GetKlass() nogil
+    xmlSecTransformId xmlSecTransformRsaPkcs1GetKlass() nogil
+    xmlSecTransformId xmlSecTransformRsaOaepGetKlass() nogil
+    xmlSecTransformId xmlSecTransformSha1GetKlass() nogil
+    xmlSecTransformId xmlSecTransformSha224GetKlass() nogil
+    xmlSecTransformId xmlSecTransformSha256GetKlass() nogil
+    xmlSecTransformId xmlSecTransformSha384GetKlass() nogil
+    xmlSecTransformId xmlSecTransformSha512GetKlass() nogil
 
 
 cdef class _Transform(object):

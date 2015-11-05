@@ -11,13 +11,13 @@ cdef extern from "xmlsec.h":  # xmlsec/xmltree.h
     # xmlNode* xmlSecGetNextElementNode(xmlNode* node)
 
     xmlNode* xmlSecFindChild(
-        xmlNode* parent, const_xmlChar* name, const_xmlChar* ns)
+        xmlNode* parent, const_xmlChar* name, const_xmlChar* ns) nogil
 
     xmlNode* xmlSecFindParent(
-        xmlNode* node, const_xmlChar* name, const_xmlChar* ns)
+        xmlNode* node, const_xmlChar* name, const_xmlChar* ns) nogil
 
     xmlNode* xmlSecFindNode(
-        xmlNode* parent, const_xmlChar* name, const_xmlChar* ns)
+        xmlNode* parent, const_xmlChar* name, const_xmlChar* ns) nogil
 
     # xmlNode* xmlSecAddChild(
     #     xmlNode* parent, const_xmlChar* name, const_xmlChar* ns)

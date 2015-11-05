@@ -1,3 +1,4 @@
+#include <xmlsec/app.h>
 #include <xmlsec/crypto.h>
 #include <xmlsec/xmltree.h>
 #include <xmlsec/xmldsig.h>

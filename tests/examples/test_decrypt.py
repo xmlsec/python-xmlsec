@@ -3,6 +3,7 @@ from os import path
 import xmlsec
 from .base import parse_xml, BASE_DIR, compare
 
+
 def read_from_file(filename):
     with open(filename, "rb") as stream:
         return stream.read()
