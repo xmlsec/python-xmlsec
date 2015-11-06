@@ -9,6 +9,7 @@ addons:
   apt:
     packages:
         libxmlsec1
+        libxmlsec1-dev
         libxmlsec1-openssl
 
 install:
