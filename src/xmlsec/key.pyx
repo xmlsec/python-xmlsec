@@ -51,7 +51,7 @@ cdef class KeyData(object):
     AES = _mkkdi(xmlSecOpenSSLKeyDataAesGetKlass())
     DES = _mkkdi(xmlSecOpenSSLKeyDataDesGetKlass())
     DSA = _mkkdi(xmlSecOpenSSLKeyDataDsaGetKlass())
-    ECDSA = _mkkdi(xmlSecOpenSSLKeyDataEcdsaGetKlass())
+    # ECDSA = _mkkdi(xmlSecOpenSSLKeyDataEcdsaGetKlass())
     HMAC = _mkkdi(xmlSecOpenSSLKeyDataHmacGetKlass())
     RSA = _mkkdi(xmlSecOpenSSLKeyDataRsaGetKlass())
     X509 = _mkkdi(xmlSecOpenSSLKeyDataX509GetKlass())

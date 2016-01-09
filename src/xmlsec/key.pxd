@@ -21,7 +21,7 @@ cdef extern from "xmlsec.h":  # xmlsec/keys.h
     xmlSecKeyDataId xmlSecOpenSSLKeyDataAesGetKlass() nogil
     xmlSecKeyDataId xmlSecOpenSSLKeyDataDesGetKlass() nogil
     xmlSecKeyDataId xmlSecOpenSSLKeyDataDsaGetKlass() nogil
-    xmlSecKeyDataId xmlSecOpenSSLKeyDataEcdsaGetKlass() nogil
+    # xmlSecKeyDataId xmlSecOpenSSLKeyDataEcdsaGetKlass() nogil
     xmlSecKeyDataId xmlSecOpenSSLKeyDataHmacGetKlass() nogil
     xmlSecKeyDataId xmlSecOpenSSLKeyDataRsaGetKlass() nogil
     xmlSecKeyDataId xmlSecOpenSSLKeyDataX509GetKlass() nogil
