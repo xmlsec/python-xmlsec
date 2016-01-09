@@ -11,6 +11,7 @@ addons:
         libxmlsec1
         libxmlsec1-dev
         libxmlsec1-openssl
+        pkg-config
 
 install:
   - 'travis_retry pip install -e ".[test]" --use-mirrors'
