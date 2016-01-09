@@ -8,12 +8,14 @@ python:
 addons:
   apt:
     packages:
-        libxmlsec1
-        libxmlsec1-dev
-        libxmlsec1-openssl
-        pkg-config
+      - libssl-dev
+      - libxmlsec1
+      - libxmlsec1-dev
+      - libxmlsec1-openssl
+      - libxslt1-dev
+      - pkg-config
 
 install:
-  - 'travis_retry pip install -e ".[test]" --use-mirrors'
+  - travis_retry pip install -e ".[test]"
 
-script: 'py.test'
+script: py.test
