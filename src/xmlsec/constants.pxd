@@ -85,11 +85,11 @@ cdef extern from "xmlsec.h":  # xmlsec/strings.h
     xmlSecTransformId xmlSecOpenSSLTransformDes3CbcGetKlass() nogil
     xmlSecTransformId xmlSecOpenSSLTransformKWDes3GetKlass() nogil
     xmlSecTransformId xmlSecOpenSSLTransformDsaSha1GetKlass() nogil
-    xmlSecTransformId xmlSecOpenSSLTransformEcdsaSha1GetKlass() nogil
-    xmlSecTransformId xmlSecOpenSSLTransformEcdsaSha224GetKlass() nogil
-    xmlSecTransformId xmlSecOpenSSLTransformEcdsaSha256GetKlass() nogil
-    xmlSecTransformId xmlSecOpenSSLTransformEcdsaSha384GetKlass() nogil
-    xmlSecTransformId xmlSecOpenSSLTransformEcdsaSha512GetKlass() nogil
+    # xmlSecTransformId xmlSecOpenSSLTransformEcdsaSha1GetKlass() nogil
+    # xmlSecTransformId xmlSecOpenSSLTransformEcdsaSha224GetKlass() nogil
+    # xmlSecTransformId xmlSecOpenSSLTransformEcdsaSha256GetKlass() nogil
+    # xmlSecTransformId xmlSecOpenSSLTransformEcdsaSha384GetKlass() nogil
+    # xmlSecTransformId xmlSecOpenSSLTransformEcdsaSha512GetKlass() nogil
     xmlSecTransformId xmlSecOpenSSLTransformHmacMd5GetKlass() nogil
     xmlSecTransformId xmlSecOpenSSLTransformHmacRipemd160GetKlass() nogil
     xmlSecTransformId xmlSecOpenSSLTransformHmacSha1GetKlass() nogil
