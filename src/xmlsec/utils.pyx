@@ -20,11 +20,11 @@ def init():
     if r != 0:
         return False
 
-    r = xmlSecCryptoInit()
+    r = xmlSecOpenSSLInit()
     if r != 0:
         return False
 
-    r = xmlSecCryptoAppInit(NULL)
+    r = xmlSecOpenSSLAppInit(NULL)
     if r != 0:
         return False
 
@@ -37,11 +37,11 @@ def shutdown():
     This is called automatically upon interpreter termination and
     should not need to be called explicitly.
     """
-    r = xmlSecCryptoAppShutdown()
+    r = xmlSecOpenSSLAppShutdown()
     if r != 0:
         return False
 
-    r = xmlSecCryptoShutdown()
+    r = xmlSecOpenSSLShutdown()
     if r != 0:
         return False
 

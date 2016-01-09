@@ -25,9 +25,9 @@ cdef extern from "xmlsec.h":  # xmlsec/errors.h
     int xmlSecErrorsDefaultCallbackEnableOutput(int) nogil
 
 
-cdef extern from "xmlsec.h":  # xmlsec/app.h
-    int xmlSecCryptoInit() nogil
-    int xmlSecCryptoShutdown() nogil
+cdef extern from "xmlsec.h":  # xmlsec/openssl/app.h
+    int xmlSecOpenSSLInit() nogil
+    int xmlSecOpenSSLShutdown() nogil
 
-    int xmlSecCryptoAppInit(char* name) nogil
-    int xmlSecCryptoAppShutdown() nogil
+    int xmlSecOpenSSLAppInit(char* name) nogil
+    int xmlSecOpenSSLAppShutdown() nogil

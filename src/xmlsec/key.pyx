@@ -48,15 +48,14 @@ cdef class KeyData(object):
     VALUE = _mkkdi(xmlSecKeyDataValueGetKlass())
     RETRIEVALMETHOD = _mkkdi(xmlSecKeyDataRetrievalMethodGetKlass())
     ENCRYPTEDKEY = _mkkdi(xmlSecKeyDataEncryptedKeyGetKlass())
-    AES = _mkkdi(xmlSecKeyDataAesGetKlass())
-    DES = _mkkdi(xmlSecKeyDataDesGetKlass())
-    DSA = _mkkdi(xmlSecKeyDataDsaGetKlass())
-    ECDSA = _mkkdi(xmlSecKeyDataEcdsaGetKlass())
-    HMAC = _mkkdi(xmlSecKeyDataHmacGetKlass())
-    RSA = _mkkdi(xmlSecKeyDataRsaGetKlass())
-    X509 = _mkkdi(xmlSecKeyDataX509GetKlass())
-    RAWX509CERT = _mkkdi(xmlSecKeyDataRawX509CertGetKlass())
-
+    AES = _mkkdi(xmlSecOpenSSLKeyDataAesGetKlass())
+    DES = _mkkdi(xmlSecOpenSSLKeyDataDesGetKlass())
+    DSA = _mkkdi(xmlSecOpenSSLKeyDataDsaGetKlass())
+    ECDSA = _mkkdi(xmlSecOpenSSLKeyDataEcdsaGetKlass())
+    HMAC = _mkkdi(xmlSecOpenSSLKeyDataHmacGetKlass())
+    RSA = _mkkdi(xmlSecOpenSSLKeyDataRsaGetKlass())
+    X509 = _mkkdi(xmlSecOpenSSLKeyDataX509GetKlass())
+    RAWX509CERT = _mkkdi(xmlSecOpenSSLKeyDataRawX509CertGetKlass())
 
 
 cdef class KeyDataType(object):
@@ -73,9 +72,14 @@ cdef class KeyDataType(object):
 
 cdef class Key(object):
 
+    def __init__(self):
+        self._handle = NULL
+        self._owner = True
+
     def __dealloc__(self):
         if self._owner and self._handle != NULL:
             xmlSecKeyDestroy(self._handle)
+            self._handle = NULL
 
     def __deepcopy__(self):
         return self.__copy__()
@@ -109,7 +113,7 @@ cdef class Key(object):
         c_data = <const_unsigned_char*><char*>data
 
         with nogil:
-            handle = xmlSecCryptoAppKeyLoadMemory(
+            handle = xmlSecOpenSSLAppKeyLoadMemory(
                 c_data, c_size, format, c_password, NULL, NULL)
 
         if handle == NULL:
@@ -131,7 +135,7 @@ cdef class Key(object):
         cdef Key instance
 
         with nogil:
-            handle = xmlSecCryptoAppKeyLoad(
+            handle = xmlSecOpenSSLAppKeyLoad(
                 c_filename, format, c_password, NULL, NULL)
 
         if handle == NULL:
@@ -195,7 +199,7 @@ cdef class Key(object):
         c_data = <const_unsigned_char*><char*>data
 
         with nogil:
-            rv = xmlSecCryptoAppKeyCertLoadMemory(
+            rv = xmlSecOpenSSLAppKeyCertLoadMemory(
                 self._handle, c_data, c_size, format)
 
         if rv != 0:
@@ -207,17 +211,23 @@ cdef class Key(object):
         cdef Key instance
 
         with nogil:
-            rv = xmlSecCryptoAppKeyCertLoad(self._handle, c_filename, format)
+            rv = xmlSecOpenSSLAppKeyCertLoad(self._handle, c_filename, format)
 
         if rv != 0:
             raise ValueError('Failed to load the certificate from the file.')
 
     property name:
         def __get__(self):
-            return _u(xmlSecKeyGetName(self._handle))
+            if self._handle != NULL:
+                return _u(xmlSecKeyGetName(self._handle))
+            else:
+                raise ValueError('Not ready.')
 
         def __set__(self, value):
-            xmlSecKeySetName(self._handle, _b(value))
+            if self._handle != NULL:
+                xmlSecKeySetName(self._handle, _b(value))
+            else:
+                raise ValueError('Not ready.')
 
 
 cdef class KeysManager(object):
@@ -229,7 +239,7 @@ cdef class KeysManager(object):
         if handle == NULL:
             raise InternalError("failed to create keys manager", -1)
 
-        rv = xmlSecCryptoAppDefaultKeysMngrInit(handle)
+        rv = xmlSecOpenSSLAppDefaultKeysMngrInit(handle)
         if rv < 0:
             raise InternalError("failed to initialize keys manager", rv)
         self._handle = handle
@@ -242,11 +252,14 @@ cdef class KeysManager(object):
         """add (a copy of) *key*."""
 
         cdef int rv
+        if key._handle == NULL:
+            raise ValueError("invalid key")
+
         cdef xmlSecKeyPtr key_handle = xmlSecKeyDuplicate(key._handle)
         if key_handle == NULL:
             raise InternalError("failed to copy key", -1)
 
-        rv = xmlSecCryptoAppDefaultKeysMngrAdoptKey(self._handle, key_handle)
+        rv = xmlSecOpenSSLAppDefaultKeysMngrAdoptKey(self._handle, key_handle)
         if rv < 0:
             xmlSecKeyDestroy(key_handle)
             raise Error("failed to add key", rv)
@@ -260,7 +273,7 @@ cdef class KeysManager(object):
         cdef const_char* c_filename = <const_char*>_b(filename)
 
         with nogil:
-            rv = xmlSecCryptoAppKeysMngrCertLoad(self._handle, c_filename, format, type)
+            rv = xmlSecOpenSSLAppKeysMngrCertLoad(self._handle, c_filename, format, type)
 
         if rv != 0:
             raise Error("failed to load certificate from '%s'" % filename, rv)
@@ -280,7 +293,7 @@ cdef class KeysManager(object):
         c_data = <const_unsigned_char*><char*>data
 
         with nogil:
-            rv = xmlSecCryptoAppKeysMngrCertLoadMemory(self._handle, c_data, c_size, format, type)
+            rv = xmlSecOpenSSLAppKeysMngrCertLoadMemory(self._handle, c_data, c_size, format, type)
 
         if rv != 0:
             raise Error("failed to load certificate from memory", rv)

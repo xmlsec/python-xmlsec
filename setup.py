@@ -53,7 +53,7 @@ def make_extension(name, cython=True):
     for lib in ['libxml-2.0', 'xmlsec1-%s' % xmlsec_crypto]:
         config.update(parse(lib))
 
-    config['extra_compile_args'] = ['-DXMLSEC_CRYPTO_OPENSSL=1']
+    config['extra_compile_args'] = ['-DXMLSEC_CRYPTO_OPENSSL=1', '-DXMLSEC_NO_CRYPTO_DYNAMIC_LOADING=1']
 
     # List-ify config for setuptools.
     for key in config:
