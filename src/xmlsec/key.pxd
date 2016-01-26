@@ -14,18 +14,18 @@ cdef extern from "xmlsec.h":  # xmlsec/keys.h
 
     ctypedef _xmlSecKeyDataKlass *xmlSecKeyDataId
 
-    xmlSecKeyDataId xmlSecKeyDataNameGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataValueGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataRetrievalMethodGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataEncryptedKeyGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataAesGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataDesGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataDsaGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataEcdsaGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataHmacGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataRsaGetKlass()
-    xmlSecKeyDataId xmlSecKeyDataX509GetKlass()
-    xmlSecKeyDataId xmlSecKeyDataRawX509CertGetKlass()
+    xmlSecKeyDataId xmlSecKeyDataNameGetKlass() nogil
+    xmlSecKeyDataId xmlSecKeyDataValueGetKlass() nogil
+    xmlSecKeyDataId xmlSecKeyDataRetrievalMethodGetKlass() nogil
+    xmlSecKeyDataId xmlSecKeyDataEncryptedKeyGetKlass() nogil
+    xmlSecKeyDataId xmlSecOpenSSLKeyDataAesGetKlass() nogil
+    xmlSecKeyDataId xmlSecOpenSSLKeyDataDesGetKlass() nogil
+    xmlSecKeyDataId xmlSecOpenSSLKeyDataDsaGetKlass() nogil
+    # xmlSecKeyDataId xmlSecOpenSSLKeyDataEcdsaGetKlass() nogil
+    xmlSecKeyDataId xmlSecOpenSSLKeyDataHmacGetKlass() nogil
+    xmlSecKeyDataId xmlSecOpenSSLKeyDataRsaGetKlass() nogil
+    xmlSecKeyDataId xmlSecOpenSSLKeyDataX509GetKlass() nogil
+    xmlSecKeyDataId xmlSecOpenSSLKeyDataRawX509CertGetKlass() nogil
 
     ctypedef enum xmlSecKeyDataFormat:
         xmlSecKeyDataFormatUnknown = 0
@@ -63,10 +63,10 @@ cdef extern from "xmlsec.h":  # xmlsec/keys.h
 
     xmlSecKeyPtr xmlSecKeyDuplicate(xmlSecKeyPtr) nogil
 
-    xmlSecKeyPtr xmlSecCryptoAppKeyLoad(
+    xmlSecKeyPtr xmlSecOpenSSLAppKeyLoad(
         const_char*, xmlSecKeyDataFormat, const_char*, void*, void *) nogil
 
-    xmlSecKeyPtr xmlSecCryptoAppKeyLoadMemory(
+    xmlSecKeyPtr xmlSecOpenSSLAppKeyLoadMemory(
         const_unsigned_char*, int, xmlSecKeyDataFormat,
         const_char*, void*, void*) nogil
 
@@ -75,10 +75,10 @@ cdef extern from "xmlsec.h":  # xmlsec/keys.h
     # xmlSecKeyPtr xmlSecKeyReadMemory(
     #     xmlSecKeyDataId, const_unsigned_char*, size_t) nogil
 
-    int xmlSecCryptoAppKeyCertLoad(
+    int xmlSecOpenSSLAppKeyCertLoad(
         xmlSecKeyPtr, const_char*, xmlSecKeyDataFormat) nogil
 
-    int xmlSecCryptoAppKeyCertLoadMemory(
+    int xmlSecOpenSSLAppKeyCertLoadMemory(
         xmlSecKeyPtr, const_unsigned_char*, int, xmlSecKeyDataFormat) nogil
 
     xmlSecKeyPtr xmlSecKeyGenerate(
@@ -96,14 +96,14 @@ cdef extern from "xmlsec.h":  # xmlsec/keys.h
 
     void xmlSecKeysMngrDestroy(xmlSecKeysMngrPtr) nogil
 
-    int xmlSecCryptoAppDefaultKeysMngrInit(xmlSecKeysMngrPtr) nogil
+    int xmlSecOpenSSLAppDefaultKeysMngrInit(xmlSecKeysMngrPtr) nogil
 
-    int xmlSecCryptoAppDefaultKeysMngrAdoptKey(xmlSecKeysMngrPtr, xmlSecKeyPtr) nogil
+    int xmlSecOpenSSLAppDefaultKeysMngrAdoptKey(xmlSecKeysMngrPtr, xmlSecKeyPtr) nogil
 
-    int xmlSecCryptoAppKeysMngrCertLoad(
+    int xmlSecOpenSSLAppKeysMngrCertLoad(
         xmlSecKeysMngrPtr, char * filename, xmlSecKeyDataFormat, xmlSecKeyDataType) nogil
 
-    int xmlSecCryptoAppKeysMngrCertLoadMemory(
+    int xmlSecOpenSSLAppKeysMngrCertLoadMemory(
         xmlSecKeysMngrPtr, const_unsigned_char *, size_t, xmlSecKeyDataFormat, xmlSecKeyDataType) nogil
 
 

@@ -1,3 +1,4 @@
+sudo: false
 language: python
 python:
   - '2.7'
@@ -7,13 +8,12 @@ python:
 addons:
   apt:
     packages:
-      - libxslt1-dev
       - libssl-dev
-
-# Not sure how to install a more recent version of this
-before_install:
-  - travis_retry wget --no-check-certificate -O /dev/stdout http://www.aleksey.com/xmlsec/download/xmlsec1-1.2.20.tar.gz | tar xzv
-  - cd xmlsec1-1.2.20 && ./configure && make && sudo make install && sudo ldconfig && cd ..
+      - libxmlsec1
+      - libxmlsec1-dev
+      - libxmlsec1-openssl
+      - libxslt1-dev
+      - pkg-config
 
 install:
   - travis_retry pip install -e ".[test]"
