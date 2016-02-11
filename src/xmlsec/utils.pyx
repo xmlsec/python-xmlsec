@@ -50,4 +50,4 @@ def shutdown():
 
 
 def enable_debug_trace(flag):
-    xmlSecErrorsDefaultCallbackEnableOutput(<int>flag)
+    xmlSecErrorsDefaultCallbackEnableOutput(1 if flag else 0)

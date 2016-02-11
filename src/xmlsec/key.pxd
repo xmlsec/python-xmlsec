@@ -98,6 +98,8 @@ cdef extern from "xmlsec.h":  # xmlsec/keys.h
 
     int xmlSecOpenSSLAppDefaultKeysMngrInit(xmlSecKeysMngrPtr) nogil
 
+    int xmlSecOpenSSLKeysMngrInit(xmlSecKeysMngrPtr) nogil
+
     int xmlSecOpenSSLAppDefaultKeysMngrAdoptKey(xmlSecKeysMngrPtr, xmlSecKeyPtr) nogil
 
     int xmlSecOpenSSLAppKeysMngrCertLoad(
@@ -118,3 +120,4 @@ cdef class Key(object):
 
 cdef class KeysManager(object):
     cdef xmlSecKeysMngrPtr _handle
+    cdef bint _mode

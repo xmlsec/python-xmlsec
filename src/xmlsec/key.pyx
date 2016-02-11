@@ -235,18 +235,32 @@ cdef class KeysManager(object):
         cdef int rv
         cdef xmlSecKeysMngrPtr handle
 
+        self._mode = 0
         handle = xmlSecKeysMngrCreate()
         if handle == NULL:
             raise InternalError("failed to create keys manager", -1)
-
-        rv = xmlSecOpenSSLAppDefaultKeysMngrInit(handle)
-        if rv < 0:
-            raise InternalError("failed to initialize keys manager", rv)
         self._handle = handle
 
     def __dealloc__(self):
         if self._handle != NULL:
             xmlSecKeysMngrDestroy(self._handle)
+
+
+    def __ensure_init(self, expected_mode):
+        if self._mode == expected_mode:
+            return
+
+        if self._mode != 0:
+           raise InternalError("Cannot use one manager for verify and sign", -1)
+
+        if expected_mode == 1:
+           rv = xmlSecOpenSSLAppDefaultKeysMngrInit(self._handle)
+        else:
+           rv = xmlSecOpenSSLKeysMngrInit(self._handle)
+
+        if rv < 0:
+            raise InternalError("failed to initialize keys manager", rv)
+
 
     def add_key(self, Key key):
         """add (a copy of) *key*."""
@@ -259,6 +273,7 @@ cdef class KeysManager(object):
         if key_handle == NULL:
             raise InternalError("failed to copy key", -1)
 
+        self.__ensure_init(1)
         rv = xmlSecOpenSSLAppDefaultKeysMngrAdoptKey(self._handle, key_handle)
         if rv < 0:
             xmlSecKeyDestroy(key_handle)
@@ -272,6 +287,7 @@ cdef class KeysManager(object):
         cdef int rv
         cdef const_char* c_filename = <const_char*>_b(filename)
 
+        self.__ensure_init(2)
         with nogil:
             rv = xmlSecOpenSSLAppKeysMngrCertLoad(self._handle, c_filename, format, type)
 
@@ -292,6 +308,7 @@ cdef class KeysManager(object):
         c_size = len(data)
         c_data = <const_unsigned_char*><char*>data
 
+        self.__ensure_init(2)
         with nogil:
             rv = xmlSecOpenSSLAppKeysMngrCertLoadMemory(self._handle, c_data, c_size, format, type)
 

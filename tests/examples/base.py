@@ -18,4 +18,3 @@ def compare(name, result):
 
     # Compare the results.
     assert expected_text == result_text
-

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+XML Security Library example: Original XML doc file for sign3 example. 
+-->
+<Envelope xmlns="urn:envelope" ID="ef115a20-cf73-11e5-aed1-3c15c2c2cc88">
+  <Data>
+	Hello, World!
+  </Data>
+</Envelope>
