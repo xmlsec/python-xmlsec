@@ -120,4 +120,3 @@ cdef class Key(object):
 
 cdef class KeysManager(object):
     cdef xmlSecKeysMngrPtr _handle
-    cdef bint _mode

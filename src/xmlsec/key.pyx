@@ -235,7 +235,6 @@ cdef class KeysManager(object):
         cdef int rv
         cdef xmlSecKeysMngrPtr handle
 
-        self._mode = 0
         handle = xmlSecKeysMngrCreate()
         if handle == NULL:
             raise InternalError("failed to create keys manager", -1)
