@@ -238,10 +238,11 @@ cdef class KeysManager(object):
         handle = xmlSecKeysMngrCreate()
         if handle == NULL:
             raise InternalError("failed to create keys manager", -1)
-
         rv = xmlSecOpenSSLAppDefaultKeysMngrInit(handle)
         if rv < 0:
-            raise InternalError("failed to initialize keys manager", rv)
+            xmlSecKeysMngrDestroy(handle)
+            raise InternalError("failed to init manager", rv)
+
         self._handle = handle
 
     def __dealloc__(self):

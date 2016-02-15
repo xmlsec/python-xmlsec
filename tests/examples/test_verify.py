@@ -4,14 +4,14 @@ import xmlsec
 from .base import parse_xml, BASE_DIR
 
 
-@mark.parametrize('index', range(1, 4))
+@mark.parametrize('index', range(1, 5))
 def test_verify_with_pem_file(index):
     """Should verify a signed file using a key from a PEM file.
     """
 
     # Load the XML document.
     template = parse_xml('sign%d-res.xml' % index)
-
+    xmlsec.tree.add_ids(template, ["ID"])
     # Find the <Signature/> node.
     signature_node = xmlsec.tree.find_node(template, xmlsec.Node.SIGNATURE)
 
