@@ -17,7 +17,6 @@ class Namespace:
     BASE = _u(xmlSecNs)
     DS = _u(xmlSecDSigNs)
     ENC = _u(xmlSecEncNs)
-    XKMS = _u(xmlSecXkmsNs)
     XPATH = _u(xmlSecXPathNs)
     XPATH2 = _u(xmlSecXPath2Ns)
     XPOINTER = _u(xmlSecXPointerNs)

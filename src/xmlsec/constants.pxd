@@ -6,7 +6,6 @@ cdef extern from "xmlsec.h":  # xmlsec/strings.h
     const_xmlChar* xmlSecNs
     const_xmlChar* xmlSecDSigNs
     const_xmlChar* xmlSecEncNs
-    const_xmlChar* xmlSecXkmsNs
     const_xmlChar* xmlSecXPathNs
     const_xmlChar* xmlSecXPath2Ns
     const_xmlChar* xmlSecXPointerNs
