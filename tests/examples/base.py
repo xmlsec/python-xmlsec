@@ -17,4 +17,7 @@ def compare(name, result):
     result_text = etree.tostring(result, pretty_print=False)
 
     # Compare the results.
+    if expected_text != result_text:
+        print(expected_text)
+        print(result_text)
     assert expected_text == result_text
