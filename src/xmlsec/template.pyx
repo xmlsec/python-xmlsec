@@ -89,6 +89,71 @@ def add_x509_data(_Element node not None):
     return elementFactory(node._doc, c_node)
 
 
+def x509_data_add_issuer_serial(_Element node not None):
+
+    cdef xmlNode* c_node
+
+    c_node = xmlSecTmplX509DataAddIssuerSerial(node._c_node)
+
+    return elementFactory(node._doc, c_node)
+
+
+def x509_issuer_serial_add_issuer_name(_Element node not None, name=None):
+
+    cdef xmlNode* c_node
+    cdef const_xmlChar* c_name = _b(name)
+
+    c_node = xmlSecTmplX509IssuerSerialAddIssuerName(node._c_node, c_name)
+
+    return elementFactory(node._doc, c_node)
+
+
+def x509_issuer_serial_add_serial_number(_Element node not None, serial=None):
+
+    cdef xmlNode* c_node
+    cdef const_xmlChar* c_serial = _b(serial)
+
+    c_node = xmlSecTmplX509IssuerSerialAddSerialNumber(node._c_node, c_serial)
+
+    return elementFactory(node._doc, c_node)
+
+
+def x509_data_add_subject_name(_Element node not None):
+
+    cdef xmlNode* c_node
+
+    c_node = xmlSecTmplX509DataAddSubjectName(node._c_node)
+
+    return elementFactory(node._doc, c_node)
+
+
+def x509_data_add_ski(_Element node not None):
+
+    cdef xmlNode* c_node
+
+    c_node = xmlSecTmplX509DataAddSKI(node._c_node)
+
+    return elementFactory(node._doc, c_node)
+
+
+def x509_data_add_certificate(_Element node not None):
+
+    cdef xmlNode* c_node
+
+    c_node = xmlSecTmplX509DataAddCertificate(node._c_node)
+
+    return elementFactory(node._doc, c_node)
+
+
+def x509_data_add_crl(_Element node not None):
+
+    cdef xmlNode* c_node
+
+    c_node = xmlSecTmplX509DataAddCRL(node._c_node)
+
+    return elementFactory(node._doc, c_node)
+
+
 def add_encrypted_key(_Element node not None,
                       _Transform method not None,
                       id=None,

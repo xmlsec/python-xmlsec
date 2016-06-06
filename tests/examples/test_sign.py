@@ -222,6 +222,71 @@ def test_sign_generated_template_pem_with_x509_with_custom_ns():
     compare('sign4-res.xml', template)
 
 
+def test_sign_generated_template_pem_with_x509_with_cert_info():
+    """
+    Should sign a file using a dynamicaly created template, key from PEM
+    file and an X509 certificate.
+    """
+
+    # Load document file.
+    template = parse_xml('sign5-doc.xml')
+
+    # Create a signature template for RSA-SHA1 enveloped signature.
+    signature_node = xmlsec.template.create(
+        template,
+        xmlsec.Transform.EXCL_C14N,
+        xmlsec.Transform.RSA_SHA1)
+
+    assert signature_node is not None
+
+    # Add the <ds:Signature/> node to the document.
+    template.append(signature_node)
+
+    # Add the <ds:Reference/> node to the signature template.
+    ref = xmlsec.template.add_reference(signature_node, xmlsec.Transform.SHA1)
+
+    # Add the enveloped transform descriptor.
+    xmlsec.template.add_transform(ref, xmlsec.Transform.ENVELOPED)
+
+    # Add the <ds:KeyInfo/> and <ds:KeyName/> nodes.
+    key_info = xmlsec.template.ensure_key_info(signature_node)
+    x509_data = xmlsec.template.add_x509_data(key_info)
+    xmlsec.template.x509_data_add_subject_name(x509_data)
+    xmlsec.template.x509_data_add_certificate(x509_data)
+    xmlsec.template.x509_data_add_ski(x509_data)
+    x509_issuer_serial = xmlsec.template.x509_data_add_issuer_serial(x509_data)
+    xmlsec.template.x509_issuer_serial_add_issuer_name(x509_issuer_serial, 'Test Issuer')
+    xmlsec.template.x509_issuer_serial_add_serial_number(x509_issuer_serial, '1')
+
+    # Create a digital signature context (no key manager is needed).
+    ctx = xmlsec.SignatureContext()
+
+    # Load private key (assuming that there is no password).
+    filename = path.join(BASE_DIR, 'rsakey.pem')
+    key = xmlsec.Key.from_file(filename, xmlsec.KeyFormat.PEM)
+
+    assert key is not None
+
+    # Load the certificate and add it to the key.
+    filename = path.join(BASE_DIR, 'rsacert.pem')
+    key.load_cert_from_file(filename, xmlsec.KeyFormat.PEM)
+
+    # Set key name to the file name (note: this is just a test).
+    key.name = path.basename(filename)
+
+    # Set the key on the context.
+    ctx.key = key
+
+    assert ctx.key is not None
+    assert ctx.key.name == path.basename(filename)
+
+    # Sign the template.
+    ctx.sign(signature_node)
+
+    # Assert the contents of the XML document against the expected result.
+    compare('sign5-res.xml', template)
+
+
 def test_sign_binary():
     ctx = xmlsec.SignatureContext()
     filename = path.join(BASE_DIR, 'rsakey.pem')

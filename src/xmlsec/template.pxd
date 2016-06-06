@@ -24,6 +24,20 @@ cdef extern from "xmlsec.h":  # xmlsec/templates.h
 
     xmlNode* xmlSecTmplKeyInfoAddX509Data(xmlNode* node) nogil
 
+    xmlNode* xmlSecTmplX509DataAddIssuerSerial(xmlNode* node) nogil
+
+    xmlNode* xmlSecTmplX509IssuerSerialAddIssuerName(xmlNode* node, const_xmlChar* name) nogil
+
+    xmlNode* xmlSecTmplX509IssuerSerialAddSerialNumber(xmlNode* node, const_xmlChar* serial) nogil
+
+    xmlNode* xmlSecTmplX509DataAddSubjectName(xmlNode* node) nogil
+
+    xmlNode* xmlSecTmplX509DataAddSKI(xmlNode* node) nogil
+
+    xmlNode* xmlSecTmplX509DataAddCertificate(xmlNode* node) nogil
+
+    xmlNode* xmlSecTmplX509DataAddCRL(xmlNode* node) nogil
+
     xmlNode* xmlSecTmplKeyInfoAddEncryptedKey(
         xmlNode* keyInfoNode, xmlSecTransformId encMethodId,
         const_xmlChar *id, const_xmlChar *type, const_xmlChar *recipient) nogil
