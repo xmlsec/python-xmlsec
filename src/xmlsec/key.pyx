@@ -5,6 +5,7 @@ from .key cimport *
 from .utils cimport _b, _u
 from .error import *
 from copy import copy
+from .ssl cimport ERR_clear_error
 
 __all__ = [
     'KeyData',
@@ -117,6 +118,9 @@ cdef class Key(object):
                 c_data, c_size, format, c_password, NULL, NULL)
 
         if handle == NULL:
+            # Clear the error stack generated from openssl
+            ERR_clear_error()
+
             raise ValueError("failed to load key")
 
         # Construct and return a new instance.
@@ -139,6 +143,9 @@ cdef class Key(object):
                 c_filename, format, c_password, NULL, NULL)
 
         if handle == NULL:
+            # Clear the error stack generated from openssl
+            ERR_clear_error()
+
             raise ValueError("failed to load key from '%s'" % filename)
 
         # Construct and return a new instance.
@@ -159,7 +166,10 @@ cdef class Key(object):
            handle = xmlSecKeyGenerate(data_id, size, type)
 
         if handle == NULL:
-           raise ValueError("failed to generate key")
+            # Clear the error stack generated from openssl
+            ERR_clear_error()
+
+            raise ValueError("failed to generate key")
 
         # Construct and return a new instance.
         instance = cls()
@@ -180,7 +190,10 @@ cdef class Key(object):
            handle = xmlSecKeyReadBinaryFile(data_id, c_filename)
 
         if handle == NULL:
-           raise ValueError("failed to load from '%s'" % filename)
+            # Clear the error stack generated from openssl
+            ERR_clear_error()
+
+            raise ValueError("failed to load from '%s'" % filename)
 
         # Construct and return a new instance.
         instance = cls()
@@ -203,6 +216,9 @@ cdef class Key(object):
                 self._handle, c_data, c_size, format)
 
         if rv != 0:
+            # Clear the error stack generated from openssl
+            ERR_clear_error()
+
             raise ValueError('Failed to load the certificate from the I/O stream.')
 
     def load_cert_from_file(self, filename, xmlSecKeyDataFormat format):
@@ -214,6 +230,9 @@ cdef class Key(object):
             rv = xmlSecOpenSSLAppKeyCertLoad(self._handle, c_filename, format)
 
         if rv != 0:
+            # Clear the error stack generated from openssl
+            ERR_clear_error()
+
             raise ValueError('Failed to load the certificate from the file.')
 
     property name:
