@@ -43,6 +43,7 @@ def test_verify_with_pem_file(index):
 def test_validate_binary_sign():
     ctx = xmlsec.SignatureContext()
     filename = path.join(BASE_DIR, 'rsakey.pem')
+    print("!!!", BASE_DIR, filename)
     key = xmlsec.Key.from_file(filename, xmlsec.KeyFormat.PEM)
     assert key is not None
 

@@ -16,6 +16,7 @@ addons:
       - pkg-config
 
 install:
-  - travis_retry pip install -e ".[test]"
+  - travis_retry pip install -r requirements-test.txt
+  - travis_retry pip install -e "."
 
-script: py.test
+script: py.test tests

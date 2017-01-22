@@ -37,7 +37,7 @@ def test_decrypt2():
     enc_ctx = xmlsec.EncryptionContext(manager)
 
     root = parse_xml("enc2-res.xml")
-    enc_data = xmlsec.tree.find_child(root, xmlsec.constants.Node.ENCRYPTED_DATA, xmlsec.Namespace.ENC)
+    enc_data = xmlsec.tree.find_child(root, xmlsec.Node.ENCRYPTED_DATA, xmlsec.Namespace.ENC)
     assert enc_data is not None
     decrypted = enc_ctx.decrypt(enc_data)
     assert decrypted.text == "\ntest\n"
