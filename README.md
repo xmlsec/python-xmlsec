@@ -17,7 +17,7 @@ Check the [examples](https://github.com/mehcode/python-xmlsec/tree/master/tests/
    ```sh
    apt-get install libxml2-dev libxmlsec1-dev
    ```
-   
+
 #### Linux (CentOS)
 
    ```sh
@@ -86,7 +86,8 @@ include the appropriate files from the libxml2 and libxmlsec1 libraries.
    This will download all dependencies required for running the unit tests.
 
    ```sh
-   pip install -e ".[test]"
+   pip install -r requirements-test.txt
+   pip install -e "."
    ```
 
 ### Running the test suite
@@ -96,7 +97,7 @@ include the appropriate files from the libxml2 and libxmlsec1 libraries.
 2. Run the unit tests.
 
    ```sh
-   py.test
+   py.test tests
    ```
 
 ## License

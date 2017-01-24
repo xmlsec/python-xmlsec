@@ -1,0 +1,2 @@
+pkgconfig
+lxml >= 3.0
