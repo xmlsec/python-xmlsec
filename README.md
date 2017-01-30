@@ -8,6 +8,10 @@
 
 Check the [examples](https://github.com/mehcode/python-xmlsec/tree/master/tests/examples) to see various examples of signing and verifying using the library.
 
+## Requirements
+- libxml2 >= 2.9.1
+- libxmlsec1 >= 1.2.14
+
 ## Install
 
 ### Pre-Install
@@ -17,6 +21,15 @@ Check the [examples](https://github.com/mehcode/python-xmlsec/tree/master/tests/
    ```sh
    apt-get install libxml2-dev libxmlsec1-dev libxmlsec1-opensssl
    ```
+
+Note: There is no required version of libxml2 for ubuntu precise,
+so need to dowload and install it manually.
+```sh
+wget http://xmlsoft.org/sources/libxml2-2.9.1.tar.gz
+tar -xvf libxml2-2.9.1.tar.gz
+cd libxml2-2.9.1
+./configure && make && make install
+```
 
 #### Linux (CentOS)
 
