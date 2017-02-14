@@ -2,15 +2,13 @@ from __future__ import print_function
 
 import glob
 import os
-import pkgconfig
 from setuptools import setup
 from setuptools import Extension
-import sys
+from setuptools.command import build_ext
 
-import lxml
 
 __name__ = "xmlsec"
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __description__ = "Python bindings for the XML Security Library"
 
 
@@ -29,33 +27,55 @@ else:
     cflags.extend(["-Os"])
 
 
-config = pkgconfig.parse("xmlsec1")
+def add_to_list(target, up):
+    if up is None:
+        return target
 
-
-def add_to_config(key, args):
-    value = list(config.get(key, []))
-    value.extend(args)
-    config[key] = value
-
-
-add_to_config('define_macros', macroses)
-add_to_config('include_dirs', lxml.get_include())
-
-print(config, file=sys.stderr)
+    value = set(target)
+    value.update(up)
+    target[:] = list(value)
 
 
 def find_sources(path):
     return glob.glob(os.path.join(path, "*.c"))
 
 
+def parse_requirements(filename, __cache={}):
+    try:
+        return __cache[filename]
+    except KeyError:
+        with open(filename) as stream:
+            result = __cache[filename] = [x for x in (y.strip() for y in stream) if x and not x.startswith('#')]
+            return result
+
+
+class BuildExt(build_ext.build_ext):
+    def run(self):
+        self.patch_xmlsec()
+        build_ext.build_ext.run(self)
+
+    def patch_xmlsec(self):
+        # at this moment all setup_requires are installed and we can safety import them
+        pkgconfig = __import__("pkgconfig")
+        lxml = __import__("lxml")
+
+        ext = self.ext_map[__name__]
+        config = pkgconfig.parse("xmlsec1")
+        # added build flags from pkg-config
+        for item in ('define_macros', 'libraries', 'library_dirs', 'include_dirs'):
+            add_to_list(getattr(ext, item), config.get(item))
+
+        add_to_list(ext.include_dirs, lxml.get_include())
+
+
 _xmlsec = Extension(
     __name__,
     sources=find_sources("./src"),
     extra_compile_args=cflags,
-    libraries=list(config.get('libraries', [])),
-    library_dirs=list(config.get('library_dirs', [])),
-    include_dirs=list(config.get('include_dirs', [])),
-    define_macros=config['define_macros']
+    libraries=[],
+    library_dirs=[],
+    include_dirs=[],
+    define_macros=macroses
 )
 
 setup(
@@ -63,6 +83,9 @@ setup(
     version=__version__,
     description=__description__,
     ext_modules=[_xmlsec],
+    cmdclass={'build_ext': BuildExt},
+    setup_requires=parse_requirements('requirements.txt'),
+    install_requires=parse_requirements('requirements.txt'),
     author="Ryan Leckey",
     author_email='support@mehcode.com',
     maintainer='Bulat Gaifullin',
