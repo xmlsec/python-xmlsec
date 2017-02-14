@@ -8,7 +8,7 @@ from setuptools.command import build_ext
 
 
 __name__ = "xmlsec"
-__version__ = os.getenv("TRAVIS_TAG", "1.0.2")  # publish on tag is used
+__version__ = "1.0.1"
 __description__ = "Python bindings for the XML Security Library"
 
 

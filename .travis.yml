@@ -14,6 +14,8 @@ addons:
     - libxmlsec1-openssl
     - libxslt1-dev
     - pkg-config
+before_install:
+- sed -i "s/1.0.1/${TRAVIS_TAG:-1.0.1}/" setup.py
 install:
 - travis_retry pip install -r requirements-test.txt
 - travis_retry pip install -e "."
@@ -23,7 +25,8 @@ deploy:
   provider: pypi
   user: bgaifullin
   password:
-    secure: wuWADHAmAz2e2wMMVadhDXh5UMqtYLM7NjzjT4LVojPzbI+04BHFjmUVDEe3nOtxiEv/oJuumutb24MNMppSRklmofy/jqyDwEEPwsNJWvLi8eK60AohAhmP5rU1Vp5B6azotWnDiVApL18t9+nJqL+6nEQ5dcQeu0jtskiC5EOaIMgB12+HHfV9QUHYsQp9t+4LMsM8TaIogom3DSMUaKTRHdWbcmHgmYF3JJTNPDyUkND8zr1bwezf/jb9ytRVzo/mQh0tsHQF80CdkC9Cu3rXxgnE0RUrU9gC2Nwyj4UZQOxhXXQpd55HEGE00jUscaiDCc6D4Y4NGZ2gu1l4lx2z3UyvV3YdaZMPg8FSCJ1Z6TuwDYAZl3WdIvidiDKU1Pj/YyP8RAMmNhmLpgZNsK9iQ3o9wNFgr0w4rutg1vJUVOgu5nEBVBqERX8YXIsoq7eSMIdJxiVA6sralxJLxGsmNhtxpxgr0UJKx12tnJCgZnDtquwObaPzeEoAkqWsxu5fDyxGRlB4UCMn2ZckdWkjRpjymiScgVWM+3N9x6pwD+9/EsR6N4S1zVIghjGmEkOm5yeiQr11T9ZQjDtFA7sap02a9d4jmxEk6EZW4KoBWTgFOs9/qb3YH79PGNVok/HjuctLLl/udVkD8JSYPUjCGSx08kdr1TCGTJSRGUQ=
+    secure: V7KMY7sTMk1zIEfJ4j9UiGWqwYRZHfeZ6qPt7lfRLF8QOE244/17/wYJRZhejk53YvRUMTK4Xh6tSOiwH9QRoI5vgcX5JJ5AQgI8xscidIDnxn9f/LOslp2LFLz+xM8XPmnqILclekA3T1RictbdKDuMFMY+MWgTSJu0QTOeUBM+LtbhqZKMr29T33EsVBdCjB77lw/2BqVlbo4TV9hxohbXth4OUd5wZdEMsDvrvySC1FUR4V/jzkcNrtxMnLjiDhvcapCfGwkEldCAI/liYulDQP3A3LZ7oeP04LvAO1XxL1Pq4VbnpENXYvtRL4mCIW8s8tDwYSsHi7633b6UIFVyjGegDboZCUDL1T86C54Sw8nLFSkNCBMXQOWDb1Sjilr80TYscaNXZl5BOI1XiOdtHRCwRkdpYr+UsfK3qgv8nsM+bCxTN4rDa/IfbcSWyM8OyLHbRQrXATgjXPwTCiURZVjsNEllUdSP0QH1jqrpapofbQV5nFVxohoF4UZVqJVYT6fljyyLPpjOgXWFU64m5L++y3hzYD1qeaCcm7TwhuF2k0IxT1j0Ze61MzufULHJ8BonGjBrgZG59Xk5JXKJWb+W+5DoodUK12hprBItH7EH7Ku3DE5QG+RHr18ivloMnApWggqBxdKb6bg6mXT0SekZbXmyTG7arEga4TA=
   on:
     tags: true
-    branch: master
+    distributions: sdist bdist_wheel
+    python: '3.5'
