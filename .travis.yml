@@ -2,23 +2,28 @@ dist: trusty
 sudo: false
 language: python
 python:
-  - '2.7'
-  - '3.4'
-  - '3.5'
-
+- '2.7'
+- '3.4'
+- '3.5'
 addons:
   apt:
     packages:
-      - libssl-dev
-      - libxmlsec1
-      - libxmlsec1-dev
-      - libxmlsec1-openssl
-      - libxslt1-dev
-      - pkg-config
-
+    - libssl-dev
+    - libxmlsec1
+    - libxmlsec1-dev
+    - libxmlsec1-openssl
+    - libxslt1-dev
+    - pkg-config
 install:
-  - travis_retry pip install -r requirements-test.txt
-  - travis_retry pip install -e "."
-  - pip list
-
-script: 'py.test tests'
+- travis_retry pip install -r requirements-test.txt
+- travis_retry pip install -e "."
+- pip list
+script: py.test tests
+deploy:
+  provider: pypi
+  user: bgaifullin
+  password:
+    secure: sQrEP6/EXr2FHVL7ZSrP8VhqHAK7AptT+Ksi+GmtGLbTJxxVT7kVZQ5T8s8dHGyCfTUDdi5LGgHZPuPUvjzM+bcYqaU/4rG0oRSfmNG1w1Sgx0buSw7aUKXJZrJvNUW6I4ZDOs12T3oykDKfhi0Un8H4uTaJdczZDbWAm8vdmVQH/iyiDaE9bABFozBegXDxAtp7afMeLq89U6AoqTSZDNfFOaPvlFcXyD36+TwyBccOK6z4JD3R5bb84pMJrLFee1EgmfZsPGIRF9EigGbXZUeVV+2m3jBVlh1TVHB+3PXESSof+FUWLFFkGOnK7sKTSOWvbvK98hD+yNwQkymf3lw2bEn+0SonDCl7H4cIVpMSS0IN24EtNOTZ7uLH3Zbhxg8PyTjqqL2+WieFrC+3a1HAYaPgFnhs1U+n1gm4Zrk1hyOwZcYzWdtuOLThNEAATip1tsdQaeOD+qmChj8HG4TSv/g/QAe/7wUJqIIAOsO6VO4sN+yKcqK4U49+vbw8GgQedouvKLpq92E2v6jig5NNjpzf7nhvD8ugmpulOE1gDG6QSjb5DeZaGQDz1DsjlDET0LKlCcyWDKhyWnsTev5S3tq2ZTk3dV52ezMIlaDELG3VPSp5qV6WwIDg93DZIu/WzMf/hYoNgc5R4br8u9EWlzZGInZQNgLNH5afmr8=
+  on:
+    tags: true
+    branch: master
