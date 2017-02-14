@@ -86,7 +86,7 @@ setup(
     cmdclass={'build_ext': BuildExt},
     setup_requires=parse_requirements('requirements.txt'),
     install_requires=parse_requirements('requirements.txt'),
-    author="Ryan Leckey",
+    author="Bulat Gaifullin",
     author_email='support@mehcode.com',
     maintainer='Bulat Gaifullin',
     maintainer_email='gaifullinbf@gmail.com',
