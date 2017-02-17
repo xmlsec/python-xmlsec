@@ -21,6 +21,12 @@
 
 #define XMLSEC_VERSION_HEX ((XMLSEC_VERSION_MAJOR << 8) | (XMLSEC_VERSION_MINOR << 4) | (XMLSEC_VERSION_SUBMINOR))
 
+// XKMS support was removed in version 1.2.21
+// https://mail.gnome.org/archives/commits-list/2015-February/msg10555.html
+#if  XMLSEC_VERSION_HEX > 0x134
+#define XMLSEC_NO_XKMS 1
+#endif
+
 #define XSTR(c) (const xmlChar*)(c)
 
 #if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
