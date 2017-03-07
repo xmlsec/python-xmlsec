@@ -146,6 +146,19 @@ Running the test suite
 
     py.test tests
 
+Reporting a issue
+-----------------
+Please attach the output of following information:
+version of python-xmlsec
+version of libxmlsec1
+version of libxml2
+
+output from command:
+
+.. code-block:: bash
+
+    pkg-config --cflags xmlsec1
+
 
 ******************
 Versions of python
