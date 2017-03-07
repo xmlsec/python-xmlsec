@@ -46,7 +46,7 @@ static int PyXmlSec_Init(void) {
     }
 
 #ifndef XMLSEC_NO_CRYPTO_DYNAMIC_LOADING
-    if (xmlSecCryptoDLLoadLibrary(NULL) < 0) {
+    if (xmlSecCryptoDLLoadLibrary((const xmlChar*) STRINGIFY(XMLSEC_CRYPTO)) < 0) {
         PyXmlSec_SetLastError("cannot load crypto library for xmlsec.");
         PyXmlSec_Free(_FREE_XMLSEC);
         return -1;
