@@ -21,18 +21,29 @@ cflags = ["-g", "-std=c99", "-fno-strict-aliasing", "-Wno-error=declaration-afte
 
 
 if is_debug():
-    macroses.append(("PYXMLSEC_ENABLE_DEBUG", 1))
+    macroses.append(("PYXMLSEC_ENABLE_DEBUG", "1"))
     cflags.extend(["-Wall", "-O0"])
 else:
     cflags.extend(["-Os"])
 
 
-def add_to_list(target, up):
+# values which requires escaping
+require_escape = {"XMLSEC_CRYPTO"}
+
+
+def add_to_list(target, up, need_to_escape=None):
     if up is None:
         return target
 
     value = set(target)
-    value.update(up)
+    if need_to_escape:
+        for x in up:
+            if x[0] in need_to_escape:
+                value.add((x[0], '"{0}"'.format(x[1])))
+            else:
+                value.add(x)
+    else:
+        value.update(up)
     target[:] = list(value)
 
 
@@ -61,10 +72,12 @@ class BuildExt(build_ext.build_ext):
 
         ext = self.ext_map[__name__]
         config = pkgconfig.parse("xmlsec1")
+        # need to escape XMLSEC_CRYPTO
         # added build flags from pkg-config
-        for item in ('define_macros', 'libraries', 'library_dirs', 'include_dirs'):
+        for item in ('libraries', 'library_dirs', 'include_dirs'):
             add_to_list(getattr(ext, item), config.get(item))
 
+        add_to_list(ext.define_macros, config.get('define_macros'), {"XMLSEC_CRYPTO"})
         add_to_list(ext.include_dirs, lxml.get_include())
 
 
