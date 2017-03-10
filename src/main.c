@@ -46,7 +46,14 @@ static int PyXmlSec_Init(void) {
     }
 
 #ifndef XMLSEC_NO_CRYPTO_DYNAMIC_LOADING
-    if (xmlSecCryptoDLLoadLibrary((const xmlChar*) STRINGIFY(XMLSEC_CRYPTO)) < 0) {
+#if XMLSEC_VERSION_HEX > 308
+    // xmlSecGetDefaultCrypto was introduced in version 1.2.21
+    const xmlChar* cryptoLib = xmlSecGetDefaultCrypto();
+#else
+    const xmlChar* cryptoLib = (const xmlChar*) XMLSEC_CRYPTO;
+#endif
+    PYXMLSEC_DEBUGF("dynamic crypto library: %s", cryptoLib);
+    if (xmlSecCryptoDLLoadLibrary(cryptoLib) < 0) {
         PyXmlSec_SetLastError("cannot load crypto library for xmlsec.");
         PyXmlSec_Free(_FREE_XMLSEC);
         return -1;
@@ -240,6 +247,5 @@ PYENTRY_FUNC_NAME(void)
 
     PY_MOD_RETURN(module);
 ON_FAIL:
-    Py_DECREF(module);
     PY_MOD_RETURN(NULL);
 }
