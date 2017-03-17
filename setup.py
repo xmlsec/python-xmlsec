@@ -27,10 +27,6 @@ else:
     cflags.extend(["-Os"])
 
 
-# values which requires escaping
-require_escape = {"XMLSEC_CRYPTO"}
-
-
 def add_to_list(target, up, need_to_escape=None):
     if up is None:
         return target
@@ -108,7 +104,7 @@ setup(
     license='MIT',
     keywords=["xmlsec"],
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
         'License :: OSI Approved :: MIT License',
