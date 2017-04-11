@@ -23,10 +23,10 @@ install:
 script: py.test tests
 deploy:
   provider: pypi
-  user: bgaifullin
-  password:
-    secure: V7KMY7sTMk1zIEfJ4j9UiGWqwYRZHfeZ6qPt7lfRLF8QOE244/17/wYJRZhejk53YvRUMTK4Xh6tSOiwH9QRoI5vgcX5JJ5AQgI8xscidIDnxn9f/LOslp2LFLz+xM8XPmnqILclekA3T1RictbdKDuMFMY+MWgTSJu0QTOeUBM+LtbhqZKMr29T33EsVBdCjB77lw/2BqVlbo4TV9hxohbXth4OUd5wZdEMsDvrvySC1FUR4V/jzkcNrtxMnLjiDhvcapCfGwkEldCAI/liYulDQP3A3LZ7oeP04LvAO1XxL1Pq4VbnpENXYvtRL4mCIW8s8tDwYSsHi7633b6UIFVyjGegDboZCUDL1T86C54Sw8nLFSkNCBMXQOWDb1Sjilr80TYscaNXZl5BOI1XiOdtHRCwRkdpYr+UsfK3qgv8nsM+bCxTN4rDa/IfbcSWyM8OyLHbRQrXATgjXPwTCiURZVjsNEllUdSP0QH1jqrpapofbQV5nFVxohoF4UZVqJVYT6fljyyLPpjOgXWFU64m5L++y3hzYD1qeaCcm7TwhuF2k0IxT1j0Ze61MzufULHJ8BonGjBrgZG59Xk5JXKJWb+W+5DoodUK12hprBItH7EH7Ku3DE5QG+RHr18ivloMnApWggqBxdKb6bg6mXT0SekZbXmyTG7arEga4TA=
+  user: mehcode
   on:
     tags: true
     distributions: sdist bdist_wheel
     python: '3.5'
+  password:
+    secure: Gq9Ut9FATKUSVoaTTSeecN8kWxRQjTe4K+gK/gKuRJqWzYPOG9AhCq2Nxd3rwlWedPWpfoQwmlCuCma68npVQZnsJqyNYmEUBp4xjgDXOR12q2jDlgT0SH5V23ysJydA+c5QuHGXz7INxBTSwCjD+xBe2WXRxp9RJoi8kLloFt0=
