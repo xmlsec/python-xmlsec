@@ -22,6 +22,7 @@ install:
 - pip list
 script: py.test tests
 deploy:
+  skip_cleanup: true
   provider: pypi
   user: mehcode
   on:

@@ -212,7 +212,7 @@ int PyXmlSec_TreeModule_Init(PyObject* package) {
 #ifdef PY3K
     PyObject* tree = PyModule_Create(&PyXmlSec_TreeModule);
 #else
-    PyObject* tree = Py_InitModule3(STRINGIFY(MODULE_NAME) ".template", PyXmlSec_TreeMethods, PYXMLSEC_TREE_DOC);
+    PyObject* tree = Py_InitModule3(STRINGIFY(MODULE_NAME) ".tree", PyXmlSec_TreeMethods, PYXMLSEC_TREE_DOC);
     Py_XINCREF(tree);
 #endif
 
