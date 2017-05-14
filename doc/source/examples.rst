@@ -1,0 +1,116 @@
+Examples
+========
+
+Decrypt
+-------
+.. code:: python
+
+    from lxml import etree
+    import xmlsec
+
+    manager = xmlsec.KeysManager()
+    key = xmlsec.Key.from_file('rsakey.pem', xmlsec.constants.KeyDataFormatPem)
+    manager.add_key(key)
+    enc_ctx = xmlsec.EncryptionContext(manager)
+    root = etree.parse("enc1-res.xml").getroot()
+    enc_data = xmlsec.tree.find_child(root, "EncryptedData", xmlsec.constants.EncNs)
+    decrypted = enc_ctx.decrypt(enc_data)
+    print(etree.tostring(decrypted))
+
+
+Encrypt
+-------
+.. code:: python
+
+    from lxml import etree
+    import xmlsec
+
+    manager = xmlsec.KeysManager()
+    key = xmlsec.Key.from_file('rsacert.pem', xmlsec.constants.KeyDataFormatCertPem, None)
+    manager.add_key(key)
+    template = etree.parse('enc1-doc.xml').getroot()
+    enc_data = xmlsec.template.encrypted_data_create(
+        template, xmlsec.constants.TransformAes128Cbc, type=xmlsec.constants.TypeEncContent, ns="xenc")
+
+    xmlsec.template.encrypted_data_ensure_cipher_value(enc_data)
+    key_info = xmlsec.template.encrypted_data_ensure_key_info(enc_data, ns="dsig")
+    enc_key = xmlsec.template.add_encrypted_key(key_info, xmlsec.Transform.RSA_OAEP)
+    xmlsec.template.encrypted_data_ensure_cipher_value(enc_key)
+    data = template.find('./Data')
+
+    # Encryption
+    enc_ctx = xmlsec.EncryptionContext(manager)
+    enc_ctx.key = xmlsec.Key.generate(xmlsec.constants.KeyDataAes, 128, xmlsec.constants.KeyDataTypeSession)
+    enc_datsa = enc_ctx.encrypt_xml(enc_data, data)
+    enc_method = xmlsec.tree.find_child(enc_data, xmlsec.constants.NodeEncryptionMethod, xmlsec.constants.EncNs)
+    key_info = xmlsec.tree.find_child(enc_data, xmlsec.constants.NodeKeyInfo, xmlsec.constants.DSigNs)
+    enc_method = xmlsec.tree.find_node(key_info, xmlsec.constants.NodeEncryptionMethod, xmlsec.constants.EncNs)
+    cipher_value = xmlsec.tree.find_node(key_info, xmlsec.constants.NodeCipherValue, xmlsec.constants.EncNs)
+    print(etree.tostring(cipher_value))
+
+
+Sign
+----
+.. code:: python
+
+    from lxml import etree
+    import xmlsec
+
+    template = etree.parse('sign1-tmpl.xml').getroot()
+
+    signature_node = xmlsec.tree.find_node(template, xmlsec.constants.NodeSignature)
+    ctx = xmlsec.SignatureContext()
+    key = xmlsec.Key.from_file('rsakey.pem', xmlsec.constants.KeyDataFormatPem)
+    ctx.key = key
+    ctx.sign(signature_node)
+    print(etree.tostring(template))
+
+
+Sign-Binary
+-----------
+.. code:: python
+
+    from lxml import etree
+    import xmlsec
+
+    ctx = xmlsec.SignatureContext()
+    key = xmlsec.Key.from_file('rsakey.pem', xmlsec.constants.KeyDataFormatPem)
+    ctx.key = key
+    data = b'\xa8f4dP\x82\x02\xd3\xf5.\x02\xc1\x03\xef\xc4\x86\xabC\xec\xb7>\x8e\x1f\xa3\xa3\xc5\xb9qc\xc2\x81\xb1-\xa4B\xdf\x03>\xba\xd1'
+    sign = ctx.sign_binary(data, xmlsec.constants.TransformRsaSha1)
+    print(sign)
+
+
+
+Verify
+------
+.. code:: python
+
+    from lxml import etree
+    import xmlsec
+
+    template = etree.parse('sign1-res.xml').getroot()
+    xmlsec.tree.add_ids(template, ["ID"])
+    signature_node = xmlsec.tree.find_node(template, xmlsec.constants.NodeSignature)
+    # Create a digital signature context (no key manager is needed).
+    ctx = xmlsec.SignatureContext()
+    key = xmlsec.Key.from_file('rsapub.pem', xmlsec.constants.KeyDataFormatPem)
+    # Set the key on the context.
+    ctx.key = key
+    ctx.verify(signature_node)
+
+
+Verify-Binary
+-------------
+.. code:: python
+
+    from lxml import etree
+    import xmlsec
+
+    ctx = xmlsec.SignatureContext()
+    key = xmlsec.Key.from_file('rsakey.pem', xmlsec.constants.KeyDataFormatPem)
+    ctx.key = key
+
+    data = b'\xa8f4dP\x82\x02\xd3\xf5.\x02\xc1\x03\xef\xc4\x86\xabC\xec\xb7>\x8e\x1f\xa3\xa3\xc5\xb9qc\xc2\x81\xb1-\xa4B\xdf\x03>\xba\xd1'
+    sign = b"h\xcb\xb1\x82\xfa`e\x89x\xe5\xc5ir\xd6\xd1Q\x9a\x0b\xeaU_G\xcc'\xa4c\xa3>\x9b27\xbf^`\xa7p\xfb\x98\xcb\x81\xd2\xb1\x0c'\x9d\xe2\n\xec\xb2<\xcf@\x98=\xe0}O8}fy\xc2\xc4\xe9\xec\x87\xf6\xc1\xde\xfd\x96*o\xab\xae\x12\xc9{\xcc\x0e\x93y\x9a\x16\x80o\x92\xeb\x02^h|\xa0\x9b<\x99_\x97\xcb\xe27\xe9u\xc3\xfa_\xcct/sTb\xa0\t\xd3\x93'\xb4\xa4\x0ez\xcbL\x14D\xdb\xe3\x84\x886\xe9J[\xe7\xce\xc0\xb1\x99\x07\x17{\xc6:\xff\x1dt\xfd\xab^2\xf7\x9e\xa4\xccT\x8e~b\xdb\x9a\x04\x04\xbaM\xfa\xbd\xec)z\xbb\x89\xd7\xb2Q\xac\xaf\x13\xdcD\xcd\n6\x92\xfao\xb9\xd9\x96$\xce\xa6\xcf\xf8\xe4Bb60\xf5\xd2a\xb1o\x8c\x0f\x8bl\x88vh\xb5h\xfa\xfa\xb66\xedQ\x10\xc4\xef\xfa\x81\xf0\xc9.^\x98\x1ePQS\x9e\xafAy\x90\xe4\x95\x03V\xc2\xa0\x18\xa5d\xc2\x15*\xb6\xd7$\xc0\t2\xa1"
+    ctx.verify_binary(data, xmlsec.constants.TransformRsaSha1, sign)

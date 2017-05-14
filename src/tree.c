@@ -16,7 +16,11 @@
 #define PYXMLSEC_TREE_DOC "Common XML utility functions"
 
 static char PyXmlSec_TreeFindChild__doc__[] = \
-    "Searches a direct child of the parent node having given name and namespace href.\n";
+    "Searches a direct child of the parent node having given name and namespace href.\n\n"
+    ":param parent: the pointer to XML node\n"
+    ":param name: the name\n"
+    ":param namespace: the namespace href(optional)\n"
+    ":return: the pointer to the found node or None if node is not found\n";
 static PyObject* PyXmlSec_TreeFindChild(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "parent", "name", "namespace", NULL};
 
@@ -47,7 +51,11 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TreeFindParent__doc__[] = \
-    "Searches the ancestors axis of the node having given name and namespace href.\n";
+    "Searches the ancestors axis of the node having given name and namespace href.\n\n"
+    ":param node: the pointer to XML node\n"
+    ":param name: the name\n"
+    ":param namespace: the namespace href(optional)\n"
+    ":return: the pointer to the found node or None if node is not found\n";
 static PyObject* PyXmlSec_TreeFindParent(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "name", "namespace", NULL};
 
@@ -78,7 +86,11 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TreeFindNode__doc__[] = \
-    "Searches all children of the parent node having given name and namespace href.\n";
+    "Searches all children of the parent node having given name and namespace href.\n\n"
+    ":param node: the pointer to XML node\n"
+    ":param name: the name\n"
+    ":param namespace: the namespace href(optional)\n"
+    ":return: the pointer to the found node or None if node is not found\n";
 static PyObject* PyXmlSec_TreeFindNode(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "name", "namespace", NULL};
 
@@ -113,7 +125,9 @@ static char PyXmlSec_TreeAddIds__doc__[] = \
     "used as XML ids in the subtree rooted at *node*.\n"\
     "A call to `addIds` may be necessary to make known which attributes contain XML ids.\n"\
     "This is the case, if a transform references an id via `XPointer` or a self document uri and\n"
-    "the id inkey_data_formation is not available by other means (e.g. an associated DTD or XML schema).\n";
+    "the id inkey_data_formation is not available by other means (e.g. an associated DTD or XML schema).\n\n"
+    ":param node: the pointer to XML node\n"
+    ":param ids: the list of ID attributes.\n";
 static PyObject* PyXmlSec_TreeAddIds(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "ids", NULL};
 

@@ -65,7 +65,12 @@ static PyObject* PyXmlSec_Key__copy__(PyObject* self) {
     return (PyObject*)key2;
 }
 
-static const char PyXmlSec_KeyFromMemory__doc__[] = "Load PKI key from memory.\n";
+static const char PyXmlSec_KeyFromMemory__doc__[] = \
+    "Loads PKI key from memory.\n\n"
+    ":param data: the binary key data\n"
+    ":param format: the key file format\n"
+    ":param password: the key file password\n"
+    ":return: pointer to newly created key\n";
 static PyObject* PyXmlSec_KeyFromMemory(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "data", "format", "password", NULL};
 
@@ -104,9 +109,14 @@ ON_FAIL:
     return NULL;
 }
 
-static const char PyXmlSec_KeyFromFile__doc__[] = "Load PKI key from a file.\n";
+static const char PyXmlSec_KeyFromFile__doc__[] = \
+    "Loads PKI key from a file.\n\n"
+    ":param file: the file object or file path\n"
+    ":param format: the key file format\n"
+    ":param password: the key file password\n"
+    ":return: pointer to newly created key\n";
 static PyObject* PyXmlSec_KeyFromFile(PyObject* self, PyObject* args, PyObject* kwargs) {
-    static char *kwlist[] = { "data", "format", "password", NULL};
+    static char *kwlist[] = { "file", "format", "password", NULL};
 
     PyObject* file = NULL;
     const char* password = NULL;
@@ -162,9 +172,14 @@ ON_FAIL:
     return NULL;
 }
 
-static const char PyXmlSec_KeyGenerate__doc__[] = "Generate key of kind *data* with *size* and *type*.\n";
+static const char PyXmlSec_KeyGenerate__doc__[] = \
+    "Generates key of kind *data* with *size* and *type*.\n\n"
+    ":param klass: the requested key klass (rsa, dsa, aes, ...)\n"
+    ":param size: the new key size (in bits!)\n"
+    ":param type: the new key type (session, permanent, ...)\n"
+    ":return: pointer to newly created key\n";
 static PyObject* PyXmlSec_KeyGenerate(PyObject* self, PyObject* args, PyObject* kwargs) {
-    static char *kwlist[] = { "data", "size", "type", NULL};
+    static char *kwlist[] = { "klass", "size", "type", NULL};
 
     PyXmlSec_KeyData* keydata = NULL;
     short unsigned int keysize = 0;
@@ -196,9 +211,13 @@ ON_FAIL:
     return NULL;
 }
 
-static const char PyXmlSec_KeyFromBinaryFile__doc__[] = "Loads (symmetric) key of kind *data* from *filename*.\n";
+static const char PyXmlSec_KeyFromBinaryFile__doc__[] = \
+    "Loads (symmetric) key of kind *data* from *filename*.\n\n"
+    ":param klass: the key value data klass\n"
+    ":param filename: the key binary filename\n"
+    ":return: pointer to newly created key\n";
 static PyObject* PyXmlSec_KeyFromBinaryFile(PyObject* self, PyObject* args, PyObject* kwargs) {
-    static char *kwlist[] = { "data", "filename", NULL};
+    static char *kwlist[] = { "klass", "filename", NULL};
 
     PyXmlSec_KeyData* keydata = NULL;
     PyObject* filepath = NULL;
@@ -238,7 +257,10 @@ ON_FAIL:
     return NULL;
 }
 
-static const char PyXmlSec_KeyCertFromMemory__doc__[] = "Load certificate from memory.\n";
+static const char PyXmlSec_KeyCertFromMemory__doc__[] = \
+    "Loads certificate from memory.\n\n"
+    ":param data: the certificate binary data\n"
+    ":param format: the certificate file format\n";
 static PyObject* PyXmlSec_KeyCertFromMemory(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "data", "format", NULL};
 
@@ -271,9 +293,12 @@ ON_FAIL:
     return NULL;
 }
 
-static const char PyXmlSec_KeyCertFromFile__doc__[] = "Load certificate from file.\n";
+static const char PyXmlSec_KeyCertFromFile__doc__[] = \
+    "Loads certificate from file.\n\n"
+    ":param file: the file object or file path\n"
+    ":param format: the certificate file format\n";
 static PyObject* PyXmlSec_KeyCertFromFile(PyObject* self, PyObject* args, PyObject* kwargs) {
-    static char *kwlist[] = { "data", "format", NULL};
+    static char *kwlist[] = { "file", "format", NULL};
 
     PyObject* file = NULL;
     unsigned int format = 0;
@@ -497,7 +522,9 @@ static void PyXmlSec_KeysManager__del__(PyObject* self) {
     Py_TYPE(self)->tp_free(self);
 }
 
-static const char PyXmlSec_KeysManagerAddKey__doc__[] = "Adds a copy of *key*.\n";
+static const char PyXmlSec_KeysManagerAddKey__doc__[] = \
+    "Adds a copy of *key* to keys manager\n\n"
+    ":param key: the pointer to key\n";
 static PyObject* PyXmlSec_KeysManagerAddKey(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "key", NULL};
 
@@ -539,7 +566,11 @@ ON_FAIL:
     return NULL;
 }
 
-static const char PyXmlSec_KeysManagerLoadCert__doc__[] = "load certificate from *filename*\n*format* - file format\n*type* - key type.\n";
+static const char PyXmlSec_KeysManagerLoadCert__doc__[] = \
+    "Loads certificate from *filename*.\n\n"
+    ":param filename: the certificate file\n"
+    ":param format: the certificate file format\n"
+    ":param type: the flag that indicates is the certificate in filename trusted or not\n";
 static PyObject* PyXmlSec_KeysManagerLoadCert(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "filename", "format", "type", NULL};
 
@@ -567,7 +598,11 @@ ON_FAIL:
     return NULL;
 }
 
-static const char PyXmlSec_KeysManagerLoadCertFromMemory__doc__[] = "load certificate from *data*\n*format* - file format\n*type* - key type.\n";
+static const char PyXmlSec_KeysManagerLoadCertFromMemory__doc__[] = \
+    "Loads certificate from *data*\n\n"
+    ":param data: the certificate binary data\n"
+    ":param format: the certificate file format\n"
+    ":param type: the flag that indicates is the certificate in filename trusted or not\n";
 static PyObject* PyXmlSec_KeysManagerLoadCertFromMemory(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "data", "format", "type", NULL};
 

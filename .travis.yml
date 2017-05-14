@@ -21,6 +21,11 @@ install:
 - travis_retry pip install -e "."
 - pip list
 script: py.test tests
+
+before_deploy:
+    - travis_retry pip install Sphinx
+    - python setup.py build_sphinx
+
 deploy:
   skip_cleanup: true
   provider: pypi
@@ -28,6 +33,6 @@ deploy:
   on:
     tags: true
     distributions: sdist bdist_wheel
-    python: '3.5'
+    python: '2.7'
   password:
     secure: Gq9Ut9FATKUSVoaTTSeecN8kWxRQjTe4K+gK/gKuRJqWzYPOG9AhCq2Nxd3rwlWedPWpfoQwmlCuCma68npVQZnsJqyNYmEUBp4xjgDXOR12q2jDlgT0SH5V23ysJydA+c5QuHGXz7INxBTSwCjD+xBe2WXRxp9RJoi8kLloFt0=

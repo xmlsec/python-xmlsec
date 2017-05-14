@@ -18,8 +18,14 @@
 #define PYXMLSEC_TEMPLATES_DOC "Xml Templates processing"
 
 static char PyXmlSec_TemplateCreate__doc__[] = \
-    "Creates new <dsig:Signature/> node with the mandatory <dsig:SignedInfo/>, <dsig:CanonicalizationMethod/>,\n"
-    "<dsig:SignatureMethod/> and <dsig:SignatureValue/> children and sub-children.\n";
+    "Creates new <dsig:Signature/> node with the mandatory <dsig:SignedInfo/>, <dsig:CanonicalizationMethod/>,"
+    "<dsig:SignatureMethod/> and <dsig:SignatureValue/> children and sub-children.\n\n"
+    ":param node: the signature node\n"
+    ":param c14n_method: the signature canonicalization method\n"
+    ":param sign_method: the signature method\n"
+    ":param name: the node id (optional)\n"
+    ":param ns: the namespace prefix for the signature element (e.g. \"dsig\") (optional)\n"
+    ":return: the pointer to newly created <dsig:Signature/> node\n";
 static PyObject* PyXmlSec_TemplateCreate(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "c14n_method", "sign_method", "name", "ns", NULL};
 
@@ -54,8 +60,14 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddReference__doc__[] = \
-    "Adds <dsig:Reference/> node with given URI (uri ), Id (id ) and Type (type ) attributes and\n"
-    "the required children <dsig:DigestMethod/> and <dsig:DigestValue/> to the <dsig:SignedInfo/> child of *node*.\n";
+    "Adds <dsig:Reference/> node with given URI (uri ) Id (id ) and Type (type ) attributes and\n"
+    "the required children <dsig:DigestMethod/> and <dsig:DigestValue/> to the <dsig:SignedInfo/> child of *node*.\n\n"
+    ":param node: the pointer to <dsig:Signature/> node\n"
+    ":param digest_method: the reference digest method\n"
+    ":param id: the node id (optional)\n"
+    ":param uri: the reference node uri (optional)\n"
+    ":param type: the reference node type (optional)\n"
+    ":return: the pointer to newly created <dsig:Reference/> node\n";
 static PyObject* PyXmlSec_TemplateAddReference(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "digest_method", "id", "uri", "type", NULL};
 
@@ -89,7 +101,10 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddTransform__doc__[] = \
-    "Adds <dsig:Transform/> node to the <dsig:Reference/> node of *node*.\n";
+    "Adds <dsig:Transform/> node to the <dsig:Reference/> node of *node*.\n\n"
+    ":param node: the pointer to <dsig:Reference/> node\n"
+    ":param transform: the transform method id\n"
+    ":return: the pointer to newly created <dsig:Transform/> node\n";
 static PyObject* PyXmlSec_TemplateAddTransform(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "transform", NULL};
 
@@ -120,7 +135,10 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateEnsureKeyInfo__doc__[] = \
-    "Adds (if necessary) <dsig:KeyInfo/> node to the <dsig:Signature/> node of *node*.\n";
+    "Adds (if necessary) <dsig:KeyInfo/> node to the <dsig:Signature/> node of *node*.\n\n"
+    ":param node: the pointer to <dsig:Signature/> node\n"
+    ":param id: the node id (optional)\n"
+    ":return: the pointer to newly created <dsig:KeyInfo/> node\n";
 static PyObject* PyXmlSec_TemplateEnsureKeyInfo(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "id", NULL};
 
@@ -150,7 +168,10 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddKeyName__doc__[] = \
-    "Adds <dsig:KeyName/> node to the <dsig:KeyInfo/> node of *node*.\n";
+    "Adds <dsig:KeyName/> node to the <dsig:KeyInfo/> node of *node*.\n\n"
+    ":param node: the pointer to <dsig:KeyInfo/> node\n"
+    ":param name: the key name (optional)\n"
+    ":return: the pointer to the newly created <dsig:KeyName/> node\n";
 static PyObject* PyXmlSec_TemplateAddKeyName(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "name", NULL};
 
@@ -181,7 +202,9 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddKeyValue__doc__[] = \
-    "Adds <dsig:KeyValue/> node to the <dsig:KeyInfo/> node of *node*.\n";
+    "Adds <dsig:KeyValue/> node to the <dsig:KeyInfo/> node of *node*.\n\n"
+    ":param node: the pointer to <dsig:KeyInfo/> node\n"
+    ":return: the pointer to the newly created <dsig:KeyValue/> node\n";
 static PyObject* PyXmlSec_TemplateAddKeyValue(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", NULL};
 
@@ -211,7 +234,9 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddX509Data__doc__[] = \
-    "Adds <dsig:X509Data/> node to the <dsig:KeyInfo/> node of *node*.\n";
+    "Adds <dsig:X509Data/> node to the <dsig:KeyInfo/> node of *node*.\n\n"
+    ":param node: the pointer to <dsig:KeyInfo/> node\n"
+    ":return: the pointer to the newly created <dsig:X509Data/> node\n";
 static PyObject* PyXmlSec_TemplateAddX509Data(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", NULL};
 
@@ -241,7 +266,9 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddX509DataAddIssuerSerial__doc__[] = \
-    "Adds <dsig:X509IssuerSerial/> node to the given <dsig:X509Data/> node of *node*.\n";
+    "Adds <dsig:X509IssuerSerial/> node to the given <dsig:X509Data/> node of *node*.\n\n"
+    ":param node: the pointer to <dsig:X509Data/> node\n"
+    ":return: the pointer to the newly created <dsig:X509IssuerSerial/> node\n";
 static PyObject* PyXmlSec_TemplateAddX509DataAddIssuerSerial(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", NULL};
 
@@ -271,7 +298,10 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddX509DataIssuerSerialAddIssuerName__doc__[] = \
-    "Adds <dsig:X509IssuerName/> node to the <dsig:X509IssuerSerial/> node of *node*.\n";
+    "Adds <dsig:X509IssuerName/> node to the <dsig:X509IssuerSerial/> node of *node*.\n\n"
+    ":param node: the pointer to <dsig:X509IssuerSerial/> node\n"
+    ":param name: the issuer name (optional)\n"
+    ":return: the pointer to the newly created <dsig:X509IssuerName/> node\n";
 static PyObject* PyXmlSec_TemplateAddX509DataIssuerSerialAddIssuerName(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "name", NULL};
 
@@ -302,7 +332,10 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddX509DataIssuerSerialAddIssuerSerialNumber__doc__[] = \
-    "Adds <dsig:X509SerialNumber/> node to the <dsig:X509IssuerSerial/> node of *node*.\n";
+    "Adds <dsig:X509SerialNumber/> node to the <dsig:X509IssuerSerial/> node of *node*.\n\n"
+    ":param node: the pointer to <dsig:X509IssuerSerial/> node\n"
+    ":param serial: the serial number (optional)\n"
+    ":return: the pointer to the newly created <dsig:X509SerialNumber/> node\n";
 static PyObject* PyXmlSec_TemplateAddX509DataIssuerSerialAddIssuerSerialNumber(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "serial", NULL};
 
@@ -333,7 +366,9 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddX509DataAddSubjectName__doc__[] = \
-    "Adds <dsig:X509SubjectName/> node to the given <dsig:X509Data/> node of *node*.\n";
+    "Adds <dsig:X509SubjectName/> node to the given <dsig:X509Data/> node of *node*.\n\n"
+    ":param node: the pointer to <dsig:X509Data/> node\n"
+    ":return: the pointer to the newly created <dsig:X509SubjectName/> node\n";
 static PyObject* PyXmlSec_TemplateAddX509DataAddSubjectName(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", NULL};
 
@@ -363,7 +398,9 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddX509DataAddSKI__doc__[] = \
-    "Adds <dsig:X509SKI/> node to the given <dsig:X509Data/> node of *node*.\n";
+    "Adds <dsig:X509SKI/> node to the given <dsig:X509Data/> node of *node*.\n\n"
+    ":param node: the pointer to <dsig:X509Data/> node\n"
+    ":return: the pointer to the newly created <dsig:X509SKI/> node\n";
 static PyObject* PyXmlSec_TemplateAddX509DataAddSKI(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", NULL};
 
@@ -393,7 +430,9 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddX509DataAddCertificate__doc__[] = \
-    "Adds <dsig:X509Certificate/> node to the given <dsig:X509Data/> node of *node*.\n";
+    "Adds <dsig:X509Certificate/> node to the given <dsig:X509Data/> node of *node*.\n\n"
+    ":param node: the pointer to <dsig:X509Data/> node\n"
+    ":return: the pointer to the newly created <dsig:X509Certificate/> node\n";
 static PyObject* PyXmlSec_TemplateAddX509DataAddCertificate(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", NULL};
 
@@ -423,7 +462,9 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddX509DataAddCRL__doc__[] = \
-    "Adds <dsig:X509CRL/> node to the given <dsig:X509Data/> node of *node*.\n";
+    "Adds <dsig:X509CRL/> node to the given <dsig:X509Data/> node of *node*.\n\n"
+    ":param node: the pointer to <dsig:X509Data/> node\n"
+    ":return: the pointer to the newly created <dsig:X509CRL/> node\n";
 static PyObject* PyXmlSec_TemplateAddX509DataAddCRL(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", NULL};
 
@@ -453,7 +494,13 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddEncryptedKey__doc__[] = \
-    "Adds <enc:EncryptedKey/> node with given attributes to the <dsig:KeyInfo/> node of *node*.\n";
+    "Adds <enc:EncryptedKey/> node with given attributes to the <dsig:KeyInfo/> node of *node*.\n\n"
+    ":param node: the pointer to <dsig:KeyInfo/> node\n"
+    ":param method: the encryption method (optional)\n"
+    ":param id: the Id attribute (optional)\n"
+    ":param type: the Type attribute (optional)\n"
+    ":param recipient: the Recipient attribute (optional)\n"
+    ":return: the pointer to the newly created <enc:EncryptedKey/> node\n";
 static PyObject* PyXmlSec_TemplateAddEncryptedKey(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "method", "id", "type", "recipient", NULL};
 
@@ -487,7 +534,15 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateCreateEncryptedData__doc__[] = \
-    "Creates new <{ns}:EncryptedData /> node for encryption template.\n";
+    "Creates new <{ns}:EncryptedData /> node for encryption template.\n\n"
+    ":param node: the pointer to signature node\n"
+    ":param method: the encryption method (optional)\n"
+    ":param id: the Id attribute (optional)\n"
+    ":param type: the Type attribute (optional)\n"
+    ":param mime_type: the Recipient attribute (optional)\n"
+    ":param encoding: the MimeType attribute (optional)\n"
+    ":param ns: the namespace prefix (optional)\n"
+    ":return: the pointer newly created <enc:EncryptedData/> node\n";
 static PyObject* PyXmlSec_TemplateCreateEncryptedData(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "method", "id", "type", "mime_type", "encoding", "ns", NULL};
 
@@ -526,7 +581,11 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateEncryptedDataEnsureKeyInfo__doc__[] = \
-    "Adds <{ns}:KeyInfo/> to the <enc:EncryptedData/> node of *node*.\n";
+    "Adds <{ns}:KeyInfo/> to the <enc:EncryptedData/> node of *node*.\n\n"
+    ":param node: the pointer to <enc:EncryptedData/> node\n"
+    ":param id: the Id attribute (optional)\n"
+    ":param ns: the namespace prefix (optional)\n"
+    ":return: the pointer to newly created <dsig:KeyInfo/> node\n";
 static PyObject* PyXmlSec_TemplateEncryptedDataEnsureKeyInfo(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "id", "ns", NULL};
 
@@ -561,7 +620,9 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateEncryptedDataEnsureCipherValue__doc__[] = \
-    "Adds <CipherValue/> to the <enc:EncryptedData/> node of *node*.\n";
+    "Adds <CipherValue/> to the <enc:EncryptedData/> node of *node*.\n\n"
+    ":param node: the pointer to <enc:EncryptedData/> node\n"
+    ":return: the pointer to newly created <enc:CipherValue/> node\n";
 static PyObject* PyXmlSec_TemplateEncryptedDataEnsureCipherValue(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", NULL};
 

@@ -39,7 +39,7 @@ Linux (Debian)
 
 
 Note: There is no required version of libxml2 for ubuntu precise,
-so need to dowload and install it manually.
+so need to download and install it manually.
 
 .. code-block:: bash
 
