@@ -5,8 +5,8 @@ python-xmlsec
     :target: https://travis-ci.org/mehcode/python-xmlsec
 .. image:: https://img.shields.io/pypi/v/xmlsec.svg
     :target: https://pypi.python.org/pypi/xmlsec
-.. image:: https://img.shields.io/pypi/dm/xmlsec.svg
-    :target: https://pypi.python.org/pypi/xmlsec
+.. image:: https://img.shields.io/badge/docs-latest-green.svg
+    :target: http://pythonhosted.org/xmlsec/
 
 
 Python bindings for the XML Security Library.
