@@ -28,6 +28,7 @@ before_deploy:
 
 deploy:
   skip_cleanup: true
+  skip_upload_docs: false
   provider: pypi
   user: mehcode
   on:
