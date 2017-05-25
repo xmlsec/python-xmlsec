@@ -651,6 +651,57 @@ ON_FAIL:
     return NULL;
 }
 
+static char PyXmlSec_TemplateTransformAddC14NInclNamespaces__doc__[] = \
+    "Adds 'inclusive' namespaces to the ExcC14N transform node *node*.\n\n"
+    ":param node: the pointer to <dsig:Transform/> node.\n"
+    ":param prefixList: the list of namespace prefixes, where 'default' indicates the default namespace (optional).";
+static PyObject* PyXmlSec_TemplateTransformAddC14NInclNamespaces(PyObject* self, PyObject *args, PyObject *kwargs) {
+    static char *kwlist[] = { "node", "prefixes", NULL};
+
+    PyXmlSec_LxmlElementPtr node = NULL;
+    PyObject* prefixes = NULL;
+    // transform_add_c14n_inclusive_namespaces
+    PYXMLSEC_DEBUG("template encrypted_data_ensure_cipher_value - start");
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O:transform_add_c14n_inclusive_namespaces", kwlist,
+        PyXmlSec_LxmlElementConverter, &node, &prefixes))
+    {
+        prefixes = NULL;
+        goto ON_FAIL;
+    }
+    if (PyList_Check(prefixes) || PyTuple_Check(prefixes)) {
+        PyObject* sep = PyString_FromString(" ");
+        prefixes = PyObject_CallMethod(sep, "join", "O", prefixes);
+        Py_DECREF(sep);
+    } else if (PyString_Check(prefixes)) {
+        Py_INCREF(prefixes);
+    } else {
+        PyErr_SetString(PyExc_TypeError, "expected instance of str or list of str");
+        prefixes = NULL;
+    }
+
+    if (prefixes == NULL) {
+        goto ON_FAIL;
+    }
+
+    int res;
+    const char* c_prefixes = PyString_AsString(prefixes);
+    Py_BEGIN_ALLOW_THREADS;
+    res = xmlSecTmplTransformAddC14NInclNamespaces(node->_c_node, XSTR(c_prefixes));
+    Py_END_ALLOW_THREADS;
+    if (res != 0) {
+        PyXmlSec_SetLastError("cannot add 'inclusive' namespaces to the ExcC14N transform node");
+        goto ON_FAIL;
+    }
+
+    Py_DECREF(prefixes);
+    PYXMLSEC_DEBUG("transform_add_c14n_inclusive_namespaces - ok");
+    Py_RETURN_NONE;
+
+ON_FAIL:
+    PYXMLSEC_DEBUG("transform_add_c14n_inclusive_namespaces - fail");
+    Py_XDECREF(prefixes);
+    return NULL;
+}
 
 static PyMethodDef PyXmlSec_TemplateMethods[] = {
     {
@@ -760,6 +811,12 @@ static PyMethodDef PyXmlSec_TemplateMethods[] = {
         (PyCFunction)PyXmlSec_TemplateEncryptedDataEnsureCipherValue,
         METH_VARARGS|METH_KEYWORDS,
         PyXmlSec_TemplateEncryptedDataEnsureCipherValue__doc__
+    },
+    {
+        "transform_add_c14n_inclusive_namespaces",
+        (PyCFunction)PyXmlSec_TemplateTransformAddC14NInclNamespaces,
+        METH_VARARGS|METH_KEYWORDS,
+        PyXmlSec_TemplateTransformAddC14NInclNamespaces__doc__,
     },
     {NULL, NULL} /* sentinel */
 };
