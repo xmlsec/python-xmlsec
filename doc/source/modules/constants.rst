@@ -58,6 +58,8 @@ Namespaces
 - *XPointerNs* - http://www.w3.org/2001/04/xmldsig-more/xptr
 - *Soap11Ns*   - http://schemas.xmlsoap.org/soap/envelope/
 - *Soap12Ns*   - http://www.w3.org/2002/06/soap-envelope
+- *NsExcC14N*  - http://www.w3.org/2001/10/xml-exc-c14n#
+- *NsExcC14NWithComments* - http://www.w3.org/2001/10/xml-exc-c14n#WithComments
 
 Nodes
 *****
