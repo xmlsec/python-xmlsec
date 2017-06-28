@@ -354,7 +354,11 @@ static PyObject* PyXmlSec_KeyNameGet(PyObject* self, void* closure) {
         PyErr_SetString(PyExc_ValueError, "key is not ready");
         return NULL;
     }
-    return PyString_FromString((const char*)xmlSecKeyGetName(handle));
+    const char* cname = (const char*)xmlSecKeyGetName(handle);
+    if (cname != NULL) {
+        return PyString_FromString(cname);
+    }
+    Py_RETURN_NONE;
 }
 
 static int PyXmlSec_KeyNameSet(PyObject* self, PyObject* value, void* closure) {
@@ -517,6 +521,7 @@ static void PyXmlSec_KeysManager__del__(PyObject* self) {
     PYXMLSEC_DEBUGF("%p: delete KeysManager", self);
     PyXmlSec_KeysManager* manager = (PyXmlSec_KeysManager*)self;
     if (manager->handle != NULL) {
+        PYXMLSEC_DEBUGF("%p: delete KeysManager handle - %p", self, manager->handle);
         xmlSecKeysMngrDestroy(manager->handle);
     }
     Py_TYPE(self)->tp_free(self);
@@ -528,7 +533,7 @@ static const char PyXmlSec_KeysManagerAddKey__doc__[] = \
 static PyObject* PyXmlSec_KeysManagerAddKey(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "key", NULL};
 
-    PyXmlSec_Key* key;
+    PyXmlSec_Key* key = NULL;
 
     PYXMLSEC_DEBUGF("%p(%p): add key - start", self, ((PyXmlSec_KeysManager*)self)->handle);
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!:add_key", kwlist, PyXmlSec_KeyType, &key)) {
@@ -574,14 +579,17 @@ static const char PyXmlSec_KeysManagerLoadCert__doc__[] = \
 static PyObject* PyXmlSec_KeysManagerLoadCert(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "filename", "format", "type", NULL};
 
-    const char* filename = NULL;
+    PyObject* filepath = NULL;
     unsigned int format = 0;
     unsigned int type = 0;
 
     PYXMLSEC_DEBUGF("%p: load cert - start", self);
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sII:load_cert", kwlist, &filename, &format, &type)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&II:load_cert", kwlist,
+        PyString_FSConverter, &filepath, &format, &type)) {
         goto ON_FAIL;
     }
+
+    const char* filename = PyBytes_AsString(filepath);
 
     int rv;
     Py_BEGIN_ALLOW_THREADS;
@@ -591,10 +599,12 @@ static PyObject* PyXmlSec_KeysManagerLoadCert(PyObject* self, PyObject* args, Py
         PyXmlSec_SetLastError("cannot load cert");
         goto ON_FAIL;
     }
+    Py_DECREF(filepath);
     PYXMLSEC_DEBUGF("%p: load cert - ok", self);
     Py_RETURN_NONE;
 ON_FAIL:
     PYXMLSEC_DEBUGF("%p: load cert - fail", self);
+    Py_XDECREF(filepath);
     return NULL;
 }
 

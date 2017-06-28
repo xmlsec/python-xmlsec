@@ -16,12 +16,13 @@
 #include <libxml/valid.h>
 
 #include <lxml-version.h>
-#include <etree_defs.h>
 #include <lxml.etree.h>
 
 typedef struct LxmlElement* PyXmlSec_LxmlElementPtr;
 typedef struct LxmlDocument* PyXmlSec_LxmlDocumentPtr;
 
+// checks that xnode is Element
+int PyXmlSec_IsElement(xmlNodePtr xnode);
 // creates a new element
 PyXmlSec_LxmlElementPtr PyXmlSec_elementFactory(PyXmlSec_LxmlDocumentPtr doc, xmlNodePtr node);
 
