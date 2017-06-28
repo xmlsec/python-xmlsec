@@ -23,28 +23,28 @@ static char PyXmlSec_TemplateCreate__doc__[] = \
     ":param node: the signature node\n"
     ":param c14n_method: the signature canonicalization method\n"
     ":param sign_method: the signature method\n"
-    ":param name: the node id (optional)\n"
+    ":param id: the node id (optional)\n"
     ":param ns: the namespace prefix for the signature element (e.g. \"dsig\") (optional)\n"
     ":return: the pointer to newly created <dsig:Signature/> node\n";
 static PyObject* PyXmlSec_TemplateCreate(PyObject* self, PyObject *args, PyObject *kwargs) {
-    static char *kwlist[] = { "node", "c14n_method", "sign_method", "name", "ns", NULL};
+    static char *kwlist[] = { "node", "c14n_method", "sign_method", "id", "ns", "name", NULL};
 
     PyXmlSec_LxmlElementPtr node = NULL;
     PyXmlSec_Transform* c14n = NULL;
     PyXmlSec_Transform* sign = NULL;
-    const char* name = NULL;
+    const char* id = NULL;
     const char* ns = NULL;
 
     PYXMLSEC_DEBUG("template create - start");
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O!O!|zz:create", kwlist,
-        PyXmlSec_LxmlElementConverter, &node, PyXmlSec_TransformType, &c14n, PyXmlSec_TransformType, &sign, &name, &ns))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O!O!|zzz:create", kwlist,
+        PyXmlSec_LxmlElementConverter, &node, PyXmlSec_TransformType, &c14n, PyXmlSec_TransformType, &sign, &id, &ns, &id))
     {
         goto ON_FAIL;
     }
 
     xmlNodePtr res;
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplSignatureCreateNsPref(node->_doc->_c_doc, c14n->id, sign->id, XSTR(name), XSTR(ns));
+    res = xmlSecTmplSignatureCreateNsPref(node->_doc->_c_doc, c14n->id, sign->id, XSTR(id), XSTR(ns));
     Py_END_ALLOW_THREADS;
     if (res == NULL) {
         PyXmlSec_SetLastError("cannot create template.");
@@ -496,7 +496,7 @@ ON_FAIL:
 static char PyXmlSec_TemplateAddEncryptedKey__doc__[] = \
     "Adds <enc:EncryptedKey/> node with given attributes to the <dsig:KeyInfo/> node of *node*.\n\n"
     ":param node: the pointer to <dsig:KeyInfo/> node\n"
-    ":param method: the encryption method (optional)\n"
+    ":param method: the encryption method\n"
     ":param id: the Id attribute (optional)\n"
     ":param type: the Type attribute (optional)\n"
     ":param recipient: the Recipient attribute (optional)\n"
@@ -536,7 +536,7 @@ ON_FAIL:
 static char PyXmlSec_TemplateCreateEncryptedData__doc__[] = \
     "Creates new <{ns}:EncryptedData /> node for encryption template.\n\n"
     ":param node: the pointer to signature node\n"
-    ":param method: the encryption method (optional)\n"
+    ":param method: the encryption method\n"
     ":param id: the Id attribute (optional)\n"
     ":param type: the Type attribute (optional)\n"
     ":param mime_type: the Recipient attribute (optional)\n"
