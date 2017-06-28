@@ -232,7 +232,6 @@ int PyXmlSec_TreeModule_Init(PyObject* package) {
 
     if (!tree) goto ON_FAIL;
 
-    PYXMLSEC_DEBUGF("%", tree);
     if (PyModule_AddObject(package, "tree", tree) < 0) goto ON_FAIL;
 
     return 0;
