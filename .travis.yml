@@ -23,7 +23,7 @@ install:
 - travis_retry pip install -r requirements-test.txt
 - travis_retry pip install -e "."
 - pip list
-script: py.test tests
+script: py.test -v tests
 
 before_deploy:
     - travis_retry pip install Sphinx
