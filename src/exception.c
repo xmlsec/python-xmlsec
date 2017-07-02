@@ -122,6 +122,7 @@ void PyXmlSec_SetLastError2(PyObject* type, const char* msg) {
         }
     }
     PyErr_SetObject(type, last);
+    Py_DECREF(last);
 }
 
 void PyXmlSec_SetLastError(const char* msg) {

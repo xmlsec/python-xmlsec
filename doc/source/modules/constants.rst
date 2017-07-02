@@ -74,16 +74,21 @@ Nodes
 - *NodeObject*                 - Object
 - *NodeManifest*               - Manifest
 - *NodeEncryptedData*          - EncryptedData
+- *NodeEncryptedKey*           - EncryptedKey
 - *NodeEncryptionMethod*       - EncryptionMethod
 - *NodeEncryptionProperties*   - EncryptionProperties
 - *NodeEncryptionProperty*     - EncryptionProperty
 - *NodeCipherData*             - CipherData
 - *NodeCipherValue*            - CipherValue
 - *NodeCipherReference*        - CipherReference
+- *NodeReference               - Reference
 - *NodeReferenceList*          - ReferenceList
 - *NodeDataReference*          - DataReference
 - *NodeKeyReference*           - KeyReference
 - *NodeKeyInfo*                - KeyInfo
+- *NodeKeyName                 - KeyName
+- *NodeKeyValue                - KeyValue
+- *NodeX509Data                - X509Data
 
 Transforms
 **********

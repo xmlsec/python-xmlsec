@@ -24,7 +24,7 @@ typedef struct {
 
 static PyObject* PyXmlSec_EncryptionContext__new__(PyTypeObject *type, PyObject *args, PyObject *kwargs) {
     PyXmlSec_EncryptionContext* ctx = (PyXmlSec_EncryptionContext*)PyType_GenericNew(type, args, kwargs);
-    PYXMLSEC_DEBUGF("%p: new sign context", ctx);
+    PYXMLSEC_DEBUGF("%p: new enc context", ctx);
     if (ctx != NULL) {
         ctx->handle = NULL;
         ctx->manager = NULL;
@@ -37,24 +37,26 @@ static int PyXmlSec_EncryptionContext__init__(PyObject* self, PyObject* args, Py
 
     PyXmlSec_KeysManager* manager = NULL;
     PyXmlSec_EncryptionContext* ctx = (PyXmlSec_EncryptionContext*)self;
-    PYXMLSEC_DEBUGF("%p: init sign context", self);
+    PYXMLSEC_DEBUGF("%p: init enc context", self);
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|O&:__init__", kwlist, PyXmlSec_KeysManagerConvert, &manager)) {
-        return -1;
+        goto ON_FAIL;
     }
-
-    PYXMLSEC_DEBUGF("%p", manager);
     ctx->handle = xmlSecEncCtxCreate(manager != NULL ? manager->handle : NULL);
     if (ctx->handle == NULL) {
-        PyXmlSec_SetLastError("failed to create the digital signature context");
-        return -1;
+        PyXmlSec_SetLastError("failed to create the encryption context");
+        goto ON_FAIL;
     }
-    Py_XINCREF(manager);
     ctx->manager = manager;
+    PYXMLSEC_DEBUGF("%p: init enc context - ok, manager - %p", self, manager);
     return 0;
+ON_FAIL:
+    PYXMLSEC_DEBUGF("%p: init enc context - failed", self);
+    Py_XDECREF(manager);
+    return -1;
 }
 
 static void PyXmlSec_EncryptionContext__del__(PyObject* self) {
-    PYXMLSEC_DEBUGF("%p: delete sign context", self);
+    PYXMLSEC_DEBUGF("%p: delete enc context", self);
     PyXmlSec_EncryptionContext* ctx = (PyXmlSec_EncryptionContext*)self;
     if (ctx->handle != NULL) {
         xmlSecEncCtxDestroy(ctx->handle);
@@ -66,8 +68,13 @@ static void PyXmlSec_EncryptionContext__del__(PyObject* self) {
 
 static const char PyXmlSec_EncryptionContextKey__doc__[] = "Encryption key.\n";
 static PyObject* PyXmlSec_EncryptionContextKeyGet(PyObject* self, void* closure) {
+    PyXmlSec_EncryptionContext* ctx = ((PyXmlSec_EncryptionContext*)self);
+    if (ctx->handle->encKey == NULL) {
+        Py_RETURN_NONE;
+    }
+
     PyXmlSec_Key* key = PyXmlSec_NewKey();
-    key->handle = ((PyXmlSec_EncryptionContext*)self)->handle->encKey;
+    key->handle = ctx->handle->encKey;
     key->is_own = 0;
     return (PyObject*)key;
 }
@@ -142,9 +149,10 @@ static void PyXmlSec_ClearReplacedNodes(xmlSecEncCtxPtr ctx, PyXmlSec_LxmlDocume
     xmlNodePtr n = ctx->replacedNodeList;
     xmlNodePtr nn;
     while (n != NULL) {
+        PYXMLSEC_DEBUGF("clear replaced node %p", n);
         nn = n->next;
         // if n has references, it will not be deleted
-        Py_XDECREF(PyXmlSec_elementFactory(doc, n));
+        Py_DECREF(PyXmlSec_elementFactory(doc, n));
         n = nn;
     }
     ctx->replacedNodeList = NULL;
@@ -290,7 +298,7 @@ static PyObject* PyXmlSec_EncryptionContextDecrypt(PyObject* self, PyObject* arg
     }
 
     xmlNodePtr xparent = node->_c_node->parent;
-    if (xparent != NULL && !_isElement(xparent)) {
+    if (xparent != NULL && !PyXmlSec_IsElement(xparent)) {
         xparent = NULL;
     }
 
@@ -323,7 +331,7 @@ static PyObject* PyXmlSec_EncryptionContextDecrypt(PyObject* self, PyObject* arg
     if (!ctx->resultReplaced) {
         Py_XDECREF(node_num);
         Py_XDECREF(parent);
-        PYXMLSEC_DEBUGF("%p: decrypt - ok", self);
+        PYXMLSEC_DEBUGF("%p: binary.decrypt - ok", self);
         return PyBytes_FromStringAndSize(
             (const char*)xmlSecBufferGetData(ctx->result), (Py_ssize_t)xmlSecBufferGetSize(ctx->result)
         );
@@ -341,7 +349,7 @@ static PyObject* PyXmlSec_EncryptionContextDecrypt(PyObject* self, PyObject* arg
             parent = tmp;
         }
         Py_DECREF(node_num);
-        PYXMLSEC_DEBUGF("%p: decrypt - ok", self);
+        PYXMLSEC_DEBUGF("%p: parent.decrypt - ok", self);
         return parent;
     }
 

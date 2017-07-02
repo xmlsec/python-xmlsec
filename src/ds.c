@@ -39,17 +39,20 @@ static int PyXmlSec_SignatureContext__init__(PyObject* self, PyObject* args, PyO
     PYXMLSEC_DEBUGF("%p: init sign context", self);
     PyXmlSec_SignatureContext* ctx = (PyXmlSec_SignatureContext*)self;
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|O&:__init__", kwlist, PyXmlSec_KeysManagerConvert, &manager)) {
-        return -1;
+        goto ON_FAIL;
     }
-    PYXMLSEC_DEBUGF("%p", manager);
     ctx->handle = xmlSecDSigCtxCreate(manager != NULL ? manager->handle : NULL);
     if (ctx->handle == NULL) {
         PyXmlSec_SetLastError("failed to create the digital signature context");
-        return -1;
+        goto ON_FAIL;
     }
-    Py_XINCREF(manager);
     ctx->manager = manager;
+    PYXMLSEC_DEBUGF("%p: init sign context - ok, manager - %p", self, manager);
     return 0;
+ON_FAIL:
+    PYXMLSEC_DEBUGF("%p: init sign context - failed", self);
+    Py_XDECREF(manager);
+    return -1;
 }
 
 static void PyXmlSec_SignatureContext__del__(PyObject* self) {
@@ -65,8 +68,13 @@ static void PyXmlSec_SignatureContext__del__(PyObject* self) {
 
 static const char PyXmlSec_SignatureContextKey__doc__[] = "Signature key.\n";
 static PyObject* PyXmlSec_SignatureContextKeyGet(PyObject* self, void* closure) {
+    PyXmlSec_SignatureContext* ctx = ((PyXmlSec_SignatureContext*)self);
+    if (ctx->handle->signKey == NULL) {
+        Py_RETURN_NONE;
+    }
+
     PyXmlSec_Key* key = PyXmlSec_NewKey();
-    key->handle = ((PyXmlSec_SignatureContext*)self)->handle->signKey;
+    key->handle = ctx->handle->signKey;
     key->is_own = 0;
     return (PyObject*)key;
 }

@@ -10,6 +10,7 @@
 #include "common.h"
 #include "lxml.h"
 
+#include <etree_defs.h>
 #include <lxml.etree_api.h>
 
 #include <libxml/xmlmemory.h>
@@ -19,6 +20,10 @@
 
 int PyXmlSec_InitLxmlModule(void) {
     return import_lxml__etree();
+}
+
+int PyXmlSec_IsElement(xmlNodePtr xnode) {
+    return _isElement(xnode);
 }
 
 PyXmlSec_LxmlElementPtr PyXmlSec_elementFactory(PyXmlSec_LxmlDocumentPtr doc, xmlNodePtr xnode) {

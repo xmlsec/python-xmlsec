@@ -1,0 +1,44 @@
+<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+    <SignedInfo>
+        <CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+        <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+        <Reference>
+            <Transforms>
+                <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature">
+                    <InclusiveNamespaces xmlns="http://www.w3.org/2001/10/xml-exc-c14n#" PrefixList="default"/>
+                </Transform>
+                <Transform Algorithm="http://www.w3.org/TR/1999/REC-xslt-19991116">
+                    <InclusiveNamespaces xmlns="http://www.w3.org/2001/10/xml-exc-c14n#" PrefixList="ns1 ns2"/>
+                </Transform>
+            </Transforms>
+            <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+            <DigestValue/>
+        </Reference>
+    </SignedInfo>
+    <SignatureValue/>
+    <KeyInfo>
+        <EncryptedKey xmlns="http://www.w3.org/2001/04/xmlenc#">
+            <EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p"/>
+            <CipherData/>
+        </EncryptedKey>
+        <KeyName/>
+        <KeyValue/>
+        <X509Data>
+            <X509Certificate/>
+            <X509CRL/>
+            <X509IssuerSerial>
+                <X509IssuerName/>
+                <X509SerialNumber/>
+            </X509IssuerSerial>
+            <X509SKI/>
+            <X509SubjectName/>
+        </X509Data>
+    </KeyInfo>
+    <EncryptedData xmlns="http://www.w3.org/2001/04/xmlenc#">
+        <EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#tripledes-cbc"/>
+        <KeyInfo xmlns="http://www.w3.org/2000/09/xmldsig#"/>
+        <CipherData>
+            <CipherValue/>
+        </CipherData>
+    </EncryptedData>
+</Signature>

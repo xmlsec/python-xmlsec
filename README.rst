@@ -15,7 +15,7 @@ Python bindings for the XML Security Library.
 Usage
 ******
 
-Check the `examples <https://github.com/mehcode/python-xmlsec/tree/master/tests/examples>`_ to see various examples of signing and verifying using the library.
+Check the `examples <http://pythonhosted.org/xmlsec/examples>`_ to see various examples of signing and verifying using the library.
 
 ************
 Requirements
@@ -145,6 +145,9 @@ Running the test suite
 .. code-block:: bash
 
     py.test tests
+
+3. Tests configuration
+Env variable **PYXMLSEC_TEST_ITERATIONS** specifies number of test iterations to detect memory leaks.
 
 Reporting a issue
 -----------------
