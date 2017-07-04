@@ -15,7 +15,7 @@ Python bindings for the XML Security Library.
 Usage
 ******
 
-Check the `examples <http://pythonhosted.org/xmlsec/examples>`_ to see various examples of signing and verifying using the library.
+Check the `examples <http://pythonhosted.org/xmlsec/examples.html>`_ to see various examples of signing and verifying using the library.
 
 ************
 Requirements
