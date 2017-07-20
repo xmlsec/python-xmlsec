@@ -46,6 +46,14 @@ class TestKeys(base.TestMemoryLeaks):
         with self.assertRaises(TypeError):
             xmlsec.Key.from_binary_file(klass="", filename=1)
 
+    def test_from_binary_data(self):
+        key = xmlsec.Key.from_binary_data(klass=consts.KeyDataDes, data=self.load("deskey.bin"))
+        self.assertIsNotNone(key)
+
+    def test_from_binary_data_with_bad_args(self):
+        with self.assertRaises(TypeError):
+            xmlsec.Key.from_binary_data(klass="", data=1)
+
     def test_load_cert_from_file(self):
         key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)
         self.assertIsNotNone(key)

@@ -257,6 +257,49 @@ ON_FAIL:
     return NULL;
 }
 
+static const char PyXmlSec_KeyFromBinaryData__doc__[] = \
+    "Loads (symmetric) key of kind *klass* from *data*.\n\n"
+    ":param klass: the key value data klass\n"
+    ":param data: the key binary data\n"
+    ":return: pointer to newly created key\n";
+static PyObject* PyXmlSec_KeyFromBinaryData(PyObject* self, PyObject* args, PyObject* kwargs) {
+    static char *kwlist[] = { "klass", "data", NULL};
+
+    PyXmlSec_KeyData* keydata = NULL;
+    const char* data = NULL;
+    Py_ssize_t data_size = 0;
+
+    PyXmlSec_Key* key = NULL;
+
+    PYXMLSEC_DEBUG("load symmetric key from memory - start");
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!s#:from_binary_data", kwlist,
+        PyXmlSec_KeyDataType, &keydata,  &data, &data_size))
+    {
+        goto ON_FAIL;
+    }
+
+    if ((key = PyXmlSec_NewKey1((PyTypeObject*)self)) == NULL) goto ON_FAIL;
+
+    Py_BEGIN_ALLOW_THREADS;
+    key->handle = xmlSecKeyReadMemory(keydata->id, (const xmlSecByte*)data, (xmlSecSize)data_size);
+    Py_END_ALLOW_THREADS;
+
+    if (key->handle == NULL) {
+        PyXmlSec_SetLastError("cannot read key");
+        goto ON_FAIL;
+    }
+
+    key->is_own = 1;
+
+    PYXMLSEC_DEBUG("load symmetric key from memory - ok");
+    return (PyObject*)key;
+
+ON_FAIL:
+    PYXMLSEC_DEBUG("load symmetric key from memory - fail");
+    Py_XDECREF(key);
+    return NULL;
+}
+
 static const char PyXmlSec_KeyCertFromMemory__doc__[] = \
     "Loads certificate from memory.\n\n"
     ":param data: the certificate binary data\n"
@@ -412,6 +455,12 @@ static PyMethodDef PyXmlSec_KeyMethods[] = {
         (PyCFunction)PyXmlSec_KeyFromBinaryFile,
         METH_CLASS|METH_VARARGS|METH_KEYWORDS,
         PyXmlSec_KeyFromBinaryFile__doc__
+    },
+    {
+        "from_binary_data",
+        (PyCFunction)PyXmlSec_KeyFromBinaryData,
+        METH_CLASS|METH_VARARGS|METH_KEYWORDS,
+        PyXmlSec_KeyFromBinaryData__doc__
     },
     {
         "load_cert_from_memory",
