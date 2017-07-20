@@ -253,7 +253,7 @@ static PyObject* PyXmlSec_KeyFromBinaryFile(PyObject* self, PyObject* args, PyOb
 ON_FAIL:
     PYXMLSEC_DEBUG("load symmetric key - fail");
     Py_XDECREF(key);
-    Py_DECREF(filepath);
+    Py_XDECREF(filepath);
     return NULL;
 }
 
