@@ -106,7 +106,7 @@ static PyObject* PyXmlSec_PyEnableDebugOutput(PyObject *self, PyObject* args, Py
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|O:enable_debug_trace", kwlist, &enabled)) {
         return NULL;
     }
-    xmlSecErrorsDefaultCallbackEnableOutput(PyObject_IsTrue(enabled));
+    PyXmlSecEnableDebugTrace(PyObject_IsTrue(enabled));
     Py_RETURN_NONE;
 }
 
