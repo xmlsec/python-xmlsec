@@ -113,6 +113,7 @@ static PyObject* PyXmlSec_EncryptionContextReset(PyObject* self, PyObject* args,
     xmlSecEncCtxPtr ctx = ((PyXmlSec_EncryptionContext*)self)->handle;
     Py_BEGIN_ALLOW_THREADS;
     xmlSecEncCtxReset(ctx);
+    PYXMLSEC_DUMP(xmlSecEncCtxDebugDump, ctx);
     Py_END_ALLOW_THREADS;
     PYXMLSEC_DEBUGF("%p: reset context - ok", self);
     Py_RETURN_NONE;
@@ -141,6 +142,7 @@ static PyObject* PyXmlSec_EncryptionContextEncryptBinary(PyObject* self, PyObjec
     int rv;
     Py_BEGIN_ALLOW_THREADS;
     rv = xmlSecEncCtxBinaryEncrypt(ctx, template->_c_node, (const xmlSecByte*)data, (xmlSecSize)data_size);
+    PYXMLSEC_DUMP(xmlSecEncCtxDebugDump, ctx);
     Py_END_ALLOW_THREADS;
 
     if (rv < 0) {
@@ -226,6 +228,7 @@ static PyObject* PyXmlSec_EncryptionContextEncryptXml(PyObject* self, PyObject* 
             xnew_node = NULL;
         }
     }
+    PYXMLSEC_DUMP(xmlSecEncCtxDebugDump, ctx);
     Py_END_ALLOW_THREADS;
 
     PyXmlSec_ClearReplacedNodes(ctx, node->_doc);
@@ -268,6 +271,7 @@ static PyObject* PyXmlSec_EncryptionContextEncryptUri(PyObject* self, PyObject* 
     int rv;
     Py_BEGIN_ALLOW_THREADS;
     rv = xmlSecEncCtxUriEncrypt(ctx, template->_c_node, (const xmlSecByte*)uri);
+    PYXMLSEC_DUMP(xmlSecEncCtxDebugDump, ctx);
     Py_END_ALLOW_THREADS;
 
     if (rv < 0) {
@@ -329,6 +333,7 @@ static PyObject* PyXmlSec_EncryptionContextDecrypt(PyObject* self, PyObject* arg
     ctx->mode = xmlSecCheckNodeName(node->_c_node, xmlSecNodeEncryptedKey, xmlSecEncNs) ? xmlEncCtxModeEncryptedKey : xmlEncCtxModeEncryptedData;
     PYXMLSEC_DEBUGF("mode: %d", ctx->mode);
     rv = xmlSecEncCtxDecrypt(ctx, node->_c_node);
+    PYXMLSEC_DUMP(xmlSecEncCtxDebugDump, ctx);
     Py_END_ALLOW_THREADS;
 
     PyXmlSec_ClearReplacedNodes(ctx, node->_doc);
