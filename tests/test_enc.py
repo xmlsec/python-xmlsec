@@ -87,7 +87,25 @@ class TestEncryptionContext(base.TestMemoryLeaks):
     def test_decrypt2(self):
         self.check_decrypt(2)
 
-    def check_decrypt(self, i, ):
+    def test_decrypt_key(self):
+        root = self.load_xml('enc3-out.xml')
+        enc_key = xmlsec.tree.find_child(root, consts.NodeEncryptedKey, consts.EncNs)
+        self.assertIsNotNone(enc_key)
+
+        manager = xmlsec.KeysManager()
+        manager.add_key(xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem))
+        ctx = xmlsec.EncryptionContext(manager)
+        keydata = ctx.decrypt(enc_key)
+        ctx.reset()
+        root.remove(enc_key)
+        ctx.key = xmlsec.Key.from_binary_data(consts.KeyDataAes, keydata)
+        enc_data = xmlsec.tree.find_child(root, consts.NodeEncryptedData, consts.EncNs)
+        self.assertIsNotNone(enc_data)
+        decrypted = ctx.decrypt(enc_data)
+        self.assertIsNotNone(decrypted)
+        self.assertEqual(self.load_xml("enc3-in.xml"), decrypted)
+
+    def check_decrypt(self, i):
         root = self.load_xml('enc%d-out.xml' % i)
         enc_data = xmlsec.tree.find_child(root, consts.NodeEncryptedData, consts.EncNs)
         self.assertIsNotNone(enc_data)

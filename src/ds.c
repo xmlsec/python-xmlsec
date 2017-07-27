@@ -172,9 +172,11 @@ static PyObject* PyXmlSec_SignatureContextSign(PyObject* self, PyObject* args, P
         goto ON_FAIL;
     }
 
+    xmlSecDSigCtxPtr ctx = ((PyXmlSec_SignatureContext*)self)->handle;
     int rv;
     Py_BEGIN_ALLOW_THREADS;
-    rv = xmlSecDSigCtxSign(((PyXmlSec_SignatureContext*)self)->handle, node->_c_node);
+    rv = xmlSecDSigCtxSign(ctx, node->_c_node);
+    PYXMLSEC_DUMP(xmlSecDSigCtxDebugDump, ctx);
     Py_END_ALLOW_THREADS;
     if (rv < 0) {
         PyXmlSec_SetLastError("failed to sign");
@@ -202,17 +204,18 @@ static PyObject* PyXmlSec_SignatureContextVerify(PyObject* self, PyObject* args,
         goto ON_FAIL;
     }
 
-    xmlSecDSigCtxPtr handle = ((PyXmlSec_SignatureContext*)self)->handle;
+    xmlSecDSigCtxPtr ctx = ((PyXmlSec_SignatureContext*)self)->handle;
     int rv;
     Py_BEGIN_ALLOW_THREADS;
-    rv = xmlSecDSigCtxVerify(handle, node->_c_node);
+    rv = xmlSecDSigCtxVerify(ctx, node->_c_node);
+    PYXMLSEC_DUMP(xmlSecDSigCtxDebugDump, ctx);
     Py_END_ALLOW_THREADS;
 
     if (rv < 0) {
         PyXmlSec_SetLastError("failed to verify");
         goto ON_FAIL;
     }
-    if (handle->status != xmlSecDSigStatusSucceeded) {
+    if (ctx->status != xmlSecDSigStatusSucceeded) {
         PyErr_SetString(PyXmlSec_VerificationError, "Signature is invalid.");
         goto ON_FAIL;
     }

@@ -15,6 +15,7 @@
 #include "lxml.h"
 
 #include <xmlsec/xmlenc.h>
+#include <xmlsec/xmltree.h>
 
 typedef struct {
     PyObject_HEAD
@@ -105,6 +106,19 @@ static int PyXmlSec_EncryptionContextKeySet(PyObject* self, PyObject* value, voi
     return 0;
 }
 
+static const char PyXmlSec_EncryptionContextReset__doc__[] = \
+    "Resets *context*, user settings are not touched.\n";
+static PyObject* PyXmlSec_EncryptionContextReset(PyObject* self, PyObject* args, PyObject* kwargs) {
+    PYXMLSEC_DEBUGF("%p: reset context - start", self);
+    xmlSecEncCtxPtr ctx = ((PyXmlSec_EncryptionContext*)self)->handle;
+    Py_BEGIN_ALLOW_THREADS;
+    xmlSecEncCtxReset(ctx);
+    PYXMLSEC_DUMP(xmlSecEncCtxDebugDump, ctx);
+    Py_END_ALLOW_THREADS;
+    PYXMLSEC_DEBUGF("%p: reset context - ok", self);
+    Py_RETURN_NONE;
+}
+
 static const char PyXmlSec_EncryptionContextEncryptBinary__doc__[] = \
     "Encrypts binary *data* according to `EncryptedData` template *template*\n"\
     "Note: *template* is modified in place.\n\n"
@@ -128,6 +142,7 @@ static PyObject* PyXmlSec_EncryptionContextEncryptBinary(PyObject* self, PyObjec
     int rv;
     Py_BEGIN_ALLOW_THREADS;
     rv = xmlSecEncCtxBinaryEncrypt(ctx, template->_c_node, (const xmlSecByte*)data, (xmlSecSize)data_size);
+    PYXMLSEC_DUMP(xmlSecEncCtxDebugDump, ctx);
     Py_END_ALLOW_THREADS;
 
     if (rv < 0) {
@@ -163,12 +178,9 @@ static const char PyXmlSec_EncryptionContextEncryptXml__doc__[] = \
     "Note: The `Type` attribute of *template* decides whether *node* itself is encrypted\n"\
     "(`http://www.w3.org/2001/04/xmlenc#Element`) or its content (`http://www.w3.org/2001/04/xmlenc#Content`).\n"\
     "It must have one of these two values (or an exception is raised).\n"\
-    "The operation modifies the tree containing *node* in a way that\n"\
-    "`lxml` references to or into this tree may see a surprising state.\n"\
-    "You should no longer rely on them. Especially, you should use\n"\
-    "`getroottree()` on the result to obtain the encrypted result tree.\n\n"
-    ":param template: the pointer to <enc:EncryptedData/> template node\n"
-    ":param node: the pointer to node for encryption\n"
+    "The operation modifies the tree and removes replaced nodes.\n"\
+    ":param template: the pointer to <enc:EncryptedData/> template node\n"\
+    ":param node: the pointer to node for encryption\n"\
     ":return: the pointer to newly created <enc:EncryptedData/> node\n";
 static PyObject* PyXmlSec_EncryptionContextEncryptXml(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "template", "node", NULL};
@@ -216,6 +228,7 @@ static PyObject* PyXmlSec_EncryptionContextEncryptXml(PyObject* self, PyObject* 
             xnew_node = NULL;
         }
     }
+    PYXMLSEC_DUMP(xmlSecEncCtxDebugDump, ctx);
     Py_END_ALLOW_THREADS;
 
     PyXmlSec_ClearReplacedNodes(ctx, node->_doc);
@@ -258,6 +271,7 @@ static PyObject* PyXmlSec_EncryptionContextEncryptUri(PyObject* self, PyObject* 
     int rv;
     Py_BEGIN_ALLOW_THREADS;
     rv = xmlSecEncCtxUriEncrypt(ctx, template->_c_node, (const xmlSecByte*)uri);
+    PYXMLSEC_DUMP(xmlSecEncCtxDebugDump, ctx);
     Py_END_ALLOW_THREADS;
 
     if (rv < 0) {
@@ -273,14 +287,12 @@ ON_FAIL:
 }
 
 static const char PyXmlSec_EncryptionContextDecrypt__doc__[] = \
-    "Decrypts *node* (an `EncryptedData` element) and return the result.\n"\
+    "Decrypts *node* (an `EncryptedData` or `EncryptedKey` element) and return the result.\n"\
     "The decryption may result in binary data or an XML subtree.\n"\
     "In the former case, the binary data is returned. In the latter case,\n"\
     "the input tree is modified and a reference to the decrypted XML subtree is returned.\n"\
-    "If the operation modifies the tree, `lxml` references to or into this tree may see a surprising state.\n"\
-    "You should no longer rely on them. Especially, you should use `getroottree()` on the result\n"\
-    "to obtain the decrypted result tree.\n\n"
-    ":param node: the pointer to <enc:EncryptedData/> node\n"
+    "If the operation modifies the tree, it removes replaced nodes.\n"\
+    ":param node: the pointer to <enc:EncryptedData/> or <enc:EncryptedKey/> node\n"
     ":return: depends on input parameters\n";
 
 static PyObject* PyXmlSec_EncryptionContextDecrypt(PyObject* self, PyObject* args, PyObject* kwargs) {
@@ -310,15 +322,18 @@ static PyObject* PyXmlSec_EncryptionContextDecrypt(PyObject* self, PyObject* arg
         }
         // get index of node
         node_num = PyObject_CallMethod(parent, "index", "O", node);
-        PYXMLSEC_DEBUGF("%p, %p", parent, node_num);
+        PYXMLSEC_DEBUGF("parent: %p, %p", parent, node_num);
     }
 
     xmlSecEncCtxPtr ctx = ((PyXmlSec_EncryptionContext*)self)->handle;
-    ctx->flags = XMLSEC_ENC_RETURN_REPLACED_NODE;
     int rv;
 
     Py_BEGIN_ALLOW_THREADS;
+    ctx->flags = XMLSEC_ENC_RETURN_REPLACED_NODE;
+    ctx->mode = xmlSecCheckNodeName(node->_c_node, xmlSecNodeEncryptedKey, xmlSecEncNs) ? xmlEncCtxModeEncryptedKey : xmlEncCtxModeEncryptedData;
+    PYXMLSEC_DEBUGF("mode: %d", ctx->mode);
     rv = xmlSecEncCtxDecrypt(ctx, node->_c_node);
+    PYXMLSEC_DUMP(xmlSecEncCtxDebugDump, ctx);
     Py_END_ALLOW_THREADS;
 
     PyXmlSec_ClearReplacedNodes(ctx, node->_doc);
@@ -385,6 +400,12 @@ static PyGetSetDef PyXmlSec_EncryptionContextGetSet[] = {
 };
 
 static PyMethodDef PyXmlSec_EncryptionContextMethods[] = {
+    {
+        "reset",
+        (PyCFunction)PyXmlSec_EncryptionContextReset,
+        METH_NOARGS,
+        PyXmlSec_EncryptionContextReset__doc__,
+    },
     {
         "encrypt_binary",
         (PyCFunction)PyXmlSec_EncryptionContextEncryptBinary,

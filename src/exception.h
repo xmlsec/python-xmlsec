@@ -22,4 +22,6 @@ void PyXmlSec_SetLastError2(PyObject* type, const char* msg);
 
 void PyXmlSec_ClearError(void);
 
+void PyXmlSecEnableDebugTrace(int);
+
 #endif //__PYXMLSEC_EXCEPTIONS_H__

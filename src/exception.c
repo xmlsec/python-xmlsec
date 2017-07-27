@@ -16,12 +16,16 @@
 
 #include <pythread.h>
 
+#include <stdio.h>
+
 // default error class
 PyObject* PyXmlSec_Error;
 PyObject* PyXmlSec_InternalError;
 PyObject* PyXmlSec_VerificationError;
 
 static int PyXmlSec_LastErrorKey = 0;
+
+static int PyXmlSec_PrintErrorMessage = 0;
 
 typedef struct {
     const xmlChar* file;
@@ -83,8 +87,27 @@ static void PyXmlSec_ErrorCallback(const char* file, int line, const char* func,
     // TODO do not allocate error object each time.
     PyXmlSec_ErrorHolderFree(PyXmlSec_ExchangeLastError(PyXmlSec_ErrorHolderCreate(file, line, func, object, subject, reason, msg)));
 
-    // also call default callback
-    xmlSecErrorsDefaultCallback(file, line, func, object, subject, reason, msg);
+    if (PyXmlSec_PrintErrorMessage) {
+        const char* error_msg = NULL;
+        xmlSecSize i;
+        for (i = 0; (i < XMLSEC_ERRORS_MAX_NUMBER) && (xmlSecErrorsGetMsg(i) != NULL); ++i) {
+            if(xmlSecErrorsGetCode(i) == reason) {
+                error_msg = xmlSecErrorsGetMsg(i);
+                break;
+            }
+        }
+
+        fprintf(stderr,
+            "func=%s:file=%s:line=%d:obj=%s:subj=%s:error=%d:%s:%s\n",
+            (func != NULL) ? func : "unknown",
+            (file != NULL) ? file : "unknown",
+            line,
+            (object != NULL) ? object : "unknown",
+            (subject != NULL) ? subject : "unknown",
+            reason,
+            (error_msg != NULL) ? error_msg : "",
+            (msg != NULL) ? msg : "");
+    }
 }
 
 // pops the last error which was occurred in current thread
@@ -131,6 +154,10 @@ void PyXmlSec_SetLastError(const char* msg) {
 
 void PyXmlSec_ClearError(void) {
     PyXmlSec_ErrorHolderFree(PyXmlSec_ExchangeLastError(NULL));
+}
+
+void PyXmlSecEnableDebugTrace(int v) {
+    PyXmlSec_PrintErrorMessage = v;
 }
 
 // initializes errors module
