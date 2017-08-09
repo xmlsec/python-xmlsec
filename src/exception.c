@@ -68,6 +68,9 @@ void PyXmlSec_ErrorHolderFree(PyXmlSec_ErrorHolder* h) {
 
 // saves new error in TLS and returns previous
 static PyXmlSec_ErrorHolder* PyXmlSec_ExchangeLastError(PyXmlSec_ErrorHolder* e) {
+    PyXmlSec_ErrorHolder* v;
+    int r;
+
     if (PyXmlSec_LastErrorKey == 0) {
         PYXMLSEC_DEBUG("WARNING: There is no error key.");
         PyXmlSec_ErrorHolderFree(e);
@@ -75,9 +78,9 @@ static PyXmlSec_ErrorHolder* PyXmlSec_ExchangeLastError(PyXmlSec_ErrorHolder* e)
     }
 
     // get_key_value and set_key_value are gil free
-    PyXmlSec_ErrorHolder* v = (PyXmlSec_ErrorHolder*)PyThread_get_key_value(PyXmlSec_LastErrorKey);
+    v = (PyXmlSec_ErrorHolder*)PyThread_get_key_value(PyXmlSec_LastErrorKey);
     PyThread_delete_key_value(PyXmlSec_LastErrorKey);
-    int r = PyThread_set_key_value(PyXmlSec_LastErrorKey, (void*)e);
+    r = PyThread_set_key_value(PyXmlSec_LastErrorKey, (void*)e);
     PYXMLSEC_DEBUGF("set_key_value returns %d", r);
     return v;
 }
@@ -114,11 +117,13 @@ static void PyXmlSec_ErrorCallback(const char* file, int line, const char* func,
 // the gil should be acquired
 static PyObject* PyXmlSec_GetLastError(PyObject* type, const char* msg) {
     PyXmlSec_ErrorHolder* h = PyXmlSec_ExchangeLastError(NULL);
+    PyObject* exc;
+
     if (h == NULL) {
         return NULL;
     }
 
-    PyObject* exc = PyObject_CallFunction(type, "is", h->reason, msg);
+    exc = PyObject_CallFunction(type, "is", h->reason, msg);
     if (exc == NULL) goto ON_FAIL;
 
     PyXmlSec_SetLongAttr(exc, "code", h->reason);

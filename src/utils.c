@@ -10,10 +10,14 @@
 #include "utils.h"
 
 PyObject* PyXmlSec_GetFilePathOrContent(PyObject* file, int* is_content) {
+    PyObject* data;
+    PyObject* utf8;
+    PyObject* tmp = NULL;
+
     if (PyObject_HasAttrString(file, "read")) {
-        PyObject* data = PyObject_CallMethod(file, "read", NULL);
+        data = PyObject_CallMethod(file, "read", NULL);
         if (data != NULL && PyUnicode_Check(data)) {
-            PyObject* utf8 = PyUnicode_AsUTF8String(data);
+            utf8 = PyUnicode_AsUTF8String(data);
             Py_DECREF(data);
             data = utf8;
         }
@@ -21,7 +25,6 @@ PyObject* PyXmlSec_GetFilePathOrContent(PyObject* file, int* is_content) {
         return data;
     }
     *is_content = 0;
-    PyObject* tmp = NULL;
     if (!PyString_FSConverter(file, &tmp)) {
         return NULL;
     }
@@ -30,20 +33,24 @@ PyObject* PyXmlSec_GetFilePathOrContent(PyObject* file, int* is_content) {
 
 int PyXmlSec_SetStringAttr(PyObject* obj, const char* name, const char* value) {
     PyObject* tmp = PyString_FromString(value);
+    int r;
+
     if (tmp == NULL) {
         return -1;
     }
-    int r = PyObject_SetAttrString(obj, name, tmp);
+    r = PyObject_SetAttrString(obj, name, tmp);
     Py_DECREF(tmp);
     return r;
 }
 
 int PyXmlSec_SetLongAttr(PyObject* obj, const char* name, long value) {
     PyObject* tmp = PyLong_FromLong(value);
+    int r;
+
     if (tmp == NULL) {
         return -1;
     }
-    int r = PyObject_SetAttrString(obj, name, tmp);
+    r = PyObject_SetAttrString(obj, name, tmp);
     Py_DECREF(tmp);
     return r;
 }

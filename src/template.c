@@ -34,6 +34,7 @@ static PyObject* PyXmlSec_TemplateCreate(PyObject* self, PyObject *args, PyObjec
     PyXmlSec_Transform* sign = NULL;
     const char* id = NULL;
     const char* ns = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template create - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O!O!|zzz:create", kwlist,
@@ -42,7 +43,6 @@ static PyObject* PyXmlSec_TemplateCreate(PyObject* self, PyObject *args, PyObjec
         goto ON_FAIL;
     }
 
-    xmlNodePtr res;
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplSignatureCreateNsPref(node->_doc->_c_doc, c14n->id, sign->id, XSTR(id), XSTR(ns));
     Py_END_ALLOW_THREADS;
@@ -76,6 +76,7 @@ static PyObject* PyXmlSec_TemplateAddReference(PyObject* self, PyObject *args, P
     const char* id = NULL;
     const char* uri = NULL;
     const char* type = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template add_reference - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O!|zzz:add_reference", kwlist,
@@ -83,7 +84,6 @@ static PyObject* PyXmlSec_TemplateAddReference(PyObject* self, PyObject *args, P
     {
         goto ON_FAIL;
     }
-    xmlNodePtr res;
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplSignatureAddReference(node->_c_node, digest->id, XSTR(id), XSTR(uri), XSTR(type));
     Py_END_ALLOW_THREADS;
@@ -110,6 +110,7 @@ static PyObject* PyXmlSec_TemplateAddTransform(PyObject* self, PyObject *args, P
 
     PyXmlSec_LxmlElementPtr node = NULL;
     PyXmlSec_Transform* transform = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template add_transform - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O!:add_transform", kwlist,
@@ -117,7 +118,6 @@ static PyObject* PyXmlSec_TemplateAddTransform(PyObject* self, PyObject *args, P
     {
         goto ON_FAIL;
     }
-    xmlNodePtr res;
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplReferenceAddTransform(node->_c_node, transform->id);
     Py_END_ALLOW_THREADS;
@@ -144,13 +144,14 @@ static PyObject* PyXmlSec_TemplateEnsureKeyInfo(PyObject* self, PyObject *args, 
 
     PyXmlSec_LxmlElementPtr node = NULL;
     const char* id = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template ensure_key_info - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&|z:ensure_key_info", kwlist, PyXmlSec_LxmlElementConverter, &node, &id))
     {
         goto ON_FAIL;
     }
-    xmlNodePtr res;
+
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplSignatureEnsureKeyInfo(node->_c_node, XSTR(id));
     Py_END_ALLOW_THREADS;
@@ -177,6 +178,7 @@ static PyObject* PyXmlSec_TemplateAddKeyName(PyObject* self, PyObject *args, PyO
 
     PyXmlSec_LxmlElementPtr node = NULL;
     const char* name = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template add_key_name - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&|z:add_key_name", kwlist, PyXmlSec_LxmlElementConverter, &node, &name))
@@ -184,7 +186,6 @@ static PyObject* PyXmlSec_TemplateAddKeyName(PyObject* self, PyObject *args, PyO
         goto ON_FAIL;
     }
 
-    xmlNodePtr res;
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplKeyInfoAddKeyName(node->_c_node, XSTR(name));
     Py_END_ALLOW_THREADS;
@@ -209,6 +210,7 @@ static PyObject* PyXmlSec_TemplateAddKeyValue(PyObject* self, PyObject *args, Py
     static char *kwlist[] = { "node", NULL};
 
     PyXmlSec_LxmlElementPtr node = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template add_key_value - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&:add_key_value", kwlist, PyXmlSec_LxmlElementConverter, &node))
@@ -216,7 +218,6 @@ static PyObject* PyXmlSec_TemplateAddKeyValue(PyObject* self, PyObject *args, Py
         goto ON_FAIL;
     }
 
-    xmlNodePtr res;
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplKeyInfoAddKeyValue(node->_c_node);
     Py_END_ALLOW_THREADS;
@@ -241,6 +242,7 @@ static PyObject* PyXmlSec_TemplateAddX509Data(PyObject* self, PyObject *args, Py
     static char *kwlist[] = { "node", NULL};
 
     PyXmlSec_LxmlElementPtr node = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template add_x509_data - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&:add_x509_data", kwlist, PyXmlSec_LxmlElementConverter, &node))
@@ -248,7 +250,6 @@ static PyObject* PyXmlSec_TemplateAddX509Data(PyObject* self, PyObject *args, Py
         goto ON_FAIL;
     }
 
-    xmlNodePtr res;
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplKeyInfoAddX509Data(node->_c_node);
     Py_END_ALLOW_THREADS;
@@ -273,6 +274,7 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddIssuerSerial(PyObject* self, PyO
     static char *kwlist[] = { "node", NULL};
 
     PyXmlSec_LxmlElementPtr node = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template x509_data_add_issuer_serial - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&:x509_data_add_issuer_serial", kwlist,
@@ -280,7 +282,6 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddIssuerSerial(PyObject* self, PyO
     {
         goto ON_FAIL;
     }
-    xmlNodePtr res;
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplX509DataAddIssuerSerial(node->_c_node);
     Py_END_ALLOW_THREADS;
@@ -307,6 +308,7 @@ static PyObject* PyXmlSec_TemplateAddX509DataIssuerSerialAddIssuerName(PyObject*
 
     PyXmlSec_LxmlElementPtr node = NULL;
     const char* name = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template x509_issuer_serial_add_issuer_name - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&|z:x509_issuer_serial_add_issuer_name", kwlist,
@@ -314,7 +316,7 @@ static PyObject* PyXmlSec_TemplateAddX509DataIssuerSerialAddIssuerName(PyObject*
     {
         goto ON_FAIL;
     }
-    xmlNodePtr res;
+
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplX509IssuerSerialAddIssuerName(node->_c_node, XSTR(name));
     Py_END_ALLOW_THREADS;
@@ -341,6 +343,7 @@ static PyObject* PyXmlSec_TemplateAddX509DataIssuerSerialAddIssuerSerialNumber(P
 
     PyXmlSec_LxmlElementPtr node = NULL;
     const char* serial = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template x509_issuer_serial_add_serial_number - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&|z:x509_issuer_serial_add_serial_number", kwlist,
@@ -348,7 +351,7 @@ static PyObject* PyXmlSec_TemplateAddX509DataIssuerSerialAddIssuerSerialNumber(P
     {
         goto ON_FAIL;
     }
-    xmlNodePtr res;
+
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplX509IssuerSerialAddSerialNumber(node->_c_node, XSTR(serial));
     Py_END_ALLOW_THREADS;
@@ -373,6 +376,7 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddSubjectName(PyObject* self, PyOb
     static char *kwlist[] = { "node", NULL};
 
     PyXmlSec_LxmlElementPtr node = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template x509_data_add_subject_name - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&:x509_data_add_subject_name", kwlist,
@@ -380,7 +384,7 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddSubjectName(PyObject* self, PyOb
     {
         goto ON_FAIL;
     }
-    xmlNodePtr res;
+
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplX509DataAddSubjectName(node->_c_node);
     Py_END_ALLOW_THREADS;
@@ -405,6 +409,7 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddSKI(PyObject* self, PyObject *ar
     static char *kwlist[] = { "node", NULL};
 
     PyXmlSec_LxmlElementPtr node = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template x509_data_add_ski - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&:x509_data_add_ski", kwlist,
@@ -412,7 +417,7 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddSKI(PyObject* self, PyObject *ar
     {
         goto ON_FAIL;
     }
-    xmlNodePtr res;
+
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplX509DataAddSKI(node->_c_node);
     Py_END_ALLOW_THREADS;
@@ -437,6 +442,7 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddCertificate(PyObject* self, PyOb
     static char *kwlist[] = { "node", NULL};
 
     PyXmlSec_LxmlElementPtr node = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template x509_data_add_certificate - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&:x509_data_add_certificate", kwlist,
@@ -444,7 +450,7 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddCertificate(PyObject* self, PyOb
     {
         goto ON_FAIL;
     }
-    xmlNodePtr res;
+
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplX509DataAddCertificate(node->_c_node);
     Py_END_ALLOW_THREADS;
@@ -469,6 +475,7 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddCRL(PyObject* self, PyObject *ar
     static char *kwlist[] = { "node", NULL};
 
     PyXmlSec_LxmlElementPtr node = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template x509_data_add_crl - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&:x509_data_add_crl", kwlist,
@@ -476,7 +483,7 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddCRL(PyObject* self, PyObject *ar
     {
         goto ON_FAIL;
     }
-    xmlNodePtr res;
+
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplX509DataAddCRL(node->_c_node);
     Py_END_ALLOW_THREADS;
@@ -509,6 +516,7 @@ static PyObject* PyXmlSec_TemplateAddEncryptedKey(PyObject* self, PyObject *args
     const char* id = NULL;
     const char* type = NULL;
     const char* recipient = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template add_encrypted_key - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O!|zzz:add_encrypted_key", kwlist,
@@ -516,7 +524,7 @@ static PyObject* PyXmlSec_TemplateAddEncryptedKey(PyObject* self, PyObject *args
     {
         goto ON_FAIL;
     }
-    xmlNodePtr res;
+
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplKeyInfoAddEncryptedKey(node->_c_node, method->id, XSTR(id), XSTR(type), XSTR(recipient));
     Py_END_ALLOW_THREADS;
@@ -553,6 +561,7 @@ static PyObject* PyXmlSec_TemplateCreateEncryptedData(PyObject* self, PyObject *
     const char* mime_type = NULL;
     const char* encoding = NULL;
     const char* ns = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template encrypted_data_create - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O!|zzzzz:encrypted_data_create", kwlist,
@@ -560,7 +569,7 @@ static PyObject* PyXmlSec_TemplateCreateEncryptedData(PyObject* self, PyObject *
     {
         goto ON_FAIL;
     }
-    xmlNodePtr res;
+
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplEncDataCreate(node->_doc->_c_doc, method->id, XSTR(id), XSTR(type), XSTR(mime_type), XSTR(encoding));
     Py_END_ALLOW_THREADS;
@@ -592,6 +601,7 @@ static PyObject* PyXmlSec_TemplateEncryptedDataEnsureKeyInfo(PyObject* self, PyO
     PyXmlSec_LxmlElementPtr node = NULL;
     const char* id = NULL;
     const char* ns = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template encrypted_data_ensure_key_info - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&|zz:encrypted_data_ensure_key_info", kwlist,
@@ -599,7 +609,7 @@ static PyObject* PyXmlSec_TemplateEncryptedDataEnsureKeyInfo(PyObject* self, PyO
     {
         goto ON_FAIL;
     }
-    xmlNodePtr res;
+
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplEncDataEnsureKeyInfo(node->_c_node, XSTR(id));
     Py_END_ALLOW_THREADS;
@@ -627,6 +637,7 @@ static PyObject* PyXmlSec_TemplateEncryptedDataEnsureCipherValue(PyObject* self,
     static char *kwlist[] = { "node", NULL};
 
     PyXmlSec_LxmlElementPtr node = NULL;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template encrypted_data_ensure_cipher_value - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&:encrypted_data_ensure_cipher_value", kwlist,
@@ -634,7 +645,7 @@ static PyObject* PyXmlSec_TemplateEncryptedDataEnsureCipherValue(PyObject* self,
     {
         goto ON_FAIL;
     }
-    xmlNodePtr res;
+
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplEncDataEnsureCipherValue(node->_c_node);
     Py_END_ALLOW_THREADS;
@@ -660,6 +671,10 @@ static PyObject* PyXmlSec_TemplateTransformAddC14NInclNamespaces(PyObject* self,
 
     PyXmlSec_LxmlElementPtr node = NULL;
     PyObject* prefixes = NULL;
+    PyObject* sep;
+    int res;
+    const char* c_prefixes;
+
     // transform_add_c14n_inclusive_namespaces
     PYXMLSEC_DEBUG("template encrypted_data_ensure_cipher_value - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O:transform_add_c14n_inclusive_namespaces", kwlist,
@@ -669,7 +684,7 @@ static PyObject* PyXmlSec_TemplateTransformAddC14NInclNamespaces(PyObject* self,
         goto ON_FAIL;
     }
     if (PyList_Check(prefixes) || PyTuple_Check(prefixes)) {
-        PyObject* sep = PyString_FromString(" ");
+        sep = PyString_FromString(" ");
         prefixes = PyObject_CallMethod(sep, "join", "O", prefixes);
         Py_DECREF(sep);
     } else if (PyString_Check(prefixes)) {
@@ -683,8 +698,8 @@ static PyObject* PyXmlSec_TemplateTransformAddC14NInclNamespaces(PyObject* self,
         goto ON_FAIL;
     }
 
-    int res;
-    const char* c_prefixes = PyString_AsString(prefixes);
+
+    c_prefixes = PyString_AsString(prefixes);
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplTransformAddC14NInclNamespaces(node->_c_node, XSTR(c_prefixes));
     Py_END_ALLOW_THREADS;

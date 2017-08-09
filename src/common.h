@@ -16,10 +16,6 @@
 #define MODULE_NAME "xmlsec"
 #endif
 
-#ifndef MODULE_DOC
-#define MODULE_DOC "The tiny python wrapper around xmlsec1 library."
-#endif
-
 #define JOIN(X,Y) DO_JOIN1(X,Y)
 #define DO_JOIN1(X,Y) DO_JOIN2(X,Y)
 #define DO_JOIN2(X,Y) X##Y

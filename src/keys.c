@@ -27,8 +27,8 @@ static PyObject* PyXmlSec_Key__new__(PyTypeObject *type, PyObject *args, PyObjec
 }
 
 static void PyXmlSec_Key__del__(PyObject* self) {
-    PYXMLSEC_DEBUGF("%p: delete key", self);
     PyXmlSec_Key* key = (PyXmlSec_Key*)self;
+    PYXMLSEC_DEBUGF("%p: delete key", self);
     if (key->is_own) {
         PYXMLSEC_DEBUGF("%p: delete handle - %p", self, key->handle);
         xmlSecKeyDestroy(key->handle);
@@ -41,10 +41,12 @@ static PyXmlSec_Key* PyXmlSec_NewKey1(PyTypeObject* type) {
 }
 
 static PyObject* PyXmlSec_Key__copy__(PyObject* self) {
+    xmlSecKeyPtr handle = ((PyXmlSec_Key*)self)->handle;
+    PyXmlSec_Key* key2;
+
     PYXMLSEC_DEBUGF("%p: copy key", self);
 
-    xmlSecKeyPtr handle = ((PyXmlSec_Key*)self)->handle;
-    PyXmlSec_Key* key2 = PyXmlSec_NewKey1(Py_TYPE(self));
+    key2 = PyXmlSec_NewKey1(Py_TYPE(self));
 
     if (handle == NULL || key2 == NULL) {
         PYXMLSEC_DEBUGF("%p: null key", self);
@@ -223,6 +225,7 @@ static PyObject* PyXmlSec_KeyFromBinaryFile(PyObject* self, PyObject* args, PyOb
     PyObject* filepath = NULL;
 
     PyXmlSec_Key* key = NULL;
+    const char* filename;
 
     PYXMLSEC_DEBUG("load symmetric key - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!O&:from_binary_file", kwlist,
@@ -231,7 +234,7 @@ static PyObject* PyXmlSec_KeyFromBinaryFile(PyObject* self, PyObject* args, PyOb
         goto ON_FAIL;
     }
 
-    const char* filename = PyBytes_AsString(filepath);
+    filename = PyBytes_AsString(filepath);
     if (filename == NULL) goto ON_FAIL;
     if ((key = PyXmlSec_NewKey1((PyTypeObject*)self)) == NULL) goto ON_FAIL;
 
@@ -307,19 +310,19 @@ static const char PyXmlSec_KeyCertFromMemory__doc__[] = \
 static PyObject* PyXmlSec_KeyCertFromMemory(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "data", "format", NULL};
 
+    PyXmlSec_Key* key = (PyXmlSec_Key*)self;
     const char* data = NULL;
     Py_ssize_t data_size = 0;
     unsigned int format = 0;
 
     PyObject* tmp = NULL;
+    int rv = 0;
 
     PYXMLSEC_DEBUGF("%p: load certificate from memory - start", self);
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s#I:load_cert_from_memory", kwlist, &data, &data_size, &format)) {
         goto ON_FAIL;
     }
 
-    PyXmlSec_Key* key = (PyXmlSec_Key*)self;
-    int rv = 0;
     Py_BEGIN_ALLOW_THREADS;
     rv = xmlSecCryptoAppKeyCertLoadMemory(key->handle, (const xmlSecByte*)data, (xmlSecSize)data_size, format);
     Py_END_ALLOW_THREADS;
@@ -343,6 +346,8 @@ static const char PyXmlSec_KeyCertFromFile__doc__[] = \
 static PyObject* PyXmlSec_KeyCertFromFile(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "file", "format", NULL};
 
+    PyXmlSec_Key* key = (PyXmlSec_Key*)self;
+
     PyObject* file = NULL;
     unsigned int format = 0;
 
@@ -350,6 +355,7 @@ static PyObject* PyXmlSec_KeyCertFromFile(PyObject* self, PyObject* args, PyObje
     int is_content = 0;
     const char* data = NULL;
     Py_ssize_t data_size = 0;
+    int rv = 0;
 
     PYXMLSEC_DEBUGF("%p: load certificate from memory - start", self);
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OI:load_cert_from_file", kwlist, &file, &format)) {
@@ -366,8 +372,6 @@ static PyObject* PyXmlSec_KeyCertFromFile(PyObject* self, PyObject* args, PyObje
 
     if (data == NULL) goto ON_FAIL;
 
-    PyXmlSec_Key* key = (PyXmlSec_Key*)self;
-    int rv = 0;
     Py_BEGIN_ALLOW_THREADS;
     if (is_content) {
         rv = xmlSecCryptoAppKeyCertLoadMemory(key->handle, (const xmlSecByte*)data, (xmlSecSize)data_size, format);
@@ -391,13 +395,15 @@ ON_FAIL:
 
 static const char PyXmlSec_KeyName__doc__[] = "the name of *key*.\n";
 static PyObject* PyXmlSec_KeyNameGet(PyObject* self, void* closure) {
+    PyXmlSec_Key* key = (PyXmlSec_Key*)self;
+    const char* cname;
+
     PYXMLSEC_DEBUGF("%p: get name of key", self);
-    xmlSecKeyPtr handle = ((PyXmlSec_Key*)self)->handle;
-    if (handle == NULL) {
+    if (key->handle == NULL) {
         PyErr_SetString(PyExc_ValueError, "key is not ready");
         return NULL;
     }
-    const char* cname = (const char*)xmlSecKeyGetName(handle);
+    cname = (const char*)xmlSecKeyGetName(key->handle);
     if (cname != NULL) {
         return PyString_FromString(cname);
     }
@@ -405,18 +411,20 @@ static PyObject* PyXmlSec_KeyNameGet(PyObject* self, void* closure) {
 }
 
 static int PyXmlSec_KeyNameSet(PyObject* self, PyObject* value, void* closure) {
+    PyXmlSec_Key* key = (PyXmlSec_Key*)self;
+    const char* name;
+
     PYXMLSEC_DEBUGF("%p: set name of key %p", self, value);
 
-    xmlSecKeyPtr handle = ((PyXmlSec_Key*)self)->handle;
-    if (handle == NULL) {
+    if (key->handle == NULL) {
         PyErr_SetString(PyExc_ValueError, "key is not ready");
         return -1;
     }
 
-    const char* name = PyString_AsString(value);
+    name = PyString_AsString(value);
     if (name == NULL) return -1;
 
-    xmlSecKeySetName(handle, XSTR(name));
+    xmlSecKeySetName(key->handle, XSTR(name));
     return 0;
 }
 
@@ -526,9 +534,9 @@ static PyTypeObject _PyXmlSec_KeyType = {
     0,                                          /* tp_descr_set */
     0,                                          /* tp_dictoffset */
     0,                                          /* tp_init */
-    PyType_GenericAlloc,                        /* tp_alloc */
+    0,                                          /* tp_alloc */
     PyXmlSec_Key__new__,                        /* tp_new */
-    PyObject_Del                                /* tp_free */
+    0,                                          /* tp_free */
 };
 
 PyTypeObject* PyXmlSec_KeyType = &_PyXmlSec_KeyType;
@@ -550,8 +558,9 @@ static PyObject* PyXmlSec_KeysManager__new__(PyTypeObject *type, PyObject *args,
 }
 
 static int PyXmlSec_KeysManager__init__(PyObject* self, PyObject* args, PyObject* kwargs) {
-    PYXMLSEC_DEBUGF("%p: init key manager", self);
     xmlSecKeysMngrPtr handle = xmlSecKeysMngrCreate();
+
+    PYXMLSEC_DEBUGF("%p: init key manager", self);
     if (handle == NULL) {
         PyXmlSec_SetLastError("failed to create xmlsecKeyManger");
         return -1;
@@ -567,11 +576,13 @@ static int PyXmlSec_KeysManager__init__(PyObject* self, PyObject* args, PyObject
 }
 
 static void PyXmlSec_KeysManager__del__(PyObject* self) {
+    PyXmlSec_KeysManager* mgr = (PyXmlSec_KeysManager*)self;
+
     PYXMLSEC_DEBUGF("%p: delete KeysManager", self);
-    PyXmlSec_KeysManager* manager = (PyXmlSec_KeysManager*)self;
-    if (manager->handle != NULL) {
-        PYXMLSEC_DEBUGF("%p: delete KeysManager handle - %p", self, manager->handle);
-        xmlSecKeysMngrDestroy(manager->handle);
+
+    if (mgr->handle != NULL) {
+        PYXMLSEC_DEBUGF("%p: delete KeysManager handle - %p", self, mgr->handle);
+        xmlSecKeysMngrDestroy(mgr->handle);
     }
     Py_TYPE(self)->tp_free(self);
 }
@@ -582,7 +593,10 @@ static const char PyXmlSec_KeysManagerAddKey__doc__[] = \
 static PyObject* PyXmlSec_KeysManagerAddKey(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "key", NULL};
 
+    PyXmlSec_KeysManager* mgr = (PyXmlSec_KeysManager*)self;
     PyXmlSec_Key* key = NULL;
+    xmlSecKeyPtr key2;
+    int rv;
 
     PYXMLSEC_DEBUGF("%p(%p): add key - start", self, ((PyXmlSec_KeysManager*)self)->handle);
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!:add_key", kwlist, PyXmlSec_KeyType, &key)) {
@@ -594,7 +608,6 @@ static PyObject* PyXmlSec_KeysManagerAddKey(PyObject* self, PyObject* args, PyOb
         goto ON_FAIL;
     }
 
-    xmlSecKeyPtr key2;
     Py_BEGIN_ALLOW_THREADS
     key2 = xmlSecKeyDuplicate(key->handle);
     Py_END_ALLOW_THREADS;
@@ -604,9 +617,8 @@ static PyObject* PyXmlSec_KeysManagerAddKey(PyObject* self, PyObject* args, PyOb
         goto ON_FAIL;
     }
 
-    int rv;
     Py_BEGIN_ALLOW_THREADS;
-    rv = xmlSecCryptoAppDefaultKeysMngrAdoptKey(((PyXmlSec_KeysManager*)self)->handle, key2);
+    rv = xmlSecCryptoAppDefaultKeysMngrAdoptKey(mgr->handle, key2);
     Py_END_ALLOW_THREADS;
     if (rv < 0) {
         PyXmlSec_SetLastError("cannot add key");
@@ -628,9 +640,13 @@ static const char PyXmlSec_KeysManagerLoadCert__doc__[] = \
 static PyObject* PyXmlSec_KeysManagerLoadCert(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "filename", "format", "type", NULL};
 
+    PyXmlSec_KeysManager* mgr = (PyXmlSec_KeysManager*)self;
     PyObject* filepath = NULL;
     unsigned int format = 0;
     unsigned int type = 0;
+
+    const char* filename;
+    int rv;
 
     PYXMLSEC_DEBUGF("%p: load cert - start", self);
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&II:load_cert", kwlist,
@@ -638,11 +654,10 @@ static PyObject* PyXmlSec_KeysManagerLoadCert(PyObject* self, PyObject* args, Py
         goto ON_FAIL;
     }
 
-    const char* filename = PyBytes_AsString(filepath);
+    filename = PyBytes_AsString(filepath);
 
-    int rv;
     Py_BEGIN_ALLOW_THREADS;
-    rv = xmlSecCryptoAppKeysMngrCertLoad(((PyXmlSec_KeysManager*)self)->handle, filename, format, type);
+    rv = xmlSecCryptoAppKeysMngrCertLoad(mgr->handle, filename, format, type);
     Py_END_ALLOW_THREADS;
     if (rv < 0) {
         PyXmlSec_SetLastError("cannot load cert");
@@ -665,20 +680,21 @@ static const char PyXmlSec_KeysManagerLoadCertFromMemory__doc__[] = \
 static PyObject* PyXmlSec_KeysManagerLoadCertFromMemory(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "data", "format", "type", NULL};
 
+    PyXmlSec_KeysManager* mgr = (PyXmlSec_KeysManager*)self;
+
     const char* data = NULL;
     unsigned int type = 0;
     unsigned int format = 0;
     Py_ssize_t data_size = 0;
+    int rv;
 
     PYXMLSEC_DEBUGF("%p: load cert from memory - start", self);
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s#II:load_cert", kwlist, &data, &data_size, &format, &type)) {
         goto ON_FAIL;
     }
 
-    xmlSecKeysMngrPtr handle = ((PyXmlSec_KeysManager*)self)->handle;
-    int rv;
     Py_BEGIN_ALLOW_THREADS;
-    rv = xmlSecCryptoAppKeysMngrCertLoadMemory(handle, (const xmlSecByte*)data, (xmlSecSize)data_size, format, type);
+    rv = xmlSecCryptoAppKeysMngrCertLoadMemory(mgr->handle, (const xmlSecByte*)data, (xmlSecSize)data_size, format, type);
     Py_END_ALLOW_THREADS;
     if (rv < 0) {
         PyXmlSec_SetLastError("cannot load cert from memory");
@@ -750,9 +766,9 @@ static PyTypeObject _PyXmlSec_KeysManagerType = {
     0,                                          /* tp_descr_set */
     0,                                          /* tp_dictoffset */
     PyXmlSec_KeysManager__init__,               /* tp_init */
-    PyType_GenericAlloc,                        /* tp_alloc */
+    0,                                          /* tp_alloc */
     PyXmlSec_KeysManager__new__,                /* tp_new */
-    PyObject_Del                                /* tp_free */
+    0,                                          /* tp_free */
 };
 
 PyTypeObject* PyXmlSec_KeysManagerType = &_PyXmlSec_KeysManagerType;

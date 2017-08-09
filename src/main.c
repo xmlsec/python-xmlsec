@@ -21,6 +21,9 @@
 
 static int free_mode = _FREE_NONE;
 
+#define MODULE_DOC "The tiny python wrapper around xmlsec1 (" XMLSEC_VERSION ") library"
+
+
 static void PyXmlSec_Free(int what) {
     PYXMLSEC_DEBUGF("free resources %d", what);
     switch (what) {
@@ -160,7 +163,7 @@ static int PyXmlSec_PyClear(PyObject *self) {
 static PyModuleDef PyXmlSecModule = {
     PyModuleDef_HEAD_INIT,
     STRINGIFY(MODULE_NAME), /* name of module */
-    STRINGIFY(MODULE_DOC),             /* module documentation, may be NULL */
+    MODULE_DOC,             /* module documentation, may be NULL */
     -1,                     /* size of per-interpreter state of the module,
                                or -1 if the module keeps state in global variables. */
     PyXmlSec_MainMethods,   /* m_methods */
@@ -218,7 +221,7 @@ PYENTRY_FUNC_NAME(void)
 #ifdef PY3K
     module = PyModule_Create(&PyXmlSecModule);
 #else
-    module = Py_InitModule3(STRINGIFY(MODULE_NAME), PyXmlSec_MainMethods, STRINGIFY(MODULE_DOC));
+    module = Py_InitModule3(STRINGIFY(MODULE_NAME), PyXmlSec_MainMethods, MODULE_DOC);
 #endif
     if (!module) {
         PY_MOD_RETURN(NULL); /* this really should never happen */
