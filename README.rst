@@ -3,6 +3,8 @@ python-xmlsec
 
 .. image:: https://travis-ci.org/mehcode/python-xmlsec.png?branch=master
     :target: https://travis-ci.org/mehcode/python-xmlsec
+.. image:: https://ci.appveyor.com/api/projects/status/20rtt2wv96gag9cy?svg=true
+    :target: https://ci.appveyor.com/project/bgaifullin/python-xmlsec
 .. image:: https://img.shields.io/pypi/v/xmlsec.svg
     :target: https://pypi.python.org/pypi/xmlsec
 .. image:: https://img.shields.io/badge/docs-latest-green.svg
