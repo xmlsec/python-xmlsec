@@ -1,6 +1,5 @@
 import gc
 import os
-import resource
 import sys
 
 from lxml import etree
@@ -8,14 +7,30 @@ import xmlsec
 
 import unittest
 
+
 etype = type(etree.Element("test"))
 
 ns = {'dsig': xmlsec.constants.DSigNs, 'enc': xmlsec.constants.EncNs}
 
 
-def safe_int(s):
+try:
+    import resource
+
+    def get_memory_usage():
+        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+except ImportError:
+    resource = None
+
+    def get_memory_usage():
+        return 0
+
+
+def get_iterations():
+    if sys.platform in ('win32',):
+        return 0
+
     try:
-        return int(s)
+        return int(os.getenv("PYXMLSEC_TEST_ITERATIONS", "10"))
     except ValueError:
         return 0
 
@@ -23,7 +38,7 @@ def safe_int(s):
 class TestMemoryLeaks(unittest.TestCase):
     maxDiff = None
 
-    iterations = safe_int(os.getenv("PYXMLSEC_TEST_ITERATIONS", "10"))
+    iterations = get_iterations()
 
     data_dir = os.path.join(os.path.dirname(__file__), "data")
 
@@ -104,8 +119,8 @@ class TestMemoryLeaks(unittest.TestCase):
             self.fail('text: %r != %r. %s' % (first.text, second.text, msg))
         if not xml_text_compare(first.tail, second.tail):
             self.fail('tail: %r != %r. %s' % (first.tail, second.tail, msg))
-        cl1 = first.getchildren()
-        cl2 = second.getchildren()
+        cl1 = sorted(first.getchildren(), key=lambda x: x.tag)
+        cl2 = sorted(second.getchildren(), key=lambda x: x.tag)
         if len(cl1) != len(cl2):
             self.fail('children length differs, %i != %i. %s' % (len(cl1), len(cl2), msg))
         i = 0

@@ -80,27 +80,52 @@ Mac
 If you get any fatal errors about missing .h files, update your C_INCLUDE_PATH environment variable to
 include the appropriate files from the libxml2 and libxmlsec1 libraries.
 
+
+Windows (Wheel)
+^^^^^^^^^^^^^^^
+
+#. Download appropriate binary wheel from `ci.appveyor.com <https://ci.appveyor.com/project/bgaifullin/python-xmlsec>`_ (see build`s artifacts).
+
+#. Install wheel
+
+    .. code-block:: bash
+
+        pip install <wheel filename>
+
+
+Windows (pip)
+^^^^^^^^^^^^^
+
+#. Configure build environment, see `wiki.python.org <https://wiki.python.org/moin/WindowsCompilers>`_ for more details.
+
+#. Install from pip
+
+    .. code-block:: bash
+
+        pip install xmlsec
+
+
 Manual
 ------
 
-1. Clone the **xmlsec** repository to your local computer.
+#. Clone the **xmlsec** repository to your local computer.
 
-.. code-block:: bash
+    .. code-block:: bash
 
-    git clone git://github.com/mehcode/python-xmlsec.git
+        git clone git://github.com/mehcode/python-xmlsec.git
 
-2. Change into the **xmlsec** root directory.
+#. Change into the **xmlsec** root directory.
 
-.. code-block:: bash
+    .. code-block:: bash
 
-    cd /path/to/xmlsec
+        cd /path/to/xmlsec
 
 
-3. Install the project and all its dependencies using `pip`.
+#. Install the project and all its dependencies using `pip`.
 
-.. code-block:: bash
+    .. code-block:: bash
 
-    pip install .
+        pip install .
 
 
 ************
@@ -110,44 +135,43 @@ Contributing
 Setting up your environment
 ---------------------------
 
-1. Follow steps 1 and 2 of the [manual installation instructions][].
+#. Follow steps 1 and 2 of the `manual installation instructions <#manual>`_.
 
-[manual installation instructions]: #manual
 
-2. Initialize a virtual environment to develop in.
+#. Initialize a virtual environment to develop in.
    This is done so as to ensure every contributor is working with
    close-to-identicial versions of packages.
 
-.. code-block:: bash
+    .. code-block:: bash
 
-    mkvirtualenv xmlsec
+        mkvirtualenv xmlsec
 
 
-   The `mkvirtualenv` command is available from `virtualenvwrapper` which
-   can be installed by following: http://virtualenvwrapper.readthedocs.org/en/latest/install.html#basic-installation
+    The `mkvirtualenv` command is available from `virtualenvwrapper` which
+    can be installed by following `link <http://virtualenvwrapper.readthedocs.org/en/latest/install.html#basic-installation>`_
 
-3. Install **xmlsec** in development mode with testing enabled.
+#. Install **xmlsec** in development mode with testing enabled.
    This will download all dependencies required for running the unit tests.
 
-.. code-block:: bash
+    .. code-block:: bash
 
-    pip install -r requirements-test.txt
-    pip install -e "."
+        pip install -r requirements-test.txt
+        pip install -e "."
 
 
 Running the test suite
 ----------------------
 
-1. [Set up your environment](#setting-up-your-environment).
+#. [Set up your environment](#setting-up-your-environment).
 
-2. Run the unit tests.
+#. Run the unit tests.
 
-.. code-block:: bash
+    .. code-block:: bash
 
-    py.test tests
+        py.test tests
 
-3. Tests configuration
-Env variable **PYXMLSEC_TEST_ITERATIONS** specifies number of test iterations to detect memory leaks.
+#. Tests configuration
+    Env variable **PYXMLSEC_TEST_ITERATIONS** specifies number of test iterations to detect memory leaks.
 
 Reporting a issue
 -----------------

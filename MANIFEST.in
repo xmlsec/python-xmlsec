@@ -1,4 +1,6 @@
 include src/*
 include requirements*.txt
 include LICENSE
-
+include version.txt
+include setupinfo.py
+include extra.py
