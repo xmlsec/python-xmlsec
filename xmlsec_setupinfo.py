@@ -117,7 +117,7 @@ def load_xmlsec1_config():
     config = None
 
     if WIN32:
-        import extra
+        import xmlsec_extra
 
         config = {
             'define_macros': [
@@ -154,7 +154,7 @@ def load_xmlsec1_config():
             'library_dirs': [],
             }
 
-        extra.get_prebuilt_libs(
+        xmlsec_extra.get_prebuilt_libs(
             OPTION_DOWNLOAD_DIR, config['include_dirs'], config['library_dirs']
         )
     else:

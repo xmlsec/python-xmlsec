@@ -2,5 +2,5 @@ include src/*
 include requirements*.txt
 include LICENSE
 include version.txt
-include setupinfo.py
-include extra.py
+include xmlsec_setupinfo.py
+include xmlsec_extra.py
