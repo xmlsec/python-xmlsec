@@ -103,9 +103,9 @@ static PyTypeObject _PyXmlSec_TransformType = {
     0,                                              /* tp_descr_set */
     0,                                              /* tp_dictoffset */
     0,                                              /* tp_init */
-    PyType_GenericAlloc,                            /* tp_alloc */
+    0,                                              /* tp_alloc */
     0,                                              /* tp_new */
-    PyObject_Del                                    /* tp_free */
+    0,                                              /* tp_free */
 };
 
 PyTypeObject* PyXmlSec_TransformType = &_PyXmlSec_TransformType;
@@ -197,9 +197,9 @@ static PyTypeObject _PyXmlSec_KeyDataType = {
     0,                                              /* tp_descr_set */
     0,                                              /* tp_dictoffset */
     0,                                              /* tp_init */
-    PyType_GenericAlloc,                            /* tp_alloc */
+    0,                                              /* tp_alloc */
     0,                                              /* tp_new */
-    PyObject_Del                                    /* tp_free */
+    0,                                              /* tp_free */
 };
 
 PyTypeObject* PyXmlSec_KeyDataType = &_PyXmlSec_KeyDataType;

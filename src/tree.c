@@ -27,6 +27,7 @@ static PyObject* PyXmlSec_TreeFindChild(PyObject* self, PyObject *args, PyObject
     PyXmlSec_LxmlElementPtr node = NULL;
     const char* name = NULL;
     const char* ns = (const char*)xmlSecDSigNs;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("tree find_child - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&s|s:find_child", kwlist,
@@ -34,7 +35,7 @@ static PyObject* PyXmlSec_TreeFindChild(PyObject* self, PyObject *args, PyObject
     {
         goto ON_FAIL;
     }
-    xmlNodePtr res;
+
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecFindChild(node->_c_node, XSTR(name), XSTR(ns));
     Py_END_ALLOW_THREADS;
@@ -62,6 +63,7 @@ static PyObject* PyXmlSec_TreeFindParent(PyObject* self, PyObject *args, PyObjec
     PyXmlSec_LxmlElementPtr node = NULL;
     const char* name = NULL;
     const char* ns = (const char*)xmlSecDSigNs;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("tree find_parent - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&s|s:find_parent", kwlist,
@@ -69,7 +71,7 @@ static PyObject* PyXmlSec_TreeFindParent(PyObject* self, PyObject *args, PyObjec
     {
         goto ON_FAIL;
     }
-    xmlNodePtr res;
+
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecFindParent(node->_c_node, XSTR(name), XSTR(ns));
     Py_END_ALLOW_THREADS;
@@ -97,6 +99,7 @@ static PyObject* PyXmlSec_TreeFindNode(PyObject* self, PyObject *args, PyObject 
     PyXmlSec_LxmlElementPtr node = NULL;
     const char* name = NULL;
     const char* ns = (const char*)xmlSecDSigNs;
+    xmlNodePtr res;
 
     PYXMLSEC_DEBUG("tree find_node - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&s|s:find_node", kwlist,
@@ -104,7 +107,7 @@ static PyObject* PyXmlSec_TreeFindNode(PyObject* self, PyObject *args, PyObject 
     {
         goto ON_FAIL;
     }
-    xmlNodePtr res;
+
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecFindNode(node->_c_node, XSTR(name), XSTR(ns));
     Py_END_ALLOW_THREADS;
@@ -136,12 +139,17 @@ static PyObject* PyXmlSec_TreeAddIds(PyObject* self, PyObject *args, PyObject *k
 
     const xmlChar** list = NULL;
 
+    Py_ssize_t n;
+    PyObject* tmp;
+    PyObject* key;
+    Py_ssize_t i;
+
     PYXMLSEC_DEBUG("tree add_ids - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O:add_ids", kwlist, PyXmlSec_LxmlElementConverter, &node, &ids))
     {
         goto ON_FAIL;
     }
-    Py_ssize_t n = PyObject_Length(ids);
+    n = PyObject_Length(ids);
     if (n < 0) goto ON_FAIL;
 
     list = (const xmlChar**)xmlMalloc(sizeof(xmlChar*) * (n + 1));
@@ -150,9 +158,7 @@ static PyObject* PyXmlSec_TreeAddIds(PyObject* self, PyObject *args, PyObject *k
         goto ON_FAIL;
     }
 
-    PyObject* tmp;
-    PyObject* key;
-    for (Py_ssize_t i = 0; i < n; ++i) {
+    for (i = 0; i < n; ++i) {
         key = PyLong_FromSsize_t(i);
         if (key == NULL) goto ON_FAIL;
         tmp = PyObject_GetItem(ids, key);

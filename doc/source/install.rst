@@ -40,3 +40,28 @@ Mac
     brew install libxml2 libxmlsec1
     pip install xmlsec
 
+
+
+Windows (Wheel)
+^^^^^^^^^^^^^^^
+
+#. Download appropriate binary wheels from `appveyor <https://ci.appveyor.com/project/bgaifullin/python-xmlsec>`_ (see build`s artifacts).
+
+#. Install downloaded wheel
+
+    .. code-block:: bash
+
+        pip install <downloaded wheel filename>
+
+
+Windows (pip)
+^^^^^^^^^^^^^
+
+#. Configure build environment, see `wiki.python.org <https://wiki.python.org/moin/WindowsCompilers>`_ for more details.
+
+#. Install from pip
+
+    .. code-block:: bash
+
+        pip install xmlsec
+

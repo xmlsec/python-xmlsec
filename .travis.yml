@@ -18,7 +18,7 @@ addons:
     - libxslt1-dev
     - pkg-config
 before_install:
-- sed -i "s/1.0.1/${TRAVIS_TAG:-1.0.1}/" setup.py
+- echo "${TRAVIS_TAG:-1.0.1.dev}" >version.txt
 install:
 - travis_retry pip install -r requirements-test.txt
 - travis_retry pip install -e "."

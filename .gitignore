@@ -2,6 +2,7 @@
 .*
 !.editorconfig
 !.travis*
+!.appveyor*
 !.git*
 
 # Python
