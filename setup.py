@@ -2,7 +2,7 @@ from setuptools import setup
 from setuptools import Extension
 from setuptools.command import build_ext
 
-import setupinfo
+import xmlsec_setupinfo
 
 
 class BuildExt(build_ext.build_ext):
@@ -12,17 +12,17 @@ class BuildExt(build_ext.build_ext):
         build_ext.build_ext.run(self)
 
     def patch_options(self):
-        ext = self.ext_map[setupinfo.name()]
-        ext.define_macros.extend(setupinfo.define_macros())
-        ext.include_dirs.extend(setupinfo.include_dirs())
-        ext.libraries.extend(setupinfo.libraries())
-        ext.library_dirs.extend(setupinfo.library_dirs())
+        ext = self.ext_map[xmlsec_setupinfo.name()]
+        ext.define_macros.extend(xmlsec_setupinfo.define_macros())
+        ext.include_dirs.extend(xmlsec_setupinfo.include_dirs())
+        ext.libraries.extend(xmlsec_setupinfo.libraries())
+        ext.library_dirs.extend(xmlsec_setupinfo.library_dirs())
 
 
 _xmlsec = Extension(
-    setupinfo.name(),
-    sources=setupinfo.sources(),
-    extra_compile_args=setupinfo.cflags(),
+    xmlsec_setupinfo.name(),
+    sources=xmlsec_setupinfo.sources(),
+    extra_compile_args=xmlsec_setupinfo.cflags(),
     libraries=[],
     library_dirs=[],
     include_dirs=[],
@@ -30,23 +30,23 @@ _xmlsec = Extension(
 )
 
 setup(
-    name=setupinfo.name(),
-    version=setupinfo.version(),
-    description=setupinfo.description(),
+    name=xmlsec_setupinfo.name(),
+    version=xmlsec_setupinfo.version(),
+    description=xmlsec_setupinfo.description(),
     ext_modules=[_xmlsec],
     cmdclass={'build_ext': BuildExt},
-    setup_requires=setupinfo.requirements(),
-    install_requires=setupinfo.requirements(),
+    setup_requires=xmlsec_setupinfo.requirements(),
+    install_requires=xmlsec_setupinfo.requirements(),
     author="Bulat Gaifullin",
     author_email='support@mehcode.com',
     maintainer='Bulat Gaifullin',
     maintainer_email='gaifullinbf@gmail.com',
     url='https://github.com/mehcode/python-xmlsec',
-    download_url="https://github.com/mehcode/python-xmlsec/archive/v%s.tar.gz" % setupinfo.version(),
+    download_url="https://github.com/mehcode/python-xmlsec/archive/v%s.tar.gz" % xmlsec_setupinfo.version(),
     license='MIT',
     keywords=["xmlsec"],
     classifiers=[
-        setupinfo.dev_status(),
+        xmlsec_setupinfo.dev_status(),
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
         'License :: OSI Approved :: MIT License',
