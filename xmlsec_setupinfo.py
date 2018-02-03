@@ -171,12 +171,13 @@ def load_xmlsec1_config():
         config.setdefault('libraries', [])
         config.setdefault('include_dirs', [])
         config.setdefault('library_dirs', [])
-        # fix macros
-        macros = config.setdefault('define_macros', [])
+        # fix macros, ensure that macros is list
+        macros = list(config.get('define_macros', []))
         for i, v in enumerate(macros):
             if v[0] == 'XMLSEC_CRYPTO':
                 macros[i] = ('XMLSEC_CRYPTO', '"{0}"'.format(v[1]))
                 break
+        config['define_macros'] = macros
     return config
 
 
