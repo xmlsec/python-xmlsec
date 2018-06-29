@@ -174,7 +174,7 @@ def load_xmlsec1_config():
         # fix macros, ensure that macros is list
         macros = list(config.get('define_macros', []))
         for i, v in enumerate(macros):
-            if v[0] == 'XMLSEC_CRYPTO':
+            if v[0] == 'XMLSEC_CRYPTO' and not (v[1].startswith('"') and v[1].endswith('"')):
                 macros[i] = ('XMLSEC_CRYPTO', '"{0}"'.format(v[1]))
                 break
         config['define_macros'] = macros
