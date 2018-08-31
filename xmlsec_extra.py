@@ -27,19 +27,16 @@ def get_prebuilt_libs(download_dir, static_include_dirs, static_library_dirs):
 
 
 def download_and_extract_windows_binaries(destdir):
+    url = "https://github.com/bgaifullin/libxml2-win-binaries/releases/download/v2018.08/"
     if sys.version_info < (3, 5):
         if sys.maxsize > 2147483647:
-            url = "https://ci.appveyor.com/api/buildjobs/7q4nvmkdnu05dul6/artifacts/"
             suffix = "vs2008.win64"
         else:
-            url = "https://ci.appveyor.com/api/buildjobs/tdpx6rprr5431ec9/artifacts/"
             suffix = "vs2008.win32"
     else:
         if sys.maxsize > 2147483647:
-            url = "https://ci.appveyor.com/api/buildjobs/hij3a6776pdv2007/artifacts/"
             suffix = "win64"
         else:
-            url = "https://ci.appveyor.com/api/buildjobs/7k878q7rvogcdyd9/artifacts/"
             suffix = "win32"
 
     libs = {
