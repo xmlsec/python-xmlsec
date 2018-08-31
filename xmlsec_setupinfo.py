@@ -168,9 +168,10 @@ def load_xmlsec1_config():
         if config is None or not config.get('libraries'):
             fatal_xmlsec1_error()
 
-        config.setdefault('libraries', [])
-        config.setdefault('include_dirs', [])
-        config.setdefault('library_dirs', [])
+        # make sure that all options are list
+        for x in ('libraries', 'include_dirs', 'library_dirs'):
+            config[x] = list(config.get(x) or [])
+
         # fix macros, ensure that macros is list
         macros = list(config.get('define_macros', []))
         for i, v in enumerate(macros):
