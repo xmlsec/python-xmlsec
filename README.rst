@@ -199,6 +199,7 @@ The following versions of python is supported:
  - python3.4
  - python3.5 (required libxmlsec1 >=  1.2.18 and libxml2 >= 2.9.1)
  - python3.6 (required libxmlsec1 >=  1.2.18 and libxml2 >= 2.9.1)
+ - python3.7 (required libxmlsec1 >=  1.2.18 and libxml2 >= 2.9.1)
 
 *******
 License
