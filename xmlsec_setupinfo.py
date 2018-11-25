@@ -34,7 +34,7 @@ def description():
 
 
 def sources():
-    return glob.glob(os.path.join(get_base_dir(), "src", "*.c"))
+    return sorted(glob.glob(os.path.join(get_base_dir(), "src", "*.c")))
 
 
 def define_macros():
