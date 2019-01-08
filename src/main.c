@@ -228,6 +228,9 @@ PYENTRY_FUNC_NAME(void)
     }
     PYXMLSEC_DEBUGF("%p", module);
 
+    // init first, since PyXmlSec_Init may raise XmlSecError
+    if (PyXmlSec_ExceptionsModule_Init(module) < 0) goto ON_FAIL;
+
     if (PyXmlSec_Init() < 0) goto ON_FAIL;
 
     if (PyModule_AddStringConstant(module, "__version__", STRINGIFY(MODULE_VERSION)) < 0) goto ON_FAIL;
@@ -235,7 +238,6 @@ PYENTRY_FUNC_NAME(void)
     if (PyXmlSec_InitLxmlModule() < 0) goto ON_FAIL;
     /* Populate final object settings */
     if (PyXmlSec_ConstantsModule_Init(module) < 0) goto ON_FAIL;
-    if (PyXmlSec_ExceptionsModule_Init(module) < 0) goto ON_FAIL;
     if (PyXmlSec_KeyModule_Init(module) < 0) goto ON_FAIL;
     if (PyXmlSec_TreeModule_Init(module) < 0) goto ON_FAIL;
     if (PyXmlSec_DSModule_Init(module) < 0) goto ON_FAIL;
