@@ -177,7 +177,11 @@ static void PyXmlSec_ClearReplacedNodes(xmlSecEncCtxPtr ctx, PyXmlSec_LxmlDocume
         PYXMLSEC_DEBUGF("clear replaced node %p", n);
         nn = n->next;
         // if n has references, it will not be deleted
-        Py_DECREF(PyXmlSec_elementFactory(doc, n));
+        PyXmlSec_LxmlElementPtr* elem = PyXmlSec_elementFactory(doc, n);
+        if (NULL == elem)
+            xmlFreeNode(n);
+        else
+            Py_DECREF(elem);
         n = nn;
     }
     ctx->replacedNodeList = NULL;
@@ -242,6 +246,9 @@ static PyObject* PyXmlSec_EncryptionContextEncryptXml(PyObject* self, PyObject* 
     Py_END_ALLOW_THREADS;
 
     PyXmlSec_ClearReplacedNodes(ctx->handle, node->_doc);
+    if (NULL != PyErr_Occurred()) {
+        goto ON_FAIL;
+    }
 
     if (rv != 0) {
         if (rv > 0) {
@@ -253,6 +260,7 @@ static PyObject* PyXmlSec_EncryptionContextEncryptXml(PyObject* self, PyObject* 
     }
 
     xmlFree(tmpType);
+
     PYXMLSEC_DEBUGF("%p: encrypt_xml - ok", self);
     return (PyObject*)PyXmlSec_elementFactory(node->_doc, xnew_node != NULL ? xnew_node : template->_c_node);
 ON_FAIL:
