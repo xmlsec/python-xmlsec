@@ -15,11 +15,11 @@
 #include <xmlsec/crypto.h>
 #include <xmlsec/errors.h>
 
-#define _FREE_NONE 0
-#define _FREE_XMLSEC 1
-#define _FREE_ALL 2
+#define _PYXMLSEC_FREE_NONE 0
+#define _PYXMLSEC_FREE_XMLSEC 1
+#define _PYXMLSEC_FREE_ALL 2
 
-static int free_mode = _FREE_NONE;
+static int free_mode = _PYXMLSEC_FREE_NONE;
 
 #define MODULE_DOC "The tiny python wrapper around xmlsec1 (" XMLSEC_VERSION ") library"
 
@@ -27,24 +27,24 @@ static int free_mode = _FREE_NONE;
 static void PyXmlSec_Free(int what) {
     PYXMLSEC_DEBUGF("free resources %d", what);
     switch (what) {
-    case _FREE_ALL:
+    case _PYXMLSEC_FREE_ALL:
         xmlSecCryptoAppShutdown();
-    case _FREE_XMLSEC:
+    case _PYXMLSEC_FREE_XMLSEC:
         xmlSecShutdown();
     }
-    free_mode = _FREE_NONE;
+    free_mode = _PYXMLSEC_FREE_NONE;
 }
 
 static int PyXmlSec_Init(void) {
     if (xmlSecInit() < 0) {
         PyXmlSec_SetLastError("cannot initialize xmlsec library.");
-        PyXmlSec_Free(_FREE_NONE);
+        PyXmlSec_Free(_PYXMLSEC_FREE_NONE);
         return -1;
     }
 
     if (xmlSecCheckVersion() != 1) {
         PyXmlSec_SetLastError("xmlsec library version mismatch.");
-        PyXmlSec_Free(_FREE_XMLSEC);
+        PyXmlSec_Free(_PYXMLSEC_FREE_XMLSEC);
         return -1;
     }
 
@@ -58,7 +58,7 @@ static int PyXmlSec_Init(void) {
     PYXMLSEC_DEBUGF("dynamic crypto library: %s", cryptoLib);
     if (xmlSecCryptoDLLoadLibrary(cryptoLib) < 0) {
         PyXmlSec_SetLastError("cannot load crypto library for xmlsec.");
-        PyXmlSec_Free(_FREE_XMLSEC);
+        PyXmlSec_Free(_PYXMLSEC_FREE_XMLSEC);
         return -1;
     }
 #endif /* XMLSEC_CRYPTO_DYNAMIC_LOADING */
@@ -66,17 +66,17 @@ static int PyXmlSec_Init(void) {
   /* Init crypto library */
     if (xmlSecCryptoAppInit(NULL) < 0) {
         PyXmlSec_SetLastError("cannot initialize crypto library application.");
-        PyXmlSec_Free(_FREE_XMLSEC);
+        PyXmlSec_Free(_PYXMLSEC_FREE_XMLSEC);
         return -1;
     }
 
   /* Init xmlsec-crypto library */
     if (xmlSecCryptoInit() < 0) {
         PyXmlSec_SetLastError("cannot initialize crypto library.");
-        PyXmlSec_Free(_FREE_ALL);
+        PyXmlSec_Free(_PYXMLSEC_FREE_ALL);
         return -1;
     }
-    free_mode = _FREE_ALL;
+    free_mode = _PYXMLSEC_FREE_ALL;
     return 0;
 }
 
@@ -96,7 +96,7 @@ static char PyXmlSec_PyShutdown__doc__[] = \
     "This is called automatically upon interpreter termination and\n"
     "should not need to be called explicitly.";
 static PyObject* PyXmlSec_PyShutdown(PyObject* self) {
-    PyXmlSec_Free(_FREE_ALL);
+    PyXmlSec_Free(free_mode);
     Py_RETURN_NONE;
 }
 
