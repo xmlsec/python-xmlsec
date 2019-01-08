@@ -17,18 +17,35 @@
 
 #define _PYXMLSEC_FREE_NONE 0
 #define _PYXMLSEC_FREE_XMLSEC 1
-#define _PYXMLSEC_FREE_ALL 2
+#define _PYXMLSEC_FREE_CRYPTOLIB 2
+#define _PYXMLSEC_FREE_ALL 3
 
 static int free_mode = _PYXMLSEC_FREE_NONE;
 
 #define MODULE_DOC "The tiny python wrapper around xmlsec1 (" XMLSEC_VERSION ") library"
 
+#ifndef XMLSEC_NO_CRYPTO_DYNAMIC_LOADING
+static const xmlChar* PyXmlSec_GetCryptoLibName() {
+#if XMLSEC_VERSION_HEX > 308
+    // xmlSecGetDefaultCrypto was introduced in version 1.2.21
+    const xmlChar* cryptoLib = xmlSecGetDefaultCrypto();
+#else
+    const xmlChar* cryptoLib = (const xmlChar*) XMLSEC_CRYPTO;
+#endif
+    PYXMLSEC_DEBUGF("dynamic crypto library: %s", cryptoLib);
+    return cryptoLib;
+}
+#endif // !XMLSEC_NO_CRYPTO_DYNAMIC_LOADING
 
 static void PyXmlSec_Free(int what) {
     PYXMLSEC_DEBUGF("free resources %d", what);
     switch (what) {
     case _PYXMLSEC_FREE_ALL:
         xmlSecCryptoAppShutdown();
+    case _PYXMLSEC_FREE_CRYPTOLIB:
+#ifndef XMLSEC_NO_CRYPTO_DYNAMIC_LOADING
+        xmlSecCryptoDLUnloadLibrary(PyXmlSec_GetCryptoLibName());
+#endif
     case _PYXMLSEC_FREE_XMLSEC:
         xmlSecShutdown();
     }
@@ -49,14 +66,7 @@ static int PyXmlSec_Init(void) {
     }
 
 #ifndef XMLSEC_NO_CRYPTO_DYNAMIC_LOADING
-#if XMLSEC_VERSION_HEX > 308
-    // xmlSecGetDefaultCrypto was introduced in version 1.2.21
-    const xmlChar* cryptoLib = xmlSecGetDefaultCrypto();
-#else
-    const xmlChar* cryptoLib = (const xmlChar*) XMLSEC_CRYPTO;
-#endif
-    PYXMLSEC_DEBUGF("dynamic crypto library: %s", cryptoLib);
-    if (xmlSecCryptoDLLoadLibrary(cryptoLib) < 0) {
+    if (xmlSecCryptoDLLoadLibrary(PyXmlSec_GetCryptoLibName()) < 0) {
         PyXmlSec_SetLastError("cannot load crypto library for xmlsec.");
         PyXmlSec_Free(_PYXMLSEC_FREE_XMLSEC);
         return -1;
@@ -66,7 +76,7 @@ static int PyXmlSec_Init(void) {
   /* Init crypto library */
     if (xmlSecCryptoAppInit(NULL) < 0) {
         PyXmlSec_SetLastError("cannot initialize crypto library application.");
-        PyXmlSec_Free(_PYXMLSEC_FREE_XMLSEC);
+        PyXmlSec_Free(_PYXMLSEC_FREE_CRYPTOLIB);
         return -1;
     }
 
