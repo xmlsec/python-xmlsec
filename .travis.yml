@@ -3,7 +3,6 @@ sudo: false
 language: python
 notifications:
   email: false
-
 matrix:
   include:
   - python: 2.7
@@ -13,7 +12,6 @@ matrix:
   - python: 3.7
     dist: xenial
     sudo: required
-
 addons:
   apt:
     packages:
@@ -30,11 +28,9 @@ install:
 - travis_retry pip install -e "."
 - pip list
 script: py.test -v tests
-
 before_deploy:
-    - travis_retry pip install Sphinx
-    - python setup.py build_sphinx
-
+- travis_retry pip install Sphinx
+- python setup.py build_sphinx
 deploy:
   skip_cleanup: true
   skip_upload_docs: false
@@ -45,4 +41,4 @@ deploy:
     distributions: sdist bdist_wheel
     python: '2.7'
   password:
-    secure: Gq9Ut9FATKUSVoaTTSeecN8kWxRQjTe4K+gK/gKuRJqWzYPOG9AhCq2Nxd3rwlWedPWpfoQwmlCuCma68npVQZnsJqyNYmEUBp4xjgDXOR12q2jDlgT0SH5V23ysJydA+c5QuHGXz7INxBTSwCjD+xBe2WXRxp9RJoi8kLloFt0=
+    secure: KNBbGaiAWirptxcuLjqNVgQ9E3jc75kj2+A5MRh+XvDVf6xFLAhrNg0+p/a3d+Tdap4/W5retxDdafLoMJ80ftyJFWV+lnrDxBhcrT686HGXPb0FCn58+Mho0RhM7CSHJIM8E85pVUV5E6QrmgmNWG8KKEaF3Vs5RJBhlP/g7Bg=
