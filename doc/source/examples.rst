@@ -41,7 +41,7 @@ Encrypt
     # Encryption
     enc_ctx = xmlsec.EncryptionContext(manager)
     enc_ctx.key = xmlsec.Key.generate(xmlsec.constants.KeyDataAes, 128, xmlsec.constants.KeyDataTypeSession)
-    enc_datsa = enc_ctx.encrypt_xml(enc_data, data)
+    enc_data = enc_ctx.encrypt_xml(enc_data, data)
     enc_method = xmlsec.tree.find_child(enc_data, xmlsec.constants.NodeEncryptionMethod, xmlsec.constants.EncNs)
     key_info = xmlsec.tree.find_child(enc_data, xmlsec.constants.NodeKeyInfo, xmlsec.constants.DSigNs)
     enc_method = xmlsec.tree.find_node(key_info, xmlsec.constants.NodeEncryptionMethod, xmlsec.constants.EncNs)
