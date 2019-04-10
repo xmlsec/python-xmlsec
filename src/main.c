@@ -15,40 +15,17 @@
 #include <xmlsec/crypto.h>
 #include <xmlsec/errors.h>
 
-#define _FREE_NONE 0
-#define _FREE_XMLSEC 1
-#define _FREE_ALL 2
+#define _PYXMLSEC_FREE_NONE 0
+#define _PYXMLSEC_FREE_XMLSEC 1
+#define _PYXMLSEC_FREE_CRYPTOLIB 2
+#define _PYXMLSEC_FREE_ALL 3
 
-static int free_mode = _FREE_NONE;
+static int free_mode = _PYXMLSEC_FREE_NONE;
 
 #define MODULE_DOC "The tiny python wrapper around xmlsec1 (" XMLSEC_VERSION ") library"
 
-
-static void PyXmlSec_Free(int what) {
-    PYXMLSEC_DEBUGF("free resources %d", what);
-    switch (what) {
-    case _FREE_ALL:
-        xmlSecCryptoAppShutdown();
-    case _FREE_XMLSEC:
-        xmlSecShutdown();
-    }
-    free_mode = _FREE_NONE;
-}
-
-static int PyXmlSec_Init(void) {
-    if (xmlSecInit() < 0) {
-        PyXmlSec_SetLastError("cannot initialize xmlsec library.");
-        PyXmlSec_Free(_FREE_NONE);
-        return -1;
-    }
-
-    if (xmlSecCheckVersion() != 1) {
-        PyXmlSec_SetLastError("xmlsec library version mismatch.");
-        PyXmlSec_Free(_FREE_XMLSEC);
-        return -1;
-    }
-
 #ifndef XMLSEC_NO_CRYPTO_DYNAMIC_LOADING
+static const xmlChar* PyXmlSec_GetCryptoLibName() {
 #if XMLSEC_VERSION_HEX > 308
     // xmlSecGetDefaultCrypto was introduced in version 1.2.21
     const xmlChar* cryptoLib = xmlSecGetDefaultCrypto();
@@ -56,9 +33,42 @@ static int PyXmlSec_Init(void) {
     const xmlChar* cryptoLib = (const xmlChar*) XMLSEC_CRYPTO;
 #endif
     PYXMLSEC_DEBUGF("dynamic crypto library: %s", cryptoLib);
-    if (xmlSecCryptoDLLoadLibrary(cryptoLib) < 0) {
+    return cryptoLib;
+}
+#endif // !XMLSEC_NO_CRYPTO_DYNAMIC_LOADING
+
+static void PyXmlSec_Free(int what) {
+    PYXMLSEC_DEBUGF("free resources %d", what);
+    switch (what) {
+    case _PYXMLSEC_FREE_ALL:
+        xmlSecCryptoAppShutdown();
+    case _PYXMLSEC_FREE_CRYPTOLIB:
+#ifndef XMLSEC_NO_CRYPTO_DYNAMIC_LOADING
+        xmlSecCryptoDLUnloadLibrary(PyXmlSec_GetCryptoLibName());
+#endif
+    case _PYXMLSEC_FREE_XMLSEC:
+        xmlSecShutdown();
+    }
+    free_mode = _PYXMLSEC_FREE_NONE;
+}
+
+static int PyXmlSec_Init(void) {
+    if (xmlSecInit() < 0) {
+        PyXmlSec_SetLastError("cannot initialize xmlsec library.");
+        PyXmlSec_Free(_PYXMLSEC_FREE_NONE);
+        return -1;
+    }
+
+    if (xmlSecCheckVersion() != 1) {
+        PyXmlSec_SetLastError("xmlsec library version mismatch.");
+        PyXmlSec_Free(_PYXMLSEC_FREE_XMLSEC);
+        return -1;
+    }
+
+#ifndef XMLSEC_NO_CRYPTO_DYNAMIC_LOADING
+    if (xmlSecCryptoDLLoadLibrary(PyXmlSec_GetCryptoLibName()) < 0) {
         PyXmlSec_SetLastError("cannot load crypto library for xmlsec.");
-        PyXmlSec_Free(_FREE_XMLSEC);
+        PyXmlSec_Free(_PYXMLSEC_FREE_XMLSEC);
         return -1;
     }
 #endif /* XMLSEC_CRYPTO_DYNAMIC_LOADING */
@@ -66,17 +76,17 @@ static int PyXmlSec_Init(void) {
   /* Init crypto library */
     if (xmlSecCryptoAppInit(NULL) < 0) {
         PyXmlSec_SetLastError("cannot initialize crypto library application.");
-        PyXmlSec_Free(_FREE_XMLSEC);
+        PyXmlSec_Free(_PYXMLSEC_FREE_CRYPTOLIB);
         return -1;
     }
 
   /* Init xmlsec-crypto library */
     if (xmlSecCryptoInit() < 0) {
         PyXmlSec_SetLastError("cannot initialize crypto library.");
-        PyXmlSec_Free(_FREE_ALL);
+        PyXmlSec_Free(_PYXMLSEC_FREE_ALL);
         return -1;
     }
-    free_mode = _FREE_ALL;
+    free_mode = _PYXMLSEC_FREE_ALL;
     return 0;
 }
 
@@ -96,7 +106,7 @@ static char PyXmlSec_PyShutdown__doc__[] = \
     "This is called automatically upon interpreter termination and\n"
     "should not need to be called explicitly.";
 static PyObject* PyXmlSec_PyShutdown(PyObject* self) {
-    PyXmlSec_Free(_FREE_ALL);
+    PyXmlSec_Free(free_mode);
     Py_RETURN_NONE;
 }
 
@@ -228,6 +238,9 @@ PYENTRY_FUNC_NAME(void)
     }
     PYXMLSEC_DEBUGF("%p", module);
 
+    // init first, since PyXmlSec_Init may raise XmlSecError
+    if (PyXmlSec_ExceptionsModule_Init(module) < 0) goto ON_FAIL;
+
     if (PyXmlSec_Init() < 0) goto ON_FAIL;
 
     if (PyModule_AddStringConstant(module, "__version__", STRINGIFY(MODULE_VERSION)) < 0) goto ON_FAIL;
@@ -235,7 +248,6 @@ PYENTRY_FUNC_NAME(void)
     if (PyXmlSec_InitLxmlModule() < 0) goto ON_FAIL;
     /* Populate final object settings */
     if (PyXmlSec_ConstantsModule_Init(module) < 0) goto ON_FAIL;
-    if (PyXmlSec_ExceptionsModule_Init(module) < 0) goto ON_FAIL;
     if (PyXmlSec_KeyModule_Init(module) < 0) goto ON_FAIL;
     if (PyXmlSec_TreeModule_Init(module) < 0) goto ON_FAIL;
     if (PyXmlSec_DSModule_Init(module) < 0) goto ON_FAIL;

@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header>
+  </soap:Header>
+  <soap:Body>
+    <ProcessCreditApplication xmlns="http://www.starstandards.org/STAR">
+      <ApplicationArea>
+        <Sender>
+          <Component>MyNextCar</Component>
+          <Task>CreditApplication</Task>
+          <CreatorNameCode>MYNEXTCAR</CreatorNameCode>
+          <SenderNameCode>VW</SenderNameCode>
+          <DealerNumber>409D03</DealerNumber>
+          <LocationId>MyNextCar</LocationId>
+        </Sender>
+        <CreationDateTime>2018-11-20T09:37:45Z</CreationDateTime>
+        <BODId>7f0842cc-8d47-4955-be31-c61d07ee490b</BODId>
+        <Destination>
+          <DestinationNameCode>VW</DestinationNameCode>
+        </Destination>
+      </ApplicationArea>
+      <DataArea>
+        <Process confirm="Always" acknowledge="Always">
+        </Process>
+        <CreditApplication>
+          <Header>
+      <DocumentId>VCI_MNA_0000070250</DocumentId>
+      <FinanceCompany/>
+      <Dealer>
+        <DealerName>Car Chantilly</DealerName>
+        <Address>
+          <AddressLine>14839 Stonecroft Center Ct</AddressLine>
+          <City>Chantilly</City>
+          <StateOrProvince>VA</StateOrProvince>
+          <Country>US</Country>
+          <PostalCode>20151</PostalCode>
+        </Address>
+        <SalesContact>
+          <PersonName>
+            <GivenName>MyNextCar</GivenName>
+            <FamilyName>MNA</FamilyName>
+          </PersonName>
+          <Telephone>7039562100</Telephone>
+        </SalesContact>
+        <OrganizationId>CAR</OrganizationId>
+      </Dealer>
+      <ApplicationStatus>N</ApplicationStatus>
+          </Header>
+          <Detail>
+      <CreditVehicle>
+        <ModelYear>2017</ModelYear>
+        <ModelDescription>Q7</ModelDescription>
+        <Make>CAR</Make>
+        <SaleClass>New</SaleClass>
+        <DeliveryMileage uom="M">0</DeliveryMileage>
+        <BodyStyle>Prestige</BodyStyle>
+        <Pricing>
+          <VehiclePrice currency="USD">64300.0</VehiclePrice>
+          <VehiclePricingType>MSRP</VehiclePricingType>
+        </Pricing>
+        <Pricing>
+          <VehiclePrice currency="USD">64300.0</VehiclePrice>
+          <VehiclePricingType>Selling Price</VehiclePricingType>
+        </Pricing>
+      </CreditVehicle>
+      <IndividualApplicant>
+        <AlternatePartyIds>
+          <Id>113456789</Id>
+          <AssigningPartyId>NationalId</AssigningPartyId>
+        </AlternatePartyIds>
+        <PersonName>
+          <GivenName>John</GivenName>
+          <MiddleName>Q</MiddleName>
+          <FamilyName>Public</FamilyName>
+        </PersonName>
+        <Address qualifier="HomeAddress">
+          <AddressLine>999 Washington Ave</AddressLine>
+          <AddressLine>Apt #332</AddressLine>
+          <City>Front Royal</City>
+          <StateOrProvince>VA</StateOrProvince>
+          <Country>US</Country>
+          <PostalCode>22630</PostalCode>
+          <PeriodOfResidence period="YR">01</PeriodOfResidence>
+          <PeriodOfResidence period="MO">10</PeriodOfResidence>
+          <ResidenceType>Own</ResidenceType>
+        </Address>
+        <Address qualifier="PreviousAddress">
+          <AddressLine>21 E 9th Ave</AddressLine>
+          <City>Boulder</City>
+          <StateOrProvince>CO</StateOrProvince>
+          <Country>US</Country>
+          <PostalCode>80301-7577</PostalCode>
+          <PeriodOfResidence period="YR">07</PeriodOfResidence>
+          <PeriodOfResidence period="MO">11</PeriodOfResidence>
+          <ResidenceType>Own</ResidenceType>
+        </Address>
+        <Contact>
+          <Telephone desc="Day Phone">3032852402</Telephone>
+          <Telephone desc="Evening Phone">3032852405</Telephone>
+          <Telephone desc="Cell Phone">7203554444</Telephone>
+          <EMailAddress desc="Home">JohnQPublic@anydomain.org</EMailAddress>
+        </Contact>
+        <Demographics>
+          <BirthDate>1967-07-31</BirthDate>
+        </Demographics>
+        <MarketingMailInd>0</MarketingMailInd>
+        <Employer>
+          <Name>UPS</Name>
+          <Address>
+            <AddressLine>1775 Wiehle Ave.</AddressLine>
+            <City>Reston</City>
+            <StateOrProvince>VA</StateOrProvince>
+            <Country>US</Country>
+            <PostalCode>20190</PostalCode>
+          </Address>
+          <Income currency="USD" period="MO">9500.0</Income>
+          <Occupation>Driver</Occupation>
+          <PeriodOfEmployment period="YR">01</PeriodOfEmployment>
+          <PeriodOfEmployment period="MO">05</PeriodOfEmployment>
+          <EmploymentCode>Current</EmploymentCode>
+        </Employer>
+        <Employer>
+          <Name>FedEx</Name>
+          <Income currency="USD" period="MO">4000.00</Income>
+          <Occupation>Driver</Occupation>
+          <PeriodOfEmployment period="YR">04</PeriodOfEmployment>
+          <PeriodOfEmployment period="MO">09</PeriodOfEmployment>
+          <EmploymentCode>Previous</EmploymentCode>
+        </Employer>
+        <PaymentAmount currency="USD">1252.52</PaymentAmount>
+        <OtherIncome>
+          <OtherIncomeAmount currency="USD" period="SmAN">1500.00</OtherIncomeAmount>
+        </OtherIncome>
+        <Privacy>
+          <PrivacyInd>1</PrivacyInd>
+          <PrivacyType>Consents to Credit Check</PrivacyType>
+        </Privacy>
+      </IndividualApplicant>
+      <Co-Applicant>
+        <AlternatePartyIds>
+          <Id>123435325</Id>
+          <AssigningPartyId>NationalId</AssigningPartyId>
+        </AlternatePartyIds>
+        <PersonName>
+          <GivenName>Lisa</GivenName>
+          <MiddleName>C</MiddleName>
+          <FamilyName>Public</FamilyName>
+        </PersonName>
+        <Address qualifier="HomeAddress">
+          <AddressLine>999 Lewis Street</AddressLine>
+          <City>Front Royal</City>
+          <StateOrProvince>VA</StateOrProvince>
+          <Country>US</Country>
+          <PostalCode>22630</PostalCode>
+          <PeriodOfResidence period="YR">5</PeriodOfResidence>
+          <PeriodOfResidence period="MO">0</PeriodOfResidence>
+          <ResidenceType>Own</ResidenceType>
+        </Address>
+        <Contact>
+          <Telephone desc="Day Phone">5401110000</Telephone>
+          <Telephone desc="Evening Phone">5401110073</Telephone>
+          <EMailAddress desc="Home">public@test.com</EMailAddress>
+        </Contact>
+        <Demographics>
+          <BirthDate>1963-04-20</BirthDate>
+        </Demographics>
+        <Employer>
+          <Name>Christendom College</Name>
+          <Address>
+            <AddressLine>999 Christendom Dr</AddressLine>
+            <City>Front Royal</City>
+            <StateOrProvince>VA</StateOrProvince>
+            <Country>US</Country>
+            <PostalCode>22630</PostalCode>
+          </Address>
+          <Income currency="USD" period="MO">6200.00</Income>
+          <Occupation>Professor</Occupation>
+          <PeriodOfEmployment period="YR">5</PeriodOfEmployment>
+          <PeriodOfEmployment period="MO">0</PeriodOfEmployment>
+          <EmploymentCode>Current</EmploymentCode>
+        </Employer>
+        <PaymentAmount currency="USD">1252.52</PaymentAmount>
+        <Privacy>
+          <PrivacyInd>1</PrivacyInd>
+          <PrivacyType>Consents to Credit Check</PrivacyType>
+        </Privacy>
+      </Co-Applicant>
+      <Financing>
+        <FinanceType>R</FinanceType>
+        <PaymentAmount currency="USD">0.00</PaymentAmount>
+        <Term length="Months">66</Term>
+        <DownPaymentAmount currency="USD">5000.00</DownPaymentAmount>
+        <ApplicationType>INDIVCOAPP</ApplicationType>
+        <NetTradeAmount currency="USD">2000.00</NetTradeAmount>
+        <SpecialPrograms>MyNextCar</SpecialPrograms>
+        <TradeIn>
+          <ModelYear>1978</ModelYear>
+          <ModelDescription>Bonneville</ModelDescription>
+          <Make>Pontiac</Make>
+          <BodyStyle>Coupe</BodyStyle>
+        </TradeIn>
+      </Financing>
+          </Detail>
+        </CreditApplication>
+      </DataArea>
+    </ProcessCreditApplication>
+  </soap:Body>
+</soap:Envelope>
