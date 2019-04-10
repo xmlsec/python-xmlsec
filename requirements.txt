@@ -1,2 +1,2 @@
 pkgconfig
-lxml >= 3.0
+lxml >= 3.8.0
