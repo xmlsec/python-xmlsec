@@ -67,6 +67,14 @@ Mac
     brew install libxml2 libxmlsec1
 
 
+Alpine
+^^^^^^
+
+.. code-block:: bash
+
+    apk add build-base libressl libffi-dev libressl-dev libxslt-dev libxml2-dev xmlsec-dev xmlsec
+
+
 Automated
 ---------
 1. **xmlsec** can be installed through `easy_install` or `pip`.
