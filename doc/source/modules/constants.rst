@@ -119,8 +119,8 @@ Transforms
 - *TransformKWAes128* - The AES 128 key wrap transform klass.
 - *TransformKWAes192* - The AES 192 key wrap transform klass.
 - *TransformKWAes256* - The AES 256 key wrap transform klass.
-- *TransformDes3Cbc* - The Triple DES encryption transform klass.
-- *TransformKWDes3* - The DES3 CBC cipher transform klass.
+- *TransformDes3Cbc* - The DES3 CBC cipher transform klass.
+- *TransformKWDes3* - The DES3 key wrap transform klass.
 - *TransformDsaSha1* - The DSA-SHA1 signature transform klass.
 - *TransformEcdsaSha1* - The ECDSA-SHA1 signature transform klass.
 - *TransformEcdsaSha224* - The ECDSA-SHA224 signature transform klass.
@@ -142,7 +142,7 @@ Transforms
 - *TransformRsaSha384* - The RSA-SHA384 signature transform klass.
 - *TransformRsaSha512* - The RSA-SHA512 signature transform klass.
 - *TransformRsaPkcs1* - The RSA PKCS1 key transport transform klass.
-- *TransformRsaOaep* - The RSA PKCS1 key transport transform klass.
+- *TransformRsaOaep* - The RSA OAEP key transport transform klass.
 - *TransformMd5* - The MD5 digest transform klass.
 - *TransformRipemd160* - The RIPEMD160 digest transform klass.
 - *TransformSha1* - The SHA1 digest transform klass.
