@@ -64,7 +64,7 @@ Mac
 
 .. code-block:: bash
 
-    brew install libxml2 libxmlsec1
+    brew install libxml2 libxmlsec1 pkg-config
 
 
 Alpine
