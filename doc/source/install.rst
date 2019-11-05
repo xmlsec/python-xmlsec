@@ -37,7 +37,7 @@ Mac
 
     xcode-select --install
     brew upgrade
-    brew install libxml2 libxmlsec1
+    brew install libxml2 libxmlsec1 pkg-config
     pip install xmlsec
 
 
