@@ -27,7 +27,7 @@ def get_prebuilt_libs(download_dir, static_include_dirs, static_library_dirs):
 
 
 def download_and_extract_windows_binaries(destdir):
-    url = "https://github.com/bgaifullin/libxml2-win-binaries/releases/download/v2018.08/"
+    url = "https://github.com/talebi1/libxml2-win-binaries/releases/download/master/"
     if sys.version_info < (3, 5):
         if sys.maxsize > 2147483647:
             suffix = "vs2008.win64"
