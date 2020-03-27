@@ -46,12 +46,12 @@ Install
 Depending on your OS, you may need to install the required native
 libraries first:
 
-Linux (Debian)
+Linux (Debian/Ubuntu)
 ^^^^^^^^^^^^^^
 
 .. code-block:: bash
 
-   apt-get install libxml2-dev libxmlsec1-dev libxmlsec1-openssl
+   apt-get install libxml2-dev libxmlsec1-dev libxmlsec1-openssl pkg-config
 
 
 Note: There is no required version of LibXML2 for Ubuntu Precise,
