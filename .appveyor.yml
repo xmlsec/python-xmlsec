@@ -1,7 +1,7 @@
 environment:
   global:
-    TWINE_USERNAME:
-      secure: AIbDZTVaU3Ijr7mtxW7dlw==
+    TWINE_NON_INTERACTIVE: true
+    TWINE_USERNAME: __token__
     TWINE_PASSWORD:
       secure: YI+izt+hzh/czFuDCrne4XN78nQmT7jvcqe9uWvndqAUxhyXqr98GJ9FUSVPbqyWx+pW+5cKvh2PMdDEPJUcHMG8dtpHcosn3ndXnHGkHH3mwOnOduiUtrhlSEoIFwbZUhFRScYvfILGD8KM7RgcCiUUcner8QOFPiFX1zey8WVLynIj3c1rVe6Ola18pIUoL9D4NITNt5EWxexvr4vnkHmydk6dzWHBpiGsFujzccg+MoYN2ZjiN2JGSOykmEF/
   matrix:
@@ -19,7 +19,6 @@ environment:
 install:
   - SET PATH=C:\\Python%PYTHON%;c:\\Python%PYTHON%\\scripts;%PATH%
   - python -m pip install -U pip wheel setuptools
-  - pip install -r requirements-test.txt
 
 build: off
 build_script:
@@ -27,10 +26,10 @@ build_script:
 
 test: off
 test_script:
-  - pip list
-  - py.test -v tests
+  - pip install -r requirements-test.txt
+  - pip install xmlsec --only-binary=xmlsec --no-index --find-links=dist
+  - pytest -v
   - ps: Get-ChildItem dist\*.whl | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
-
 
 deploy: on
 deploy_script:
