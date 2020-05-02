@@ -1,15 +1,20 @@
-version: 1.3.{build}
-
 environment:
-  matrix:
-  - python: 27
-  - python: 27-x64
-  - python: 35
-  - python: 35-x64
-  - python: 36
-  - python: 36-x64
-  - python: 37
-  - python: 37-x64
+    global:
+        TWINE_USERNAME:
+            secure: AIbDZTVaU3Ijr7mtxW7dlw==
+        TWINE_PASSWORD:
+            secure: YI+izt+hzh/czFuDCrne4XN78nQmT7jvcqe9uWvndqAUxhyXqr98GJ9FUSVPbqyWx+pW+5cKvh2PMdDEPJUcHMG8dtpHcosn3ndXnHGkHH3mwOnOduiUtrhlSEoIFwbZUhFRScYvfILGD8KM7RgcCiUUcner8QOFPiFX1zey8WVLynIj3c1rVe6Ola18pIUoL9D4NITNt5EWxexvr4vnkHmydk6dzWHBpiGsFujzccg+MoYN2ZjiN2JGSOykmEF/
+    matrix:
+        - python: 27
+        - python: 27-x64
+        - python: 35
+        - python: 35-x64
+        - python: 36
+        - python: 36-x64
+        - python: 37
+        - python: 37-x64
+        - python: 38
+        - python: 38-x64
 
 install:
     - SET PATH=C:\\Python%PYTHON%;c:\\Python%PYTHON%\\scripts;%PATH%
@@ -23,9 +28,11 @@ build_script:
         If ($env:APPVEYOR_REPO_TAG -Eq "true" ) {
             $version = "$env:APPVEYOR_REPO_TAG_NAME"
         } Else {
-            $version = "$env:APPVEYOR_BUILD_VERSION.dev0"
+            pip install setuptools-scm
+            $version = python -c "from setuptools_scm import get_version; print(get_version())"
         }
         $version | Set-Content version.txt
+    - python setup.py --version
     - python setup.py build bdist_wheel
     - ps: Get-ChildItem dist\*.whl | % { pip install $_.FullName }
 
@@ -34,3 +41,12 @@ test_script:
     - pip list
     - py.test -v tests
     - ps: Get-ChildItem dist\*.whl | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
+
+
+deploy: on
+deploy_script:
+    - ps: >-
+        If ($env:APPVEYOR_REPO_TAG -eq $TRUE) {
+            pip install twine
+            twine upload dist/*.whl
+        }
