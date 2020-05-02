@@ -1,7 +1,7 @@
 environment:
     global:
-        TWINE_USERNAME:
-            secure: AIbDZTVaU3Ijr7mtxW7dlw==
+        TWINE_NON_INTERACTIVE: true
+        TWINE_USERNAME: __token__
         TWINE_PASSWORD:
             secure: YI+izt+hzh/czFuDCrne4XN78nQmT7jvcqe9uWvndqAUxhyXqr98GJ9FUSVPbqyWx+pW+5cKvh2PMdDEPJUcHMG8dtpHcosn3ndXnHGkHH3mwOnOduiUtrhlSEoIFwbZUhFRScYvfILGD8KM7RgcCiUUcner8QOFPiFX1zey8WVLynIj3c1rVe6Ola18pIUoL9D4NITNt5EWxexvr4vnkHmydk6dzWHBpiGsFujzccg+MoYN2ZjiN2JGSOykmEF/
     matrix:
@@ -32,7 +32,6 @@ build_script:
             $version = python -c "from setuptools_scm import get_version; print(get_version())"
         }
         $version | Set-Content version.txt
-    - python setup.py --version
     - python setup.py build bdist_wheel
     - ps: Get-ChildItem dist\*.whl | % { pip install $_.FullName }
 
