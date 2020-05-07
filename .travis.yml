@@ -14,6 +14,12 @@ matrix:
   - python: 3.8
     dist: xenial
     sudo: required
+env:
+  global:
+  - CFLAGS=-coverage
+  - LDFLAGS=-coverage -lgcov
+  - PYXMLSEC_TEST_ITERATIONS=50
+
 addons:
   apt:
     packages:
@@ -23,11 +29,16 @@ addons:
     - libxmlsec1-openssl
     - libxslt1-dev
     - pkg-config
+    - lcov
 install:
-- travis_retry pip install -r requirements-test.txt
+- travis_retry pip install coverage codecov -r requirements-test.txt
 - travis_retry pip install -e "."
 - pip list
-script: py.test -v tests
+script: coverage run -m pytest -v tests
+after_success:
+- lcov --capture --directory . --output-file coverage.info
+- lcov --list coverage.info
+- codecov --file coverage.info
 before_deploy:
 - travis_retry pip install Sphinx
 - python setup.py build_sphinx
