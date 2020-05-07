@@ -1,5 +1,4 @@
-from setuptools import setup
-from setuptools import Extension
+from setuptools import Extension, setup
 from setuptools.command import build_ext
 
 import xmlsec_setupinfo
@@ -31,11 +30,11 @@ _xmlsec = Extension(
 
 setup(
     name=xmlsec_setupinfo.name(),
-    version=xmlsec_setupinfo.version(),
+    use_scm_version=True,
     description=xmlsec_setupinfo.description(),
     ext_modules=[_xmlsec],
     cmdclass={'build_ext': BuildExt},
-    setup_requires=xmlsec_setupinfo.requirements(),
+    setup_requires=xmlsec_setupinfo.requirements() + ['setuptools_scm[toml]>=3.4'],
     install_requires=xmlsec_setupinfo.requirements(),
     author="Bulat Gaifullin",
     author_email='support@mehcode.com',
@@ -58,6 +57,6 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
-        'Topic :: Text Processing :: Markup :: XML'
+        'Topic :: Text Processing :: Markup :: XML',
     ],
 )
