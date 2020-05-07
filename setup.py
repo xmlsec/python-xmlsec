@@ -446,4 +446,7 @@ setup(
         'Topic :: Text Processing :: Markup :: XML',
     ],
     zip_safe=False,
+    packages=['xmlsec'],
+    package_dir={'': 'src'},
+    package_data={'xmlsec': ['py.typed', '*.pyi']},
 )
