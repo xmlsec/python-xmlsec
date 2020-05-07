@@ -34,7 +34,8 @@ addons:
     - pkg-config
     - lcov
 install:
-- travis_retry pip install coverage codecov -r requirements-test.txt
+- travis_retry pip install --upgrade pip setuptools wheel
+- travis_retry pip install coverage codecov -r requirements-test.txt --upgrade --force-reinstall
 - travis_retry pip install -e "."
 - pip list
 script: coverage run -m pytest -v tests
