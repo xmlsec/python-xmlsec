@@ -6,10 +6,12 @@ notifications:
 matrix:
   include:
   - python: 2.7
-  - python: 3.4
   - python: 3.5
   - python: 3.6
   - python: 3.7
+    dist: xenial
+    sudo: required
+  - python: 3.8
     dist: xenial
     sudo: required
 addons:
@@ -21,8 +23,6 @@ addons:
     - libxmlsec1-openssl
     - libxslt1-dev
     - pkg-config
-before_install:
-- echo "${TRAVIS_TAG:-1.0.1.dev}" >version.txt
 install:
 - travis_retry pip install -r requirements-test.txt
 - travis_retry pip install -e "."
