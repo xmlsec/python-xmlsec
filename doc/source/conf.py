@@ -17,8 +17,13 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import sys
+import urllib.request
 
+import lxml
+
+from docutils.nodes import reference
 from packaging.version import parse
+from sphinx.errors import ExtensionError
 
 # sys.path.insert(0, os.path.abspath('.'))
 
@@ -172,8 +177,32 @@ autodoc_docstring_signature = True
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3/', None)}
 
-nitpick_ignore = [
-    # lxml doesn't have an intersphinx docs
-    # https://lxml.de/api/lxml.etree._Element-class.html
-    ('py:class', 'lxml.etree._Element')
-]
+
+# LXML crossref'ing stuff:
+# LXML doesn't have an intersphinx docs,
+# so we link to lxml.etree._Element explicitly
+lxml_element_cls_doc_uri = 'https://lxml.de/api/lxml.etree._Element-class.html'
+
+
+def lxml_element_doc_reference(app, env, node, contnode):
+    """
+    Handle a missing reference only if it is a ``lxml.etree._Element`` ref.
+
+    We handle only :class:`lxml.etree._Element` and :class:`~lxml.etree._Element` nodes.
+    """
+    if (
+        node.get('reftype', None) == 'class'
+        and node.get('reftarget', None) == 'lxml.etree._Element'
+        and contnode.astext() in ('lxml.etree._Element', '_Element')
+    ):
+        reftitle = '(in lxml v{})'.format(lxml.__version__)
+        newnode = reference('', '', internal=False, refuri=lxml_element_cls_doc_uri, reftitle=reftitle)
+        newnode.append(contnode)
+        return newnode
+
+
+def setup(app):
+    # first, check whether the doc URL is still valid
+    if urllib.request.urlopen(lxml_element_cls_doc_uri).getcode() != 200:
+        raise ExtensionError('URL to `lxml.etree._Element` docs is not accesible.')
+    app.connect('missing-reference', lxml_element_doc_reference)
