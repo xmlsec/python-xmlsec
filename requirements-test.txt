@@ -1,2 +1,2 @@
 -r requirements.txt
-pytest
+pytest>=4.6.9
