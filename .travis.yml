@@ -44,5 +44,5 @@ after_success:
 - lcov --list coverage.info
 - codecov --file coverage.info
 before_deploy:
-- travis_retry pip install Sphinx
-- python setup.py build_sphinx
+- travis_retry pip install Sphinx importlib-metadata packaging
+- sphinx-build -EWanb html doc/source build/sphinx
