@@ -45,4 +45,5 @@ after_success:
 - codecov --file coverage.info
 before_deploy:
 - travis_retry pip install Sphinx importlib-metadata packaging
+- git apply --verbose --no-index --unsafe-paths --directory=$(python -c "import site; print(site.getsitepackages()[0])") doc/source/sphinx-pr-6916.diff
 - sphinx-build -EWanb html doc/source build/sphinx

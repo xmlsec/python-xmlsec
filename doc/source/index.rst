@@ -1,7 +1,10 @@
 .. python-xmlsec documentation master file, created by
    sphinx-quickstart on Fri Mar 17 10:30:14 2017.
    You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+   contain the root ``toctree`` directive.
+
+.. role:: xml(code)
+   :language: xml
 
 Welcome to python-xmlsec's documentation!
 =========================================
