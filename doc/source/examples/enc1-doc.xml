@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+XML Security Library example: Original XML doc file for enc example.
+-->
+<Envelope>
+<Data>Hello, World!</Data>
+</Envelope>
