@@ -18,7 +18,7 @@ examples = sorted(examples_dir.glob('*.py'))
 
 
 @contextlib.contextmanager
-def cd(where_to: Path):
+def cd(where_to):
     """
     Temporarily change the working directory.
 
