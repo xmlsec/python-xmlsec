@@ -110,10 +110,14 @@ static int PyXmlSec_SignatureContextKeySet(PyObject* self, PyObject* value, void
 }
 
 static const char PyXmlSec_SignatureContextRegisterId__doc__[] = \
+    "register_id(node, id_attr = 'ID', id_ns = None) -> None\n"
     "Registers new id.\n\n"
     ":param node: the pointer to XML node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
     ":param id_attr: the attribute\n"
-    ":param id_ns: the namespace\n";
+    ":type id_attr: :class:`str`\n"
+    ":param id_ns: the namespace (optional)\n"
+    ":type id_ns: :class:`str` or :data:`None`";
 static PyObject* PyXmlSec_SignatureContextRegisterId(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "node", "id_attr", "id_ns", NULL};
 
@@ -166,8 +170,10 @@ ON_FAIL:
 }
 
 static const char PyXmlSec_SignatureContextSign__doc__[] = \
+    "sign(node) -> None\n"
     "Signs according to the signature template.\n\n"
-    ":param node: the pointer to <dsig:Signature/> node with signature template\n";
+    ":param node: the pointer to :xml:`<dsig:Signature/>` node with signature template\n"
+    ":type node: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_SignatureContextSign(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "node", NULL};
 
@@ -197,9 +203,12 @@ ON_FAIL:
 }
 
 static const char PyXmlSec_SignatureContextVerify__doc__[] = \
+    "verify(node) -> None\n"
     "Verifies according to the signature template.\n\n"
-    ":param node: he pointer with <dsig:Signature/> node\n"
-    ":return: None if success otherwise raises VerificationError\n";
+    ":param node: the pointer with :xml:`<dsig:Signature/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
+    ":return: :data:`None` on success\n"
+    ":raise VerificationError: on failure\n";
 static PyObject* PyXmlSec_SignatureContextVerify(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "node", NULL};
 
@@ -287,10 +296,14 @@ static int PyXmlSec_ProcessSignBinary(PyXmlSec_SignatureContext* ctx, const xmlS
 }
 
 static const char PyXmlSec_SignatureContextSignBinary__doc__[] = \
-    "Signs binary data *data* with *algorithm*.\n\n"
+    "sign_binary(bytes, transform) -> bytes\n"
+    "Signs binary data ``data`` with algorithm ``transform``.\n\n"
     ":param bytes: the binary data\n"
+    ":type bytes: :class:`bytes`\n"
     ":param transform: the signature algorithm\n"
-    ":return: the signature\n";
+    ":type transform: :class:`Transform`\n"
+    ":return: the signature\n"
+    ":rtype: :class:`bytes`";
 static PyObject* PyXmlSec_SignatureContextSignBinary(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "bytes", "transform", NULL};
     PyXmlSec_SignatureContext* ctx = (PyXmlSec_SignatureContext*)self;
@@ -322,11 +335,16 @@ ON_FAIL:
 }
 
 static const char PyXmlSec_SignatureContextVerifyBinary__doc__[] = \
+    "verify_binary(bytes, transform, signature) -> None\n"
     "Verifies signature for binary data.\n\n"
     ":param bytes: the binary data\n"
+    ":type bytes: :class:`bytes`\n"
     ":param transform: the signature algorithm\n"
+    ":type transform: :class:`Transform`\n"
     ":param signature: the signature\n"
-    ":return: None if success otherwise raises VerificationError\n";
+    ":type signature: :class:`bytes`\n"
+    ":return: :data:`None` on success\n"
+    ":raise VerificationError: on failure";
 static PyObject* PyXmlSec_SignatureContextVerifyBinary(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "bytes", "transform", "signature", NULL};
 
@@ -372,9 +390,10 @@ ON_FAIL:
 }
 
 static const char PyXmlSec_SignatureContextEnableReferenceTransform__doc__[] = \
-    "Enables use of *t* as reference transform.\n\n"\
-    "Note: by default, all transforms are enabled. The first call of\n"\
-    "`enable_reference_transform` will switch to explicitly enabled transforms.\n\n"
+    "enable_reference_transform(transform) -> None\n"
+    "Enables use of ``transform`` as reference transform.\n\n"
+    ".. note:: by default, all transforms are enabled. The first call of "
+    ":meth:`~SignatureContext.enable_reference_transform` will switch to explicitly enabled transforms.\n\n"
     ":param transform: the transform klass.\n";
 static PyObject* PyXmlSec_SignatureContextEnableReferenceTransform(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "transform", NULL};
@@ -406,9 +425,10 @@ ON_FAIL:
 }
 
 static const char PyXmlSec_SignatureContextEnableSignatureTransform__doc__[] = \
-    "Enables use of *t* as signature transform.\n\n"\
-    "Note: by default, all transforms are enabled. The first call of\n"\
-    "`enable_signature_transform` will switch to explicitly enabled transforms.\n\n"
+    "enable_signature_transform(transform) -> None\n"
+    "Enables use of ``transform`` as signature transform.\n\n"
+    ".. note:: by default, all transforms are enabled. The first call of "
+    ":meth:`~SignatureContext.enable_signature_transform` will switch to explicitly enabled transforms.\n\n"
     ":param transform: the transform klass.\n";
 static PyObject* PyXmlSec_SignatureContextEnableSignatureTransform(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "transform", NULL};
@@ -439,8 +459,10 @@ ON_FAIL:
 }
 
 static const char PyXmlSec_SignatureContextSetEnabledKeyData__doc__[] = \
-    "Adds selected *KeyData* to the list of enabled key data list.\n\n"
-    ":param keydata_list: the list.\n";
+    "set_enabled_key_data(keydata_list) -> None\n"
+    "Adds selected :class:`KeyData` to the list of enabled key data list.\n\n"
+    ":param keydata_list: the list\n"
+    ":type keydata_list: :class:`list` of :class:`KeyData`";
 static PyObject* PyXmlSec_SignatureContextSetEnabledKeyData(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "keydata_list", NULL};
 

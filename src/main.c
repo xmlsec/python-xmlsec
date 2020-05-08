@@ -91,9 +91,10 @@ static int PyXmlSec_Init(void) {
 }
 
 static char PyXmlSec_PyInit__doc__[] = \
+    "init() -> None\n"
     "Initializes the library for general operation.\n\n"
     "This is called upon library import and does not need to be called\n"
-    "again *shutdown* is called explicitly).\n";
+    "again :func:`~.shutdown` is called explicitly).\n";
 static PyObject* PyXmlSec_PyInit(PyObject *self) {
    if (PyXmlSec_Init() < 0) {
         return NULL;
@@ -102,6 +103,7 @@ static PyObject* PyXmlSec_PyInit(PyObject *self) {
 }
 
 static char PyXmlSec_PyShutdown__doc__[] = \
+    "shutdown() -> None\n"
     "Shutdowns the library and cleanup any leftover resources.\n\n"
     "This is called automatically upon interpreter termination and\n"
     "should not need to be called explicitly.";
@@ -111,8 +113,10 @@ static PyObject* PyXmlSec_PyShutdown(PyObject* self) {
 }
 
 static char PyXmlSec_PyEnableDebugOutput__doc__[] = \
+    "enable_debug_trace(enabled) -> None\n"
     "Enables or disables calling LibXML2 callback from the default errors callback.\n\n"
-    ":param enable_debug_trace: flag, debug trace is enabled or disabled";
+    ":param enabled: flag, debug trace is enabled or disabled\n"
+    ":type enabled: :class:`bool`";
 static PyObject* PyXmlSec_PyEnableDebugOutput(PyObject *self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "enabled", NULL};
     PyObject* enabled = Py_True;

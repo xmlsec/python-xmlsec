@@ -114,7 +114,8 @@ static int PyXmlSec_EncryptionContextKeySet(PyObject* self, PyObject* value, voi
 }
 
 static const char PyXmlSec_EncryptionContextReset__doc__[] = \
-    "Resets *context*, user settings are not touched.\n";
+    "reset() -> None\n"\
+    "Reset this context, user settings are not touched.\n";
 static PyObject* PyXmlSec_EncryptionContextReset(PyObject* self, PyObject* args, PyObject* kwargs) {
     PyXmlSec_EncryptionContext* ctx = (PyXmlSec_EncryptionContext*)self;
 
@@ -128,11 +129,15 @@ static PyObject* PyXmlSec_EncryptionContextReset(PyObject* self, PyObject* args,
 }
 
 static const char PyXmlSec_EncryptionContextEncryptBinary__doc__[] = \
-    "Encrypts binary *data* according to `EncryptedData` template *template*\n"\
-    "Note: *template* is modified in place.\n\n"
-    ":param template: the pointer to <enc:EncryptedData/> template node\n"
+    "encrypt_binary(template, data) -> lxml.etree._Element\n"
+    "Encrypts binary ``data`` according to ``EncryptedData`` template ``template``.\n\n"
+    ".. note:: ``template`` is modified in place.\n\n"
+    ":param template: the pointer to :xml:`<enc:EncryptedData/>` template node\n"
+    ":type template: :class:`lxml.etree._Element`\n"
     ":param data: the data\n"
-    ":return: the resulting <enc:EncryptedData/> subtree\n";
+    ":type data: :class:`bytes`\n"
+    ":return: the resulting :xml:`<enc:EncryptedData/>` subtree\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_EncryptionContextEncryptBinary(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "template", "data", NULL};
 
@@ -189,14 +194,18 @@ static void PyXmlSec_ClearReplacedNodes(xmlSecEncCtxPtr ctx, PyXmlSec_LxmlDocume
 }
 
 static const char PyXmlSec_EncryptionContextEncryptXml__doc__[] = \
-    "Encrpyts *node* using *template*.\n" \
-    "Note: The `Type` attribute of *template* decides whether *node* itself is encrypted\n"\
-    "(`http://www.w3.org/2001/04/xmlenc#Element`) or its content (`http://www.w3.org/2001/04/xmlenc#Content`).\n"\
-    "It must have one of these two values (or an exception is raised).\n"\
-    "The operation modifies the tree and removes replaced nodes.\n"\
-    ":param template: the pointer to <enc:EncryptedData/> template node\n"\
-    ":param node: the pointer to node for encryption\n"\
-    ":return: the pointer to newly created <enc:EncryptedData/> node\n";
+    "encrypt_xml(template, node) -> lxml.etree._Element\n"
+    "Encrypts ``node`` using ``template``.\n\n"
+    ".. note:: The ``\"Type\"`` attribute of ``template`` decides whether ``node`` itself "
+    "(``http://www.w3.org/2001/04/xmlenc#Element``) or its content (``http://www.w3.org/2001/04/xmlenc#Content``) is encrypted.\n"
+    "   It must have one of these two values (or an exception is raised).\n"
+    "   The operation modifies the tree and removes replaced nodes.\n\n"
+    ":param template: the pointer to :xml:`<enc:EncryptedData/>` template node\n\n"
+    ":type template: :class:`lxml.etree._Element`\n"
+    ":param node: the pointer to node for encryption\n\n"
+    ":type node: :class:`lxml.etree._Element`\n"
+    ":return: the pointer to newly created :xml:`<enc:EncryptedData/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_EncryptionContextEncryptXml(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "template", "node", NULL};
 
@@ -271,10 +280,15 @@ ON_FAIL:
 }
 
 static const char PyXmlSec_EncryptionContextEncryptUri__doc__[] = \
-    "Encrypts binary data obtained from *uri* according to *template*.\n\n"
-    ":param template: the pointer to <enc:EncryptedData/> template node\n"
+    "encrypt_uri(template, uri) -> lxml.etree._Element\n"
+    "Encrypts binary data obtained from ``uri`` according to ``template``.\n\n"
+    ".. note:: ``template`` is modified in place.\n\n"
+    ":param template: the pointer to :xml:`<enc:EncryptedData/>` template node\n"
+    ":type template: :class:`lxml.etree._Element`\n"
     ":param uri: the URI\n"
-    ":return: the resulting <enc:EncryptedData/> subtree\n";
+    ":type uri: :class:`str`\n"
+    ":return: the resulting :xml:`<enc:EncryptedData/>` subtree\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_EncryptionContextEncryptUri(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "template", "uri", NULL};
 
@@ -306,14 +320,16 @@ ON_FAIL:
 }
 
 static const char PyXmlSec_EncryptionContextDecrypt__doc__[] = \
-    "Decrypts *node* (an `EncryptedData` or `EncryptedKey` element) and return the result.\n"\
-    "The decryption may result in binary data or an XML subtree.\n"\
-    "In the former case, the binary data is returned. In the latter case,\n"\
-    "the input tree is modified and a reference to the decrypted XML subtree is returned.\n"\
-    "If the operation modifies the tree, it removes replaced nodes.\n"\
-    ":param node: the pointer to <enc:EncryptedData/> or <enc:EncryptedKey/> node\n"
-    ":return: depends on input parameters\n";
-
+    "decrypt(node)\n"
+    "Decrypts ``node`` (an ``EncryptedData`` or ``EncryptedKey`` element) and returns the result. "
+    "The decryption may result in binary data or an XML subtree. "
+    "In the former case, the binary data is returned. In the latter case, "
+    "the input tree is modified and a reference to the decrypted XML subtree is returned.\n"
+    "If the operation modifies the tree, it removes replaced nodes.\n\n"
+    ":param node: the pointer to :xml:`<enc:EncryptedData/>` or :xml:`<enc:EncryptedKey/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
+    ":return: depends on input parameters\n"
+    ":rtype: :class:`lxml.etree._Element` or :class:`bytes`";
 static PyObject* PyXmlSec_EncryptionContextDecrypt(PyObject* self, PyObject* args, PyObject* kwargs) {
     static char *kwlist[] = { "node", NULL};
 
