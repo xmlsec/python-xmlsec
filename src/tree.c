@@ -146,7 +146,9 @@ static char PyXmlSec_TreeAddIds__doc__[] = \
     "This is the case, if a transform references an id via ``XPointer`` or a self document uri and "
     "the id inkey_data_formation is not available by other means (e.g. an associated DTD or XML schema).\n\n"
     ":param node: the pointer to XML node\n"
-    ":param ids: the list of ID attributes.\n";
+    ":type node: :class:`lxml.etree._Element`\n"
+    ":param ids: the list of ID attributes.\n"
+    ":type ids: :class:`list` of strings";
 static PyObject* PyXmlSec_TreeAddIds(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "ids", NULL};
 

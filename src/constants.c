@@ -85,44 +85,44 @@ static PyGetSetDef PyXmlSec_TransformGetSet[] = {
 
 static PyTypeObject _PyXmlSec_TransformType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    STRINGIFY(MODULE_NAME) "constants.__Transform", /* tp_name */
-    sizeof(PyXmlSec_Transform),                     /* tp_basicsize */
-    0,                                              /* tp_itemsize */
-    PyXmlSec_Transform__del__,                      /* tp_dealloc */
-    0,                                              /* tp_print */
-    0,                                              /* tp_getattr */
-    0,                                              /* tp_setattr */
-    0,                                              /* tp_reserved */
-    PyXmlSec_Transform__repr__,                     /* tp_repr */
-    0,                                              /* tp_as_number */
-    0,                                              /* tp_as_sequence */
-    0,                                              /* tp_as_mapping */
-    0,                                              /* tp_hash  */
-    0,                                              /* tp_call */
-    PyXmlSec_Transform__str__,                      /* tp_str */
-    0,                                              /* tp_getattro */
-    0,                                              /* tp_setattro */
-    0,                                              /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                             /* tp_flags */
-    "The xmlSecTransformId reflection",             /* tp_doc */
-    0,                                              /* tp_traverse */
-    0,                                              /* tp_clear */
-    0,                                              /* tp_richcompare */
-    0,                                              /* tp_weaklistoffset */
-    0,                                              /* tp_iter */
-    0,                                              /* tp_iternext */
-    0,                                              /* tp_methods */
-    0,                                              /* tp_members */
-    PyXmlSec_TransformGetSet,                       /* tp_getset */
-    0,                                              /* tp_base */
-    0,                                              /* tp_dict */
-    0,                                              /* tp_descr_get */
-    0,                                              /* tp_descr_set */
-    0,                                              /* tp_dictoffset */
-    0,                                              /* tp_init */
-    0,                                              /* tp_alloc */
-    0,                                              /* tp_new */
-    0,                                              /* tp_free */
+    STRINGIFY(MODULE_NAME) ".constants.__Transform", /* tp_name */
+    sizeof(PyXmlSec_Transform),                      /* tp_basicsize */
+    0,                                               /* tp_itemsize */
+    PyXmlSec_Transform__del__,                       /* tp_dealloc */
+    0,                                               /* tp_print */
+    0,                                               /* tp_getattr */
+    0,                                               /* tp_setattr */
+    0,                                               /* tp_reserved */
+    PyXmlSec_Transform__repr__,                      /* tp_repr */
+    0,                                               /* tp_as_number */
+    0,                                               /* tp_as_sequence */
+    0,                                               /* tp_as_mapping */
+    0,                                               /* tp_hash  */
+    0,                                               /* tp_call */
+    PyXmlSec_Transform__str__,                       /* tp_str */
+    0,                                               /* tp_getattro */
+    0,                                               /* tp_setattro */
+    0,                                               /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                              /* tp_flags */
+    "The xmlSecTransformId reflection",              /* tp_doc */
+    0,                                               /* tp_traverse */
+    0,                                               /* tp_clear */
+    0,                                               /* tp_richcompare */
+    0,                                               /* tp_weaklistoffset */
+    0,                                               /* tp_iter */
+    0,                                               /* tp_iternext */
+    0,                                               /* tp_methods */
+    0,                                               /* tp_members */
+    PyXmlSec_TransformGetSet,                        /* tp_getset */
+    0,                                               /* tp_base */
+    0,                                               /* tp_dict */
+    0,                                               /* tp_descr_get */
+    0,                                               /* tp_descr_set */
+    0,                                               /* tp_dictoffset */
+    0,                                               /* tp_init */
+    0,                                               /* tp_alloc */
+    0,                                               /* tp_new */
+    0,                                               /* tp_free */
 };
 
 PyTypeObject* PyXmlSec_TransformType = &_PyXmlSec_TransformType;
@@ -195,7 +195,7 @@ static PyGetSetDef PyXmlSec_KeyDataGetSet[] = {
 
 static PyTypeObject _PyXmlSec_KeyDataType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    STRINGIFY(MODULE_NAME) "constants.__KeyData",   /* tp_name */
+    STRINGIFY(MODULE_NAME) ".constants.__KeyData",  /* tp_name */
     sizeof(PyXmlSec_KeyData),                       /* tp_basicsize */
     0,                                              /* tp_itemsize */
     PyXmlSec_KeyData__del__,                        /* tp_dealloc */
