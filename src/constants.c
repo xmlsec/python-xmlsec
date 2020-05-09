@@ -22,7 +22,22 @@ static void PyXmlSec_Transform__del__(PyObject* self) {
 static PyObject* PyXmlSec_Transform__str__(PyObject* self) {
     char buf[300];
     PyXmlSec_Transform* transform = (PyXmlSec_Transform*)(self);
-    snprintf(buf, sizeof(buf), "%s, %s", transform->id->name, transform->id->href);
+    if (transform->id->href != NULL)
+        snprintf(buf, sizeof(buf), "%s, %s", transform->id->name, transform->id->href);
+    else
+        snprintf(buf, sizeof(buf), "%s, None", transform->id->name);
+
+    return PyString_FromString(buf);
+}
+
+// __repr__ method
+static PyObject* PyXmlSec_Transform__repr__(PyObject* self) {
+    char buf[300];
+    PyXmlSec_Transform* transform = (PyXmlSec_Transform*)(self);
+    if (transform->id->href != NULL)
+        snprintf(buf, sizeof(buf), "__Transform('%s', '%s', %d)", transform->id->name, transform->id->href, transform->id->usage);
+    else
+        snprintf(buf, sizeof(buf), "__Transform('%s', None, %d)", transform->id->name, transform->id->usage);
     return PyString_FromString(buf);
 }
 
@@ -33,7 +48,9 @@ static PyObject* PyXmlSec_TransformNameGet(PyXmlSec_Transform* self, void* closu
 
 static const char PyXmlSec_TransformHrefGet__doc__[] = "The transform's identification string (href).";
 static PyObject* PyXmlSec_TransformHrefGet(PyXmlSec_Transform* self, void* closure) {
-    return PyString_FromString((const char*)self->id->href);
+    if (self->id->href != NULL)
+        return PyString_FromString((const char*)self->id->href);
+    Py_RETURN_NONE;
 }
 
 static const char PyXmlSec_TransformUsageGet__doc__[] = "The allowed transforms usages.";
@@ -76,7 +93,7 @@ static PyTypeObject _PyXmlSec_TransformType = {
     0,                                              /* tp_getattr */
     0,                                              /* tp_setattr */
     0,                                              /* tp_reserved */
-    0,                                              /* tp_repr */
+    PyXmlSec_Transform__repr__,                     /* tp_repr */
     0,                                              /* tp_as_number */
     0,                                              /* tp_as_sequence */
     0,                                              /* tp_as_mapping */
@@ -128,7 +145,21 @@ static void PyXmlSec_KeyData__del__(PyObject* self) {
 static PyObject* PyXmlSec_KeyData__str__(PyObject* self) {
     char buf[300];
     PyXmlSec_KeyData* keydata = (PyXmlSec_KeyData*)(self);
-    snprintf(buf, sizeof(buf), "%s, %s", keydata->id->name, keydata->id->href);
+    if (keydata->id->href != NULL)
+        snprintf(buf, sizeof(buf), "%s, %s", keydata->id->name, keydata->id->href);
+    else
+        snprintf(buf, sizeof(buf), "%s, None", keydata->id->name);
+    return PyString_FromString(buf);
+}
+
+// __repr__ method
+static PyObject* PyXmlSec_KeyData__repr__(PyObject* self) {
+    char buf[300];
+    PyXmlSec_KeyData* keydata = (PyXmlSec_KeyData*)(self);
+    if (keydata->id->href != NULL)
+        snprintf(buf, sizeof(buf), "__KeyData('%s', '%s')", keydata->id->name, keydata->id->href);
+    else
+        snprintf(buf, sizeof(buf), "__KeyData('%s', None)", keydata->id->name);
     return PyString_FromString(buf);
 }
 
@@ -139,7 +170,9 @@ static PyObject* PyXmlSec_KeyDataNameGet(PyXmlSec_KeyData* self, void* closure) 
 
 static const char PyXmlSec_KeyDataHrefGet__doc__[] = "The key data's identification string (href).";
 static PyObject* PyXmlSec_KeyDataHrefGet(PyXmlSec_KeyData* self, void* closure) {
-    return PyString_FromString((const char*)self->id->href);
+    if (self->id->href != NULL)
+        return PyString_FromString((const char*)self->id->href);
+    Py_RETURN_NONE;
 }
 
 static PyGetSetDef PyXmlSec_KeyDataGetSet[] = {
@@ -170,7 +203,7 @@ static PyTypeObject _PyXmlSec_KeyDataType = {
     0,                                              /* tp_getattr */
     0,                                              /* tp_setattr */
     0,                                              /* tp_reserved */
-    0,                                              /* tp_repr */
+    PyXmlSec_KeyData__repr__,                       /* tp_repr */
     0,                                              /* tp_as_number */
     0,                                              /* tp_as_sequence */
     0,                                              /* tp_as_mapping */
@@ -394,7 +427,7 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
     PYXMLSEC_ADD_KEY_TYPE_CONSTANT(KeyDataTypePublic, "PUBLIC");
     PYXMLSEC_ADD_KEY_TYPE_CONSTANT(KeyDataTypePrivate, "PRIVATE");
     PYXMLSEC_ADD_KEY_TYPE_CONSTANT(KeyDataTypeSymmetric, "SYMMETRIC");
-    PYXMLSEC_ADD_KEY_TYPE_CONSTANT(KeyDataTypeSession, "SESSION");;
+    PYXMLSEC_ADD_KEY_TYPE_CONSTANT(KeyDataTypeSession, "SESSION");
     PYXMLSEC_ADD_KEY_TYPE_CONSTANT(KeyDataTypePermanent, "PERMANENT");
     PYXMLSEC_ADD_KEY_TYPE_CONSTANT(KeyDataTypeTrusted, "TRUSTED");
     PYXMLSEC_ADD_KEY_TYPE_CONSTANT(KeyDataTypeAny, "ANY");
