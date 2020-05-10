@@ -562,12 +562,12 @@ static int PyXmlSec_KeysManager__init__(PyObject* self, PyObject* args, PyObject
 
     PYXMLSEC_DEBUGF("%p: init key manager", self);
     if (handle == NULL) {
-        PyXmlSec_SetLastError("failed to create xmlsecKeyManger");
+        PyXmlSec_SetLastError("failed to create xmlsecKeyManager");
         return -1;
     }
     if (xmlSecCryptoAppDefaultKeysMngrInit(handle) < 0) {
         xmlSecKeysMngrDestroy(handle);
-        PyXmlSec_SetLastError("failed to initialize xmlsecKeyManger");
+        PyXmlSec_SetLastError("failed to initialize xmlsecKeyManager");
         return -1;
     }
     PYXMLSEC_DEBUGF("%p: init key manager - done: %p", self, handle);
