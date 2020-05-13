@@ -9,15 +9,16 @@ jobs:
         python-abi: [cp27-cp27m, cp27-cp27mu, cp35-cp35m, cp36-cp36m, cp37-cp37m, cp38-cp38]
     steps:
       - uses: actions/checkout@v1
+      - name: Install build dependencies
+        run: |
+          /opt/python/${{ matrix.python-abi }}/bin/pip install --upgrade pip setuptools wheel
       - name: Set environment variables
         shell: bash
         run: |
           echo ::set-env name=PKGVER::$(python setup.py --version)
-          echo ::set-env name=STATIC_DEPS::true
-      - name: Install build dependencies
-        run: |
-          /opt/python/${{ matrix.python-abi }}/bin/pip install --upgrade pip setuptools wheel -r requirements.txt
       - name: Build linux_x86_64 wheel
+        env:
+          STATIC_DEPS: true
         run: |
           /opt/python/${{ matrix.python-abi }}/bin/python setup.py bdist_wheel
       - name: Label manylinux2010_x86_64 wheel
