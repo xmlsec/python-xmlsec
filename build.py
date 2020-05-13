@@ -110,11 +110,15 @@ class build_ext(build_ext_orig):
             'Gdi32',
             'Crypt32',
         ]
+        ext.library_dirs = [str(p.absolute()) for p in self.build_libs_dir.rglob('lib')]
 
         includes = [p for p in self.build_libs_dir.rglob('include') if p.is_dir()]
         includes.append(next(p / 'xmlsec' for p in includes if (p / 'xmlsec').is_dir()))
         ext.include_dirs = [str(p.absolute()) for p in includes]
-        ext.library_dirs = [str(p.absolute()) for p in self.build_libs_dir.rglob('lib')]
+
+        import lxml
+
+        ext.include_dirs.extend(lxml.get_include())
 
     def prepare_static_build_linux(self):
         self.debug = os.environ.get('DEBUG', False)
