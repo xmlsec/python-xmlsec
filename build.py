@@ -5,6 +5,7 @@ import sys
 import tarfile
 import zipfile
 from distutils import log
+from distutils.errors import DistutilsError
 
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext as build_ext_orig
@@ -22,8 +23,11 @@ class build_ext(build_ext_orig):
         self.announce(message, level=log.INFO)
 
     def run(self):
+        ext = self.ext_map['xmlsec']
         self.debug = os.environ.get('DEBUG', False)
-        if os.environ.get('STATIC_DEPS', False) or sys.platform == 'win32':
+        self.static = os.environ.get('STATIC_DEPS', False)
+
+        if self.static or sys.platform == 'win32':
             self.info('STATIC_DEPS is set; starting build of static deps on {}'.format(sys.platform))
             buildroot = Path('build', 'tmp')
 
@@ -41,13 +45,50 @@ class build_ext(build_ext_orig):
                 self.prepare_static_build_win()
             elif 'linux' in sys.platform:
                 self.prepare_static_build_linux()
+        else:
+            import pkgconfig
 
-            ext = self.ext_map['xmlsec']
-            if self.debug:
-                ext.extra_compile_args.append('-Wall')
-                ext.extra_compile_args.append('-O0')
-            else:
-                ext.extra_compile_args.append('-Os')
+            try:
+                config = pkgconfig.parse('xmlsec1')
+            except EnvironmentError:
+                raise DistutilsError('Unable to invoke pkg-config.')
+
+            if config is None or not config.get('libraries'):
+                raise DistutilsError('Bad or uncomplete result returned from pkg-config')
+
+            ext.define_macros.extend(config['define_macros'])
+            ext.include_dirs.extend(config['include_dirs'])
+            ext.library_dirs.extend(config['library_dirs'])
+            ext.libraries.extend(config['libraries'])
+
+        import lxml
+
+        ext.include_dirs.extend(lxml.get_include())
+
+        ext.define_macros.extend(
+            [('MODULE_NAME', self.distribution.metadata.name), ('MODULE_VERSION', self.distribution.metadata.version)]
+        )
+
+        if sys.platform == 'win32':
+            ext.extra_compile_args.append('/Zi')
+        else:
+            ext.extra_compile_args.extend(
+                [
+                    '-g',
+                    '-std=c99',
+                    '-fPIC',
+                    '-fno-strict-aliasing',
+                    '-Wno-error=declaration-after-statement',
+                    '-Werror=implicit-function-declaration',
+                ]
+            )
+
+        if self.debug:
+            ext.extra_compile_args.append('-Wall')
+            ext.extra_compile_args.append('-O0')
+            ext.define_macros.append(('PYXMLSEC_ENABLE_DEBUG', '1'))
+        else:
+            ext.extra_compile_args.append('-Os')
 
         super(build_ext, self).run()
 
@@ -64,18 +105,18 @@ class build_ext(build_ext_orig):
             else:
                 suffix = "win32"
 
-        libs = {
-            'libxml2': 'libxml2-2.9.4.{}.zip'.format(suffix),
-            'libxslt': 'libxslt-1.1.29.{}.zip'.format(suffix),
-            'zlib': 'zlib-1.2.8.{}.zip'.format(suffix),
-            'iconv': 'iconv-1.14.{}.zip'.format(suffix),
-            'openssl': 'openssl-1.0.1.{}.zip'.format(suffix),
-            'xmlsec': 'xmlsec-1.2.24.{}.zip'.format(suffix),
-        }
+        libs = [
+            'libxml2-2.9.4.{}.zip'.format(suffix),
+            'libxslt-1.1.29.{}.zip'.format(suffix),
+            'zlib-1.2.8.{}.zip'.format(suffix),
+            'iconv-1.14.{}.zip'.format(suffix),
+            'openssl-1.0.1.{}.zip'.format(suffix),
+            'xmlsec-1.2.24.{}.zip'.format(suffix),
+        ]
 
-        for lib, file in libs.items():
-            url = urljoin(release_url, file)
-            destfile = self.libs_dir / file
+        for libfile in libs:
+            url = urljoin(release_url, libfile)
+            destfile = self.libs_dir / libfile
             if destfile.is_file():
                 self.info('Using local copy of "{}"'.format(url))
             else:
@@ -90,8 +131,6 @@ class build_ext(build_ext_orig):
 
         ext = self.ext_map['xmlsec']
         ext.define_macros = [
-            ('MODULE_NAME', self.distribution.metadata.name),
-            ('MODULE_VERSION', self.distribution.metadata.version),
             ('XMLSEC_CRYPTO', '\\"openssl\\"'),
             ('__XMLSEC_FUNCTION__', '__FUNCTION__'),
             ('XMLSEC_NO_GOST', '1'),
@@ -127,14 +166,8 @@ class build_ext(build_ext_orig):
         includes.append(next(p / 'xmlsec' for p in includes if (p / 'xmlsec').is_dir()))
         ext.include_dirs = [str(p.absolute()) for p in includes]
 
-        import lxml
-
-        ext.include_dirs.extend(lxml.get_include())
-
-        ext.extra_compile_args.append('/Zi')
-
     def prepare_static_build_linux(self):
-        self.openssl_version = '1.1.1g'
+        self.openssl_version = os.environ.get('OPENSSL_VERSION', '1.1.1g')
         self.libiconv_version = os.environ.get('LIBICONV_VERSION', '1.16')
         self.libxml2_version = os.environ.get('LIBXML2_VERSION', None)
         self.libxslt_version = os.environ.get('LIBXLST_VERSION', None)
@@ -205,7 +238,7 @@ class build_ext(build_ext_orig):
             with tarfile.open(file) as tar:
                 tar.extractall(path=self.build_libs_dir)
 
-        prefix_arg = '--prefix={}'.format(prefix_dir)
+        prefix_arg = '--prefix={}'.format(self.prefix_dir)
 
         cflags = ['-fPIC']
         env = os.environ.copy()
@@ -300,8 +333,6 @@ class build_ext(build_ext_orig):
 
         ext = self.ext_map['xmlsec']
         ext.define_macros = [
-            ('MODULE_NAME', self.distribution.metadata.name),
-            ('MODULE_VERSION', self.distribution.metadata.version),
             ('__XMLSEC_FUNCTION__', '__func__'),
             ('XMLSEC_NO_SIZE_T', None),
             ('XMLSEC_NO_GOST', '1'),
@@ -319,26 +350,8 @@ class build_ext(build_ext_orig):
             ('_UNICODE', '1'),
         ]
 
-        if self.debug:
-            ext.define_macros.append(('PYXMLSEC_ENABLE_DEBUG', '1'))
-
-        ext.extra_compile_args.extend(
-            [
-                '-O0',
-                '-g',
-                '-std=c99',
-                '-fPIC',
-                '-fno-strict-aliasing',
-                '-Wno-error=declaration-after-statement',
-                '-Werror=implicit-function-declaration',
-            ]
-        )
-
         ext.include_dirs.append(str(self.prefix_dir / 'include'))
         ext.include_dirs.extend([str(p.absolute()) for p in (self.prefix_dir / 'include').iterdir() if p.is_dir()])
-        import lxml
-
-        ext.include_dirs.extend(lxml.get_include())
 
         ext.library_dirs = []
         ext.libraries = ['m', 'rt']
