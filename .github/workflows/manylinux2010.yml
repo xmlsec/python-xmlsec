@@ -1,5 +1,5 @@
 name: manylinux2010
-on: [push]
+on: [push, pull_request]
 jobs:
   manylinux2010_x86_64:
     runs-on: ubuntu-latest
@@ -36,6 +36,7 @@ jobs:
         run: |
           /opt/python/${{ matrix.python-abi }}/bin/pytest -v
       - name: Upload dist
+        if: startsWith(github.ref, 'refs/tags/')
         env:
           TWINE_NON_INTERACTIVE: true
           TWINE_REPOSITORY_URL: https://test.pypi.org/legacy/
