@@ -22,6 +22,7 @@ class build_ext(build_ext_orig):
         self.announce(message, level=log.INFO)
 
     def run(self):
+        self.debug = os.environ.get('DEBUG', False)
         if os.environ.get('STATIC_DEPS', False) or sys.platform == 'win32':
             self.info('STATIC_DEPS is set; starting build of static deps on {}'.format(sys.platform))
             buildroot = Path('build', 'tmp')
@@ -40,6 +41,14 @@ class build_ext(build_ext_orig):
                 self.prepare_static_build_win()
             elif 'linux' in sys.platform:
                 self.prepare_static_build_linux()
+
+            ext = self.ext_map['xmlsec']
+            if self.debug:
+                ext.extra_compile_args.append('-Wall')
+                ext.extra_compile_args.append('-O0')
+            else:
+                ext.extra_compile_args.append('-Os')
+
         super(build_ext, self).run()
 
     def prepare_static_build_win(self):
@@ -81,6 +90,8 @@ class build_ext(build_ext_orig):
 
         ext = self.ext_map['xmlsec']
         ext.define_macros = [
+            ('MODULE_NAME', self.distribution.metadata.name),
+            ('MODULE_VERSION', self.distribution.metadata.version),
             ('XMLSEC_CRYPTO', '\\"openssl\\"'),
             ('__XMLSEC_FUNCTION__', '__FUNCTION__'),
             ('XMLSEC_NO_GOST', '1'),
@@ -120,8 +131,9 @@ class build_ext(build_ext_orig):
 
         ext.include_dirs.extend(lxml.get_include())
 
+        ext.extra_compile_args.append('/Zi')
+
     def prepare_static_build_linux(self):
-        self.debug = os.environ.get('DEBUG', False)
         self.openssl_version = '1.1.1g'
         self.libiconv_version = os.environ.get('LIBICONV_VERSION', '1.16')
         self.libxml2_version = os.environ.get('LIBXML2_VERSION', None)
