@@ -23,7 +23,9 @@ class build_ext(build_ext_orig, object):
         self.announce(message, level=log.INFO)
 
     def run(self):
-        if sys.version_info < (3, 4):
+        if sys.version_info >= (3, 4):
+            from pathlib import Path
+        else:
             from pathlib2 import Path
 
         ext = self.ext_map['xmlsec']
