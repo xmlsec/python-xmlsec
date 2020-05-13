@@ -15,7 +15,7 @@ jobs:
       - name: Set environment variables
         shell: bash
         run: |
-          echo ::set-env name=PKGVER::$(python setup.py --version)
+          echo ::set-env name=PKGVER::$(/opt/python/${{ matrix.python-abi }}/bin/python setup.py --version)
       - name: Build linux_x86_64 wheel
         env:
           STATIC_DEPS: true
