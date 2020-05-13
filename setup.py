@@ -16,14 +16,16 @@ if sys.version_info >= (3, 4):
 else:
     from urllib import urlcleanup, urlretrieve
     from urlparse import urljoin
-    from pathlib2 import Path
 
 
-class build_ext(build_ext_orig):
+class build_ext(build_ext_orig, object):
     def info(self, message):
         self.announce(message, level=log.INFO)
 
     def run(self):
+        if sys.version_info < (3, 4):
+            from pathlib2 import Path
+
         ext = self.ext_map['xmlsec']
         self.debug = os.environ.get('DEBUG', False)
         self.static = os.environ.get('STATIC_DEPS', False)
@@ -239,8 +241,8 @@ class build_ext(build_ext_orig):
         for file in (openssl_tar, zlib_tar, libiconv_tar, libxml2_tar, libxslt_tar, xmlsec1_tar):
             self.info('Unpacking {}'.format(file.name))
             try:
-                with tarfile.open(file) as tar:
-                    tar.extractall(path=self.build_libs_dir)
+                with tarfile.open(str(file)) as tar:
+                    tar.extractall(path=str(self.build_libs_dir))
             except EOFError:
                 raise DistutilsError('Bad {} downloaded; remove it and try again.'.format(file.name))
 
@@ -255,27 +257,31 @@ class build_ext(build_ext_orig):
 
         self.info('Building OpenSSL')
         openssl_dir = next(self.build_libs_dir.glob('openssl-*'))
-        subprocess.run(['./config', prefix_arg, 'no-shared', '-fPIC'], cwd=openssl_dir, env=env)
-        subprocess.run(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=openssl_dir, env=env)
-        subprocess.run(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install_sw'], cwd=openssl_dir, env=env)
+        subprocess.check_output(['./config', prefix_arg, 'no-shared', '-fPIC'], cwd=str(openssl_dir), env=env)
+        subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(openssl_dir), env=env)
+        subprocess.check_output(
+            ['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install_sw'], cwd=str(openssl_dir), env=env
+        )
 
         self.info('Building zlib')
         zlib_dir = next(self.build_libs_dir.glob('zlib-*'))
-        subprocess.run(['./configure', prefix_arg], cwd=zlib_dir, env=env)
-        subprocess.run(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=zlib_dir, env=env)
-        subprocess.run(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=zlib_dir, env=env)
+        subprocess.check_output(['./configure', prefix_arg], cwd=str(zlib_dir), env=env)
+        subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(zlib_dir), env=env)
+        subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(zlib_dir), env=env)
 
         self.info('Building libiconv')
         libiconv_dir = next(self.build_libs_dir.glob('libiconv-*'))
-        subprocess.run(
-            ['./configure', prefix_arg, '--disable-dependency-tracking', '--disable-shared'], cwd=libiconv_dir, env=env
+        subprocess.check_output(
+            ['./configure', prefix_arg, '--disable-dependency-tracking', '--disable-shared'], cwd=str(libiconv_dir), env=env
         )
-        subprocess.run(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=libiconv_dir, env=env)
-        subprocess.run(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=libiconv_dir, env=env)
+        subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(libiconv_dir), env=env)
+        subprocess.check_output(
+            ['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(libiconv_dir), env=env
+        )
 
         self.info('Building LibXML2')
         libxml2_dir = next(self.build_libs_dir.glob('libxml2-*'))
-        subprocess.run(
+        subprocess.check_output(
             [
                 './configure',
                 prefix_arg,
@@ -283,15 +289,17 @@ class build_ext(build_ext_orig):
                 '--with-iconv={}'.format(self.prefix_dir),
                 '--with-zlib={}'.format(self.prefix_dir),
             ],
-            cwd=libxml2_dir,
+            cwd=str(libxml2_dir),
             env=env,
         )
-        subprocess.run(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=libxml2_dir, env=env)
-        subprocess.run(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=libxml2_dir, env=env)
+        subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(libxml2_dir), env=env)
+        subprocess.check_output(
+            ['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(libxml2_dir), env=env
+        )
 
         self.info('Building libxslt')
         libxslt_dir = next(self.build_libs_dir.glob('libxslt-*'))
-        subprocess.run(
+        subprocess.check_output(
             [
                 './configure',
                 prefix_arg,
@@ -299,11 +307,13 @@ class build_ext(build_ext_orig):
                 '--with-libxml-prefix={}'.format(self.prefix_dir),
                 '--without-crypto',
             ],
-            cwd=libxslt_dir,
+            cwd=str(libxslt_dir),
             env=env,
         )
-        subprocess.run(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=libxslt_dir, env=env)
-        subprocess.run(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=libxslt_dir, env=env)
+        subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(libxslt_dir), env=env)
+        subprocess.check_output(
+            ['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(libxslt_dir), env=env
+        )
 
         self.info('Building xmlsec1')
         if 'LDFLAGS' in env:
@@ -311,7 +321,7 @@ class build_ext(build_ext_orig):
         else:
             env['LDFLAGS'] = '-lpthread'
         xmlsec1_dir = next(self.build_libs_dir.glob('xmlsec1-*'))
-        subprocess.run(
+        subprocess.check_output(
             [
                 './configure',
                 prefix_arg,
@@ -326,16 +336,18 @@ class build_ext(build_ext_orig):
                 '--with-libxml={}'.format(self.prefix_dir),
                 '--with-libxslt={}'.format(self.prefix_dir),
             ],
-            cwd=xmlsec1_dir,
+            cwd=str(xmlsec1_dir),
             env=env,
         )
-        subprocess.run(
+        subprocess.check_output(
             ['make', '-j{}'.format(multiprocessing.cpu_count() + 1)]
             + ['-I{}'.format(str(self.prefix_dir / 'include')), '-I{}'.format(str(self.prefix_dir / 'include' / 'libxml'))],
-            cwd=xmlsec1_dir,
+            cwd=str(xmlsec1_dir),
             env=env,
         )
-        subprocess.run(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=xmlsec1_dir, env=env)
+        subprocess.check_output(
+            ['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(xmlsec1_dir), env=env
+        )
 
         ext = self.ext_map['xmlsec']
         ext.define_macros = [
@@ -374,12 +386,22 @@ class build_ext(build_ext_orig):
         ext.extra_objects = [str(self.prefix_dir / 'lib' / o) for o in extra_objects]
 
 
-src_root = Path('src')
-sources = [str(p.absolute()) for p in src_root.rglob('*.c')]
+if sys.version_info >= (3, 4):
+    src_root = Path(__file__).parent / 'src'
+    sources = [str(p.absolute()) for p in src_root.rglob('*.c')]
+else:
+    import fnmatch
+
+    src_root = os.path.join(os.path.dirname(__file__), 'src')
+    sources = []
+    for root, _, files in os.walk(src_root):
+        for file in fnmatch.filter(files, '*.c'):
+            sources.append(os.path.join(root, file))
+
 pyxmlsec = Extension('xmlsec', sources=sources)
 setup_reqs = ['setuptools_scm[toml]>=3.4', 'pkgconfig', 'lxml>=3.8']
 
-if sys.version_info < (3,):
+if sys.version_info < (3, 4):
     setup_reqs.append('pathlib2')
 
 
