@@ -127,12 +127,12 @@ class build_ext(build_ext_orig, object):
             else:
                 self.info('Retrieving "{}" to "{}"'.format(url, destfile))
                 urlcleanup()  # work around FTP bug 27973 in Py2.7.12+
-                urlretrieve(url, destfile)
+                urlretrieve(url, str(destfile))
 
         for p in self.libs_dir.glob('*.zip'):
-            with zipfile.ZipFile(p) as f:
+            with zipfile.ZipFile(str(p)) as f:
                 destdir = self.build_libs_dir
-                f.extractall(path=destdir)
+                f.extractall(path=str(destdir))
 
         ext = self.ext_map['xmlsec']
         ext.define_macros = [
