@@ -34,7 +34,7 @@ test_script:
 deploy: on
 deploy_script:
   - ps: >-
-    If ($env:APPVEYOR_REPO_TAG -eq $TRUE) {
-      pip install twine
-      twine upload dist/*.whl
-    }
+      If ($env:APPVEYOR_REPO_TAG -eq $TRUE) {
+        pip install twine
+        twine upload dist/*.whl
+      }
