@@ -52,9 +52,11 @@ class build_ext(build_ext_orig):
                 config = pkgconfig.parse('xmlsec1')
             except EnvironmentError:
                 raise DistutilsError('Unable to invoke pkg-config.')
+            except pkgconfig.PackageNotFoundError:
+                raise DistutilsError('xmlsec1 is not installed or not in path.')
 
             if config is None or not config.get('libraries'):
-                raise DistutilsError('Bad or uncomplete result returned from pkg-config')
+                raise DistutilsError('Bad or uncomplete result returned from pkg-config.')
 
             ext.define_macros.extend(config['define_macros'])
             ext.include_dirs.extend(config['include_dirs'])
@@ -178,8 +180,8 @@ class build_ext(build_ext_orig):
         self.info('{:20} {}'.format('Lib sources in:', self.libs_dir.absolute()))
         self.info('{:20} {}'.format('zlib version:', self.zlib_version))
         self.info('{:20} {}'.format('libiconv version:', self.libiconv_version))
-        self.info('{:20} {}'.format('libxml2 version:', self.libxml2_version))
-        self.info('{:20} {}'.format('libxslt version:', self.libxslt_version))
+        self.info('{:20} {}'.format('libxml2 version:', self.libxml2_version or 'unset, using latest'))
+        self.info('{:20} {}'.format('libxslt version:', self.libxslt_version or 'unset, using latest'))
         self.info('{:20} {}'.format('xmlsec1 version:', self.xmlsec1_version))
 
         # fetch openssl
@@ -235,8 +237,11 @@ class build_ext(build_ext_orig):
 
         for file in (openssl_tar, zlib_tar, libiconv_tar, libxml2_tar, libxslt_tar, xmlsec1_tar):
             self.info('Unpacking {}'.format(file.name))
-            with tarfile.open(file) as tar:
-                tar.extractall(path=self.build_libs_dir)
+            try:
+                with tarfile.open(file) as tar:
+                    tar.extractall(path=self.build_libs_dir)
+            except EOFError:
+                raise DistutilsError('Bad {} downloaded; remove it and try again.'.format(file.name))
 
         prefix_arg = '--prefix={}'.format(self.prefix_dir)
 
