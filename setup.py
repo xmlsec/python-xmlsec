@@ -14,7 +14,8 @@ if sys.version_info >= (3, 4):
     from pathlib import Path
     from urllib.request import urlcleanup, urljoin, urlretrieve
 else:
-    from urllib import urlcleanup, urljoin, urlretrieve
+    from urllib import urlcleanup, urlretrieve
+    from urlparse import urljoin
     from pathlib2 import Path
 
 
