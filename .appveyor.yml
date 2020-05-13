@@ -28,7 +28,7 @@ test: off
 test_script:
   - pip install -r requirements-test.txt
   - pip install xmlsec --only-binary=xmlsec --no-index --find-links=dist
-  - pytest -v
+  - pytest -v --color=yes
   - ps: Get-ChildItem dist\*.whl | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
 
 deploy: on

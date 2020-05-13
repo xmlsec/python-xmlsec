@@ -38,7 +38,7 @@ install:
 - travis_retry pip install coverage codecov -r requirements-test.txt --upgrade --force-reinstall
 - travis_retry pip install -e "."
 - pip list
-script: coverage run -m pytest -v tests
+script: coverage run -m pytest -v tests --color=yes
 after_success:
 - lcov --capture --directory . --output-file coverage.info
 - lcov --list coverage.info

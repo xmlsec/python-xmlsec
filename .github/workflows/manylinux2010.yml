@@ -34,7 +34,7 @@ jobs:
           /opt/python/${{ matrix.python-abi }}/bin/pip install xmlsec --only-binary=xmlsec --no-index --find-links=wheelhouse/
       - name: Run tests
         run: |
-          /opt/python/${{ matrix.python-abi }}/bin/pytest -v
+          /opt/python/${{ matrix.python-abi }}/bin/pytest -v --color=yes
       - name: Upload dist
         if: startsWith(github.ref, 'refs/tags/')
         env:
