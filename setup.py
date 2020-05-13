@@ -194,21 +194,23 @@ class build_ext(build_ext_orig, object):
         if openssl_tar is None:
             self.info('OpenSSL source tar not found, downloading ...')
             openssl_tar = self.libs_dir / 'openssl.tar.gz'
-            urlretrieve('https://www.openssl.org/source/openssl-{}.tar.gz'.format(self.openssl_version), openssl_tar)
+            urlretrieve('https://www.openssl.org/source/openssl-{}.tar.gz'.format(self.openssl_version), str(openssl_tar))
 
         # fetch zlib
         zlib_tar = next(self.libs_dir.glob('zlib*.tar.gz'), None)
         if zlib_tar is None:
             self.info('zlib source tar not found, downloading ...')
             zlib_tar = self.libs_dir / 'zlib.tar.gz'
-            urlretrieve('https://zlib.net/zlib-{}.tar.gz'.format(self.zlib_version), zlib_tar)
+            urlretrieve('https://zlib.net/zlib-{}.tar.gz'.format(self.zlib_version), str(zlib_tar))
 
         # fetch libiconv
         libiconv_tar = next(self.libs_dir.glob('libiconv*.tar.gz'), None)
         if libiconv_tar is None:
             self.info('libiconv source tar not found, downloading ...')
             libiconv_tar = self.libs_dir / 'libiconv.tar.gz'
-            urlretrieve('https://ftp.gnu.org/pub/gnu/libiconv/libiconv-{}.tar.gz'.format(self.libiconv_version), libiconv_tar)
+            urlretrieve(
+                'https://ftp.gnu.org/pub/gnu/libiconv/libiconv-{}.tar.gz'.format(self.libiconv_version), str(libiconv_tar)
+            )
 
         # fetch libxml2
         libxml2_tar = next(self.libs_dir.glob('libxml2*.tar.gz'), None)
@@ -219,7 +221,7 @@ class build_ext(build_ext_orig, object):
             else:
                 url = 'http://xmlsoft.org/sources/libxml2-{}.tar.gz'.format(self.libxml2_version)
             libxml2_tar = self.libs_dir / 'libxml2.tar.gz'
-            urlretrieve(url, libxml2_tar)
+            urlretrieve(url, str(libxml2_tar))
 
         # fetch libxslt
         libxslt_tar = next(self.libs_dir.glob('libxslt*.tar.gz'), None)
@@ -230,7 +232,7 @@ class build_ext(build_ext_orig, object):
             else:
                 url = 'http://xmlsoft.org/sources/libxslt-{}.tar.gz'.format(self.libxslt_version)
             libxslt_tar = self.libs_dir / 'libxslt.tar.gz'
-            urlretrieve(url, libxslt_tar)
+            urlretrieve(url, str(libxslt_tar))
 
         # fetch xmlsec1
         xmlsec1_tar = next(self.libs_dir.glob('xmlsec1*.tar.gz'), None)
@@ -238,7 +240,7 @@ class build_ext(build_ext_orig, object):
             self.info('xmlsec1 source tar not found, downloading ...')
             url = 'http://www.aleksey.com/xmlsec/download/xmlsec1-{}.tar.gz'.format(self.xmlsec1_version)
             xmlsec1_tar = self.libs_dir / 'xmlsec1.tar.gz'
-            urlretrieve(url, xmlsec1_tar)
+            urlretrieve(url, str(xmlsec1_tar))
 
         for file in (openssl_tar, zlib_tar, libiconv_tar, libxml2_tar, libxslt_tar, xmlsec1_tar):
             self.info('Unpacking {}'.format(file.name))
