@@ -1,9 +1,10 @@
 environment:
   global:
     TWINE_NON_INTERACTIVE: true
+    TWINE_REPOSITORY_URL: https://test.pypi.org/legacy/
     TWINE_USERNAME: __token__
     TWINE_PASSWORD:
-      secure: YI+izt+hzh/czFuDCrne4XN78nQmT7jvcqe9uWvndqAUxhyXqr98GJ9FUSVPbqyWx+pW+5cKvh2PMdDEPJUcHMG8dtpHcosn3ndXnHGkHH3mwOnOduiUtrhlSEoIFwbZUhFRScYvfILGD8KM7RgcCiUUcner8QOFPiFX1zey8WVLynIj3c1rVe6Ola18pIUoL9D4NITNt5EWxexvr4vnkHmydk6dzWHBpiGsFujzccg+MoYN2ZjiN2JGSOykmEF/
+      secure: YI+izt+hzh/czFuDCrne4cyTkNhdK/svjrWoIkN3nurz1LO1/YUb+zl8ln6hlMONaPhWLDI9YqmCobf3XdQVa8pclSCRiEtxg1HENmVOLJTS1IQCOMZhQjfXt5iNH5ov601/pgS367akiuGryGUoPkhcmJ9oD8aRH9dZ+Abh+PYPRMa3ka4U3SLcIHgzRUizLvkd73+Z5S4tjwjnDa1XHDnt/fZbeLjVL7T/4B2bWxnBVvHAckV/MGeOX3XgSK3UWdpEDTsg4ns0X0OubSziww==
   matrix:
   - python: 27
   - python: 27-x64
