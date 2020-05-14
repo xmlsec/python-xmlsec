@@ -439,4 +439,5 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Topic :: Text Processing :: Markup :: XML',
     ],
+    zip_safe=False,
 )
