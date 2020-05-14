@@ -4,6 +4,7 @@
 !.travis*
 !.appveyor*
 !.git*
+!.readthedocs.yml
 
 # Python
 /dist
