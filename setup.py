@@ -289,6 +289,10 @@ class build_ext(build_ext_orig, object):
             [
                 './configure',
                 prefix_arg,
+                '--disable-dependency-tracking',
+                '--disable-shared',
+                '--enable-rebuild-docs=no',
+                '--without-lzma',
                 '--without-python',
                 '--with-iconv={}'.format(self.prefix_dir),
                 '--with-zlib={}'.format(self.prefix_dir),
@@ -307,9 +311,11 @@ class build_ext(build_ext_orig, object):
             [
                 './configure',
                 prefix_arg,
+                '--disable-dependency-tracking',
+                '--disable-shared',
                 '--without-python',
-                '--with-libxml-prefix={}'.format(self.prefix_dir),
                 '--without-crypto',
+                '--with-libxml-prefix={}'.format(self.prefix_dir),
             ],
             cwd=str(libxslt_dir),
             env=env,
