@@ -33,7 +33,7 @@ class build_ext(build_ext_orig, object):
         self.static = os.environ.get('STATIC_DEPS', False)
 
         if self.static or sys.platform == 'win32':
-            self.info('STATIC_DEPS is set; starting build of static deps on {}'.format(sys.platform))
+            self.info('starting static build on {}'.format(sys.platform))
             buildroot = Path('build', 'tmp')
 
             self.prefix_dir = buildroot / 'prefix'
@@ -61,7 +61,7 @@ class build_ext(build_ext_orig, object):
                 raise DistutilsError('xmlsec1 is not installed or not in path.')
 
             if config is None or not config.get('libraries'):
-                raise DistutilsError('Bad or uncomplete result returned from pkg-config.')
+                raise DistutilsError('Bad or incomplete result returned from pkg-config.')
 
             ext.define_macros.extend(config['define_macros'])
             ext.include_dirs.extend(config['include_dirs'])
