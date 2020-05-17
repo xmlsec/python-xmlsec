@@ -21,9 +21,9 @@ import sys
 from typing import NamedTuple
 
 if sys.version_info >= (3, 8):
-    from typing import Final, Literal
+    from typing import Final
 else:
-    from typing_extensions import Final, Literal
+    from typing_extensions import Final
 
 
 class __KeyData(NamedTuple):  # __KeyData type
