@@ -15,7 +15,7 @@ enc_data = xmlsec.template.encrypted_data_create(
 
 xmlsec.template.encrypted_data_ensure_cipher_value(enc_data)
 key_info = xmlsec.template.encrypted_data_ensure_key_info(enc_data, ns="dsig")
-enc_key = xmlsec.template.add_encrypted_key(key_info, xmlsec.Transform.RSA_OAEP)
+enc_key = xmlsec.template.add_encrypted_key(key_info, xmlsec.constants.TransformRsaOaep)
 xmlsec.template.encrypted_data_ensure_cipher_value(enc_key)
 data = template.find('./Data')
 

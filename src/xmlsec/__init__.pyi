@@ -3,6 +3,7 @@ from typing import AnyStr, IO, Iterable, Optional, Type, TypeVar, Union
 
 from lxml.etree import _Element
 
+from xmlsec import constants, template, tree
 from xmlsec.constants import __KeyData as KeyData, __Transform as Transform
 
 if sys.version_info >= (3, 6):
