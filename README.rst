@@ -2,18 +2,18 @@ python-xmlsec
 =============
 
 .. image:: https://travis-ci.org/mehcode/python-xmlsec.png?branch=master
-    :target: https://travis-ci.org/mehcode/python-xmlsec
+   :target: https://travis-ci.org/mehcode/python-xmlsec
 .. image:: https://ci.appveyor.com/api/projects/status/ij87xk5wo8a39jua?svg=true
-    :target: https://ci.appveyor.com/project/hoefling/xmlsec
+   :target: https://ci.appveyor.com/project/hoefling/xmlsec
 .. image:: https://github.com/mehcode/python-xmlsec/workflows/manylinux2010/badge.svg
-    :target: https://github.com/mehcode/python-xmlsec/actions?query=workflow%3A%22manylinux2010%22
+   :target: https://github.com/mehcode/python-xmlsec/actions?query=workflow%3A%22manylinux2010%22
 .. image:: https://codecov.io/gh/mehcode/python-xmlsec/branch/master/graph/badge.svg
-    :target: https://codecov.io/gh/mehcode/python-xmlsec
+   :target: https://codecov.io/gh/mehcode/python-xmlsec
 .. image:: https://img.shields.io/pypi/v/xmlsec.svg
-    :target: https://pypi.python.org/pypi/xmlsec
-.. image:: https://img.shields.io/badge/docs-latest-green.svg
-    :target: http://pythonhosted.org/xmlsec/
-
+   :target: https://pypi.python.org/pypi/xmlsec
+.. image:: https://readthedocs.org/projects/xmlsec/badge/?version=latest
+   :target: https://xmlsec.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
 
 Python bindings for the XML Security Library.
 

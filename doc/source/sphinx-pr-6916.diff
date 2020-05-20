@@ -1,0 +1,46 @@
+diff --git a/sphinx/environment/__init__.py b/sphinx/environment/__init__.py
+index bc9bf49a74..4804c89c52 100644
+--- a/sphinx/environment/__init__.py
++++ b/sphinx/environment/__init__.py
+@@ -46,6 +46,7 @@
+ default_settings = {
+     'embed_stylesheet': False,
+     'cloak_email_addresses': True,
++    'syntax_highlight': 'short',
+     'pep_base_url': 'https://www.python.org/dev/peps/',
+     'pep_references': None,
+     'rfc_base_url': 'https://tools.ietf.org/html/',
+diff --git a/sphinx/writers/html.py b/sphinx/writers/html.py
+index 85eeb43..80f1eea 100644
+--- a/sphinx/writers/html.py
++++ b/sphinx/writers/html.py
+@@ -494,8 +494,11 @@ class HTMLTranslator(SphinxTranslator, BaseTranslator):
+             self.body.append(self.starttag(node, 'kbd', '',
+                                            CLASS='docutils literal notranslate'))
+         else:
++            classes = 'docutils literal notranslate'
++            if 'code' in node['classes']:
++                classes += ' highlight'
+             self.body.append(self.starttag(node, 'code', '',
+-                                           CLASS='docutils literal notranslate'))
++                                           CLASS=classes))
+             self.protect_literal_text += 1
+ 
+     def depart_literal(self, node: Element) -> None:
+diff --git a/sphinx/writers/html5.py b/sphinx/writers/html5.py
+index 80cedd3..470f559 100644
+--- a/sphinx/writers/html5.py
++++ b/sphinx/writers/html5.py
+@@ -446,8 +446,11 @@ class HTML5Translator(SphinxTranslator, BaseTranslator):
+             self.body.append(self.starttag(node, 'kbd', '',
+                                            CLASS='docutils literal notranslate'))
+         else:
++            classes = 'docutils literal notranslate'
++            if 'code' in node['classes']:
++                classes += ' highlight'
+             self.body.append(self.starttag(node, 'code', '',
+-                                           CLASS='docutils literal notranslate'))
++                                           CLASS=classes))
+             self.protect_literal_text += 1
+ 
+     def depart_literal(self, node: Element) -> None:

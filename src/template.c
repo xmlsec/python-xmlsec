@@ -18,14 +18,21 @@
 #define PYXMLSEC_TEMPLATES_DOC "Xml Templates processing"
 
 static char PyXmlSec_TemplateCreate__doc__[] = \
-    "Creates new <dsig:Signature/> node with the mandatory <dsig:SignedInfo/>, <dsig:CanonicalizationMethod/>,"
-    "<dsig:SignatureMethod/> and <dsig:SignatureValue/> children and sub-children.\n\n"
+    "create(node, c14n_method, sign_method, id = None, ns = None) -> lxml.etree._Element\n"
+    "Creates new :xml:`<dsig:Signature/>` node with the mandatory :xml:`<dsig:SignedInfo/>`, :xml:`<dsig:CanonicalizationMethod/>`, "
+    ":xml:`<dsig:SignatureMethod/>` and :xml:`<dsig:SignatureValue/>` children and sub-children.\n\n"
     ":param node: the signature node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
     ":param c14n_method: the signature canonicalization method\n"
+    ":type c14n_method: :class:`__Transform`\n"
     ":param sign_method: the signature method\n"
+    ":type sign_method: :class:`__Transform`\n"
     ":param id: the node id (optional)\n"
-    ":param ns: the namespace prefix for the signature element (e.g. \"dsig\") (optional)\n"
-    ":return: the pointer to newly created <dsig:Signature/> node\n";
+    ":type id: :class:`str` or :data:`None`\n"
+    ":param ns: the namespace prefix for the signature element (e.g. ``\"dsig\"``) (optional)\n"
+    ":type ns: :class:`str` or :data:`None`\n"
+    ":return: the pointer to newly created :xml:`<dsig:Signature/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateCreate(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "c14n_method", "sign_method", "id", "ns", "name", NULL};
 
@@ -60,14 +67,21 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddReference__doc__[] = \
-    "Adds <dsig:Reference/> node with given URI (uri ) Id (id ) and Type (type ) attributes and\n"
-    "the required children <dsig:DigestMethod/> and <dsig:DigestValue/> to the <dsig:SignedInfo/> child of *node*.\n\n"
-    ":param node: the pointer to <dsig:Signature/> node\n"
+    "add_reference(node, digest_method, id = None, uri = None, type = None) -> lxml.etree._Element\n"
+    "Adds :xml:`<dsig:Reference/>` node with given ``\"URI\"`` (``uri``), ``\"Id\"`` (``id``) and ``\"Type\"`` (``type``) attributes and "
+    "the required children :xml:`<dsig:DigestMethod/>` and :xml:`<dsig:DigestValue/>` to the :xml:`<dsig:SignedInfo/>` child of ``node``.\n\n"
+    ":param node: the pointer to :xml:`<dsig:Signature/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
     ":param digest_method: the reference digest method\n"
+    ":type digest_method: :class:`__Transform`\n"
     ":param id: the node id (optional)\n"
-    ":param uri: the reference node uri (optional)\n"
+    ":type id: :class:`str` or :data:`None`\n"
+    ":param uri: the reference node URI (optional)\n"
+    ":type uri: :class:`str` or :data:`None`\n"
     ":param type: the reference node type (optional)\n"
-    ":return: the pointer to newly created <dsig:Reference/> node\n";
+    ":type type: :class:`str` or :data:`None`\n"
+    ":return: the pointer to newly created :xml:`<dsig:Reference/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateAddReference(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "digest_method", "id", "uri", "type", NULL};
 
@@ -101,10 +115,14 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddTransform__doc__[] = \
-    "Adds <dsig:Transform/> node to the <dsig:Reference/> node of *node*.\n\n"
-    ":param node: the pointer to <dsig:Reference/> node\n"
+    "add_transform(node) -> lxml.etree._Element\n"
+    "Adds :xml:`<dsig:Transform/>` node to the :xml:`<dsig:Reference/>` node of ``node``.\n\n"
+    ":param node: the pointer to :xml:`<dsig:Reference/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
     ":param transform: the transform method id\n"
-    ":return: the pointer to newly created <dsig:Transform/> node\n";
+    ":type transform: :class:`__Transform`\n"
+    ":return: the pointer to newly created :xml:`<dsig:Transform/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateAddTransform(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "transform", NULL};
 
@@ -135,10 +153,14 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateEnsureKeyInfo__doc__[] = \
-    "Adds (if necessary) <dsig:KeyInfo/> node to the <dsig:Signature/> node of *node*.\n\n"
-    ":param node: the pointer to <dsig:Signature/> node\n"
+    "ensure_key_info(node, id = None) -> lxml.etree._Element\n"
+    "Adds (if necessary) :xml:`<dsig:KeyInfo/>` node to the :xml:`<dsig:Signature/>` node of ``node``.\n\n"
+    ":param node: the pointer to :xml:`<dsig:Signature/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
     ":param id: the node id (optional)\n"
-    ":return: the pointer to newly created <dsig:KeyInfo/> node\n";
+    ":type id: :class:`str` or :data:`None`\n"
+    ":return: the pointer to newly created :xml:`<dsig:KeyInfo/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateEnsureKeyInfo(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "id", NULL};
 
@@ -169,10 +191,14 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddKeyName__doc__[] = \
-    "Adds <dsig:KeyName/> node to the <dsig:KeyInfo/> node of *node*.\n\n"
-    ":param node: the pointer to <dsig:KeyInfo/> node\n"
+    "add_key_name(node, name = None) -> lxml.etree._Element\n"
+    "Adds :xml:`<dsig:KeyName/>` node to the :xml:`<dsig:KeyInfo/>` node of ``node``.\n\n"
+    ":param node: the pointer to :xml:`<dsig:KeyInfo/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
     ":param name: the key name (optional)\n"
-    ":return: the pointer to the newly created <dsig:KeyName/> node\n";
+    ":type name: :class:`str` or :data:`None`\n"
+    ":return: the pointer to the newly created :xml:`<dsig:KeyName/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateAddKeyName(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "name", NULL};
 
@@ -203,9 +229,12 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddKeyValue__doc__[] = \
-    "Adds <dsig:KeyValue/> node to the <dsig:KeyInfo/> node of *node*.\n\n"
-    ":param node: the pointer to <dsig:KeyInfo/> node\n"
-    ":return: the pointer to the newly created <dsig:KeyValue/> node\n";
+    "add_key_value(node) -> lxml.etree._Element\n"
+    "Adds :xml:`<dsig:KeyValue/>` node to the :xml:`<dsig:KeyInfo/>` node of ``node``.\n\n"
+    ":param node: the pointer to :xml:`<dsig:KeyInfo/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
+    ":return: the pointer to the newly created :xml:`<dsig:KeyValue/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateAddKeyValue(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", NULL};
 
@@ -235,9 +264,12 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddX509Data__doc__[] = \
-    "Adds <dsig:X509Data/> node to the <dsig:KeyInfo/> node of *node*.\n\n"
-    ":param node: the pointer to <dsig:KeyInfo/> node\n"
-    ":return: the pointer to the newly created <dsig:X509Data/> node\n";
+    "add_x509_data(node) -> lxml.etree._Element\n"
+    "Adds :xml:`<dsig:X509Data/>` node to the :xml:`<dsig:KeyInfo/>` node of ``node``.\n\n"
+    ":param node: the pointer to :xml:`<dsig:KeyInfo/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
+    ":return: the pointer to the newly created :xml:`<dsig:X509Data/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`\n";
 static PyObject* PyXmlSec_TemplateAddX509Data(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", NULL};
 
@@ -267,9 +299,12 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddX509DataAddIssuerSerial__doc__[] = \
-    "Adds <dsig:X509IssuerSerial/> node to the given <dsig:X509Data/> node of *node*.\n\n"
-    ":param node: the pointer to <dsig:X509Data/> node\n"
-    ":return: the pointer to the newly created <dsig:X509IssuerSerial/> node\n";
+    "x509_data_add_issuer_serial(node) -> lxml.etree._Element\n"
+    "Adds :xml:`<dsig:X509IssuerSerial/>` node to the given :xml:`<dsig:X509Data/>` node of ``node``.\n\n"
+    ":param node: the pointer to :xml:`<dsig:X509Data/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
+    ":return: the pointer to the newly created :xml:`<dsig:X509IssuerSerial/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateAddX509DataAddIssuerSerial(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", NULL};
 
@@ -299,10 +334,14 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddX509DataIssuerSerialAddIssuerName__doc__[] = \
-    "Adds <dsig:X509IssuerName/> node to the <dsig:X509IssuerSerial/> node of *node*.\n\n"
-    ":param node: the pointer to <dsig:X509IssuerSerial/> node\n"
+    "x509_issuer_serial_add_issuer_name(node, name = None) -> lxml.etree._Element\n"
+    "Adds :xml:`<dsig:X509IssuerName/>` node to the :xml:`<dsig:X509IssuerSerial/>` node of ``node``.\n\n"
+    ":param node: the pointer to :xml:`<dsig:X509IssuerSerial/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
     ":param name: the issuer name (optional)\n"
-    ":return: the pointer to the newly created <dsig:X509IssuerName/> node\n";
+    ":type name: :class:`str` or :data:`None`\n"
+    ":return: the pointer to the newly created :xml:`<dsig:X509IssuerName/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateAddX509DataIssuerSerialAddIssuerName(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "name", NULL};
 
@@ -334,10 +373,14 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddX509DataIssuerSerialAddIssuerSerialNumber__doc__[] = \
-    "Adds <dsig:X509SerialNumber/> node to the <dsig:X509IssuerSerial/> node of *node*.\n\n"
-    ":param node: the pointer to <dsig:X509IssuerSerial/> node\n"
+    "x509_issuer_serial_add_serial_number(node, serial = None) -> lxml.etree._Element\n"
+    "Adds :xml:`<dsig:X509SerialNumber/>` node to the :xml:`<dsig:X509IssuerSerial/>` node of ``node``.\n\n"
+    ":param node: the pointer to :xml:`<dsig:X509IssuerSerial/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
     ":param serial: the serial number (optional)\n"
-    ":return: the pointer to the newly created <dsig:X509SerialNumber/> node\n";
+    ":type serial: :class:`str` or :data:`None`\n"
+    ":return: the pointer to the newly created :xml:`<dsig:X509SerialNumber/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateAddX509DataIssuerSerialAddIssuerSerialNumber(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "serial", NULL};
 
@@ -369,9 +412,12 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddX509DataAddSubjectName__doc__[] = \
-    "Adds <dsig:X509SubjectName/> node to the given <dsig:X509Data/> node of *node*.\n\n"
-    ":param node: the pointer to <dsig:X509Data/> node\n"
-    ":return: the pointer to the newly created <dsig:X509SubjectName/> node\n";
+    "x509_data_add_subject_name(node) -> lxml.etree._Element\n"
+    "Adds :xml:`<dsig:X509SubjectName/>` node to the given :xml:`<dsig:X509Data/>` node of ``node``.\n\n"
+    ":param node: the pointer to :xml:`<dsig:X509Data/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
+    ":return: the pointer to the newly created :xml:`<dsig:X509SubjectName/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateAddX509DataAddSubjectName(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", NULL};
 
@@ -402,9 +448,12 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddX509DataAddSKI__doc__[] = \
-    "Adds <dsig:X509SKI/> node to the given <dsig:X509Data/> node of *node*.\n\n"
-    ":param node: the pointer to <dsig:X509Data/> node\n"
-    ":return: the pointer to the newly created <dsig:X509SKI/> node\n";
+    "x509_data_add_ski(node) -> lxml.etree._Element\n"
+    "Adds :xml:`<dsig:X509SKI/>` node to the given :xml:`<dsig:X509Data/>` node of ``node``.\n\n"
+    ":param node: the pointer to :xml:`<dsig:X509Data/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
+    ":return: the pointer to the newly created :xml:`<dsig:X509SKI/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateAddX509DataAddSKI(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", NULL};
 
@@ -435,9 +484,12 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddX509DataAddCertificate__doc__[] = \
-    "Adds <dsig:X509Certificate/> node to the given <dsig:X509Data/> node of *node*.\n\n"
-    ":param node: the pointer to <dsig:X509Data/> node\n"
-    ":return: the pointer to the newly created <dsig:X509Certificate/> node\n";
+    "x509_data_add_certificate(node) -> lxml.etree._Element\n"
+    "Adds :xml:`<dsig:X509Certificate/>` node to the given :xml:`<dsig:X509Data/>` node of ``node``.\n\n"
+    ":param node: the pointer to :xml:`<dsig:X509Data/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
+    ":return: the pointer to the newly created :xml:`<dsig:X509Certificate/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateAddX509DataAddCertificate(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", NULL};
 
@@ -468,9 +520,12 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddX509DataAddCRL__doc__[] = \
-    "Adds <dsig:X509CRL/> node to the given <dsig:X509Data/> node of *node*.\n\n"
-    ":param node: the pointer to <dsig:X509Data/> node\n"
-    ":return: the pointer to the newly created <dsig:X509CRL/> node\n";
+    "x509_data_add_crl(node) -> lxml.etree._Element\n"
+    "Adds :xml:`<dsig:X509CRL/>` node to the given :xml:`<dsig:X509Data/>` node of ``node``.\n\n"
+    ":param node: the pointer to :xml:`<dsig:X509Data/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
+    ":return: the pointer to the newly created :xml:`<dsig:X509CRL/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateAddX509DataAddCRL(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", NULL};
 
@@ -501,13 +556,20 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateAddEncryptedKey__doc__[] = \
-    "Adds <enc:EncryptedKey/> node with given attributes to the <dsig:KeyInfo/> node of *node*.\n\n"
-    ":param node: the pointer to <dsig:KeyInfo/> node\n"
+    "add_encrypted_key(node, method, id = None, type = None, recipient = None) -> lxml.etree._Element\n"
+    "Adds :xml:`<enc:EncryptedKey/>` node with given attributes to the :xml:`<dsig:KeyInfo/>` node of *node*.\n\n"
+    ":param node: the pointer to :xml:`<dsig:KeyInfo/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
     ":param method: the encryption method\n"
-    ":param id: the Id attribute (optional)\n"
-    ":param type: the Type attribute (optional)\n"
-    ":param recipient: the Recipient attribute (optional)\n"
-    ":return: the pointer to the newly created <enc:EncryptedKey/> node\n";
+    ":type method: :class:`__Transform`\n"
+    ":param id: the ``\"Id\"`` attribute (optional)\n"
+    ":type id: :class:`str` or :data:`None`\n"
+    ":param type: the ``\"Type\"`` attribute (optional)\n"
+    ":type type: :class:`str` or :data:`None`\n"
+    ":param recipient: the ``\"Recipient\"`` attribute (optional)\n"
+    ":type recipient: :class:`str` or :data:`None`\n"
+    ":return: the pointer to the newly created :xml:`<enc:EncryptedKey/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateAddEncryptedKey(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "method", "id", "type", "recipient", NULL};
 
@@ -542,15 +604,24 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateCreateEncryptedData__doc__[] = \
-    "Creates new <{ns}:EncryptedData /> node for encryption template.\n\n"
+    "encrypted_data_create(node, method, id = None, type = None, mime_type = None, encoding = None, ns = None) -> lxml.etree._Element\n"
+    "Creates new :xml:`<{ns}:EncryptedData />` node for encryption template.\n\n"
     ":param node: the pointer to signature node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
     ":param method: the encryption method\n"
-    ":param id: the Id attribute (optional)\n"
-    ":param type: the Type attribute (optional)\n"
-    ":param mime_type: the Recipient attribute (optional)\n"
-    ":param encoding: the MimeType attribute (optional)\n"
+    ":type method: :class:`__Transform`\n"
+    ":param id: the ``\"Id\"`` attribute (optional)\n"
+    ":type id: :class:`str` or :data:`None`\n"
+    ":param type: the ``\"Type\"`` attribute (optional)\n"
+    ":type type: :class:`str` or :data:`None`\n"
+    ":param mime_type: the ``\"Recipient\"`` attribute (optional)\n"
+    ":type mime_type: :class:`str` or :data:`None`\n"
+    ":param encoding: the ``\"MimeType\"`` attribute (optional)\n"
+    ":type encoding: :class:`str` or :data:`None`\n"
     ":param ns: the namespace prefix (optional)\n"
-    ":return: the pointer newly created <enc:EncryptedData/> node\n";
+    ":type ns: :class:`str` or :data:`None`\n"
+    ":return: the pointer newly created :xml:`<enc:EncryptedData/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateCreateEncryptedData(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "method", "id", "type", "mime_type", "encoding", "ns", NULL};
 
@@ -590,11 +661,16 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateEncryptedDataEnsureKeyInfo__doc__[] = \
-    "Adds <{ns}:KeyInfo/> to the <enc:EncryptedData/> node of *node*.\n\n"
-    ":param node: the pointer to <enc:EncryptedData/> node\n"
-    ":param id: the Id attribute (optional)\n"
+    "encrypted_data_ensure_key_info(node, id = None, ns = None) -> lxml.etree._Element\n"
+    "Adds :xml:`<{ns}:KeyInfo/>` to the :xml:`<enc:EncryptedData/>` node of ``node``.\n\n"
+    ":param node: the pointer to :xml:`<enc:EncryptedData/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
+    ":param id: the ``\"Id\"`` attribute (optional)\n"
+    ":type id: :class:`str` or :data:`None`\n"
     ":param ns: the namespace prefix (optional)\n"
-    ":return: the pointer to newly created <dsig:KeyInfo/> node\n";
+    ":type ns: :class:`str` or :data:`None`\n"
+    ":return: the pointer to newly created :xml:`<dsig:KeyInfo/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateEncryptedDataEnsureKeyInfo(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "id", "ns", NULL};
 
@@ -630,9 +706,12 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateEncryptedDataEnsureCipherValue__doc__[] = \
-    "Adds <CipherValue/> to the <enc:EncryptedData/> node of *node*.\n\n"
-    ":param node: the pointer to <enc:EncryptedData/> node\n"
-    ":return: the pointer to newly created <enc:CipherValue/> node\n";
+    "encrypted_data_ensure_cipher_value(node) -> lxml.etree._Element\n"
+    "Adds :xml:`<CipherValue/>` to the :xml:`<enc:EncryptedData/>` node of ``node``.\n\n"
+    ":param node: the pointer to :xml:`<enc:EncryptedData/>` node\n"
+    ":type node: :class:`lxml.etree._Element`\n"
+    ":return: the pointer to newly created :xml:`<enc:CipherValue/>` node\n"
+    ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateEncryptedDataEnsureCipherValue(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", NULL};
 
@@ -663,9 +742,12 @@ ON_FAIL:
 }
 
 static char PyXmlSec_TemplateTransformAddC14NInclNamespaces__doc__[] = \
-    "Adds 'inclusive' namespaces to the ExcC14N transform node *node*.\n\n"
-    ":param node: the pointer to <dsig:Transform/> node.\n"
-    ":param prefixList: the list of namespace prefixes, where 'default' indicates the default namespace (optional).";
+    "transform_add_c14n_inclusive_namespaces(node, prefixes = None) -> None\n"
+    "Adds 'inclusive' namespaces to the ExcC14N transform node ``node``.\n\n"
+    ":param node: the pointer to :xml:`<dsig:Transform/>` node.\n"
+    ":type node: :class:`lxml.etree._Element`\n"
+    ":param prefixes: the list of namespace prefixes, where ``'default'`` indicates the default namespace (optional).\n"
+    ":type prefixes: :class:`str` or :class:`list` of strings";
 static PyObject* PyXmlSec_TemplateTransformAddC14NInclNamespaces(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "prefixes", NULL};
 

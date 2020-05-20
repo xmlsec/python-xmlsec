@@ -1,5 +1,5 @@
-xmlsec.tree
------------
+``xmlsec.tree``
+---------------
 
 .. automodule:: xmlsec.tree
     :members:

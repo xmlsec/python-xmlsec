@@ -1,5 +1,5 @@
-xmlsec
-------
+``xmlsec``
+----------
 
 .. automodule:: xmlsec
     :members:
