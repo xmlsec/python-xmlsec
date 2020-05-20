@@ -35,13 +35,3 @@ jobs:
       - name: Run tests
         run: |
           /opt/python/${{ matrix.python-abi }}/bin/pytest -v --color=yes
-      - name: Upload dist
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          TWINE_NON_INTERACTIVE: true
-          TWINE_REPOSITORY_URL: https://test.pypi.org/legacy/
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.pypi_token }}
-        run: |
-          /opt/python/${{ matrix.python-abi }}/bin/pip install twine
-          /opt/python/${{ matrix.python-abi }}/bin/twine upload wheelhouse/xmlsec-${PKGVER}-${{ matrix.python-abi }}-manylinux2010_x86_64.whl
