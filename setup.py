@@ -1,3 +1,4 @@
+import io
 import multiprocessing
 import os
 import subprocess
@@ -11,7 +12,6 @@ from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext as build_ext_orig
 
 if sys.version_info >= (3, 4):
-    from pathlib import Path
     from urllib.request import urlcleanup, urljoin, urlretrieve
 else:
     from urllib import urlcleanup, urlretrieve
@@ -397,6 +397,8 @@ class build_ext(build_ext_orig, object):
 
 
 if sys.version_info >= (3, 4):
+    from pathlib import Path
+
     src_root = Path(__file__).parent / 'src'
     sources = [str(p.absolute()) for p in src_root.rglob('*.c')]
 else:
@@ -415,12 +417,18 @@ if sys.version_info < (3, 4):
     setup_reqs.append('pathlib2')
 
 
+with io.open('README.rst', encoding='utf-8') as f:
+    long_desc = f.read()
+
+
 setup(
     name='xmlsec',
     use_scm_version=True,
     description='Python bindings for the XML Security Library',
+    long_description=long_desc,
     ext_modules=[pyxmlsec],
     cmdclass={'build_ext': build_ext},
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
     setup_requires=setup_reqs,
     install_requires=['lxml>=3.8'],
     author="Bulat Gaifullin",
