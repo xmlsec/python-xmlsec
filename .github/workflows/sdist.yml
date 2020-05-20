@@ -24,3 +24,12 @@ jobs:
       - name: Run tests
         run: |
           pytest -v --color=yes
+      - name: Upload dist
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          TWINE_NON_INTERACTIVE: true
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.pypi_token }}
+        run: |
+          pip install twine
+          twine upload dist/xmlsec-*.tar.gz
