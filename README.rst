@@ -15,26 +15,34 @@ python-xmlsec
    :target: https://xmlsec.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-Python bindings for the XML Security Library.
+Python bindings for the `XML Security Library <https://www.aleksey.com/xmlsec/>`_.
 
-******
+Documentation
+*************
+
+A documentation for ``xmlsec`` can be found at `xmlsec.readthedocs.io <https://xmlsec.readthedocs.io/>`_.
+
 Usage
-******
+*****
 
-Check the `examples <http://pythonhosted.org/xmlsec/examples.html>`_ to see various examples of signing and verifying using the library.
+Check the `examples <https://xmlsec.readthedocs.io/en/latest/examples.html>`_ section in the documentation to see various examples of signing and verifying using the library.
 
-************
 Requirements
 ************
-- libxml2 >= 2.9.1
-- libxmlsec1 >= 1.2.14
+- ``libxml2 >= 2.9.1``
+- ``libxmlsec1 >= 1.2.18``
 
-*******
 Install
 *******
 
-Pre-Install
------------
+``xmlsec`` is available on PyPI:
+
+.. code-block:: bash
+
+   pip install xmlsec
+
+Prerequisites
+-------------
 
 Linux (Debian)
 ^^^^^^^^^^^^^^
@@ -44,15 +52,15 @@ Linux (Debian)
    apt-get install libxml2-dev libxmlsec1-dev libxmlsec1-openssl
 
 
-Note: There is no required version of libxml2 for ubuntu precise,
-so need to download and install it manually.
+Note: There is no required version of LibXML2 for Ubuntu Precise,
+so you need to download and install it manually.
 
 .. code-block:: bash
 
-    wget http://xmlsoft.org/sources/libxml2-2.9.1.tar.gz
-    tar -xvf libxml2-2.9.1.tar.gz
-    cd libxml2-2.9.1
-    ./configure && make && make install
+   wget http://xmlsoft.org/sources/libxml2-2.9.1.tar.gz
+   tar -xvf libxml2-2.9.1.tar.gz
+   cd libxml2-2.9.1
+   ./configure && make && make install
 
 
 Linux (CentOS)
@@ -60,7 +68,7 @@ Linux (CentOS)
 
 .. code-block:: bash
 
-    yum install libxml2-devel xmlsec1-devel xmlsec1-openssl-devel libtool-ltdl-devel
+   yum install libxml2-devel xmlsec1-devel xmlsec1-openssl-devel libtool-ltdl-devel
 
 
 Mac
@@ -68,7 +76,7 @@ Mac
 
 .. code-block:: bash
 
-    brew install libxml2 libxmlsec1 pkg-config
+   brew install libxml2 libxmlsec1 pkg-config
 
 
 Alpine
@@ -76,73 +84,58 @@ Alpine
 
 .. code-block:: bash
 
-    apk add build-base libressl libffi-dev libressl-dev libxslt-dev libxml2-dev xmlsec-dev xmlsec
+   apk add build-base libressl libffi-dev libressl-dev libxslt-dev libxml2-dev xmlsec-dev xmlsec
 
-
-Automated
----------
-1. **xmlsec** can be installed through `easy_install` or `pip`.
-
-.. code-block:: bash
-
-    pip install xmlsec
-
+Troubleshooting
+---------------
 
 Mac
 ^^^
 
-If you get any fatal errors about missing .h files, update your C_INCLUDE_PATH environment variable to
-include the appropriate files from the libxml2 and libxmlsec1 libraries.
+If you get any fatal errors about missing ``.h`` files, update your
+``C_INCLUDE_PATH`` environment variable to include the appropriate
+files from the ``libxml2`` and ``libxmlsec1`` libraries.
 
 
-Windows (Wheel)
-^^^^^^^^^^^^^^^
+Windows
+^^^^^^^
 
-#. Download appropriate binary wheel from `ci.appveyor.com <https://ci.appveyor.com/project/bgaifullin/python-xmlsec>`_ (see build`s artifacts).
-
-#. Install wheel
-
-    .. code-block:: bash
-
-        pip install <wheel filename>
-
-
-Windows (pip)
-^^^^^^^^^^^^^
+Starting with 1.3.7, prebuilt wheels are available for Windows,
+so running ``pip install xmlsec`` should suffice. If you want
+to build from source:
 
 #. Configure build environment, see `wiki.python.org <https://wiki.python.org/moin/WindowsCompilers>`_ for more details.
 
-#. Install from pip
+#. Install from source dist:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        pip install xmlsec
-
-
-Manual
-------
-
-#. Clone the **xmlsec** repository to your local computer.
-
-    .. code-block:: bash
-
-        git clone git://github.com/mehcode/python-xmlsec.git
-
-#. Change into the **xmlsec** root directory.
-
-    .. code-block:: bash
-
-        cd /path/to/xmlsec
+      pip install xmlsec --no-binary=xmlsec
 
 
-#. Install the project and all its dependencies using `pip`.
+Building from source
+--------------------
 
-    .. code-block:: bash
+#. Clone the ``xmlsec`` repository to your local computer.
 
-        pip install .
+   .. code-block:: bash
+
+      git clone https://github.com/mehcode/python-xmlsec.git
+
+#. Change into the ``python-xmlsec`` root directory.
+
+   .. code-block:: bash
+
+      cd /path/to/xmlsec
 
 
-************
+#. Install the project and all its dependencies using ``pip``.
+
+   .. code-block:: bash
+
+      pip install .
+
+
 Contributing
 ************
 
@@ -156,66 +149,59 @@ Setting up your environment
    This is done so as to ensure every contributor is working with
    close-to-identicial versions of packages.
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        mkvirtualenv xmlsec
+      mkvirtualenv xmlsec
 
+   The ``mkvirtualenv`` command is available from ``virtualenvwrapper`` package which can be installed by following `link <http://virtualenvwrapper.readthedocs.org/en/latest/install.html#basic-installation>`_.
 
-    The `mkvirtualenv` command is available from `virtualenvwrapper` which
-    can be installed by following `link <http://virtualenvwrapper.readthedocs.org/en/latest/install.html#basic-installation>`_
+#. Activate the created virtual environment:
 
-#. Install **xmlsec** in development mode with testing enabled.
+   .. code-block:: bash
+
+      workon xmlsec
+
+#. Install ``xmlsec`` in development mode with testing enabled.
    This will download all dependencies required for running the unit tests.
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        pip install -r requirements-test.txt
-        pip install -e "."
+      pip install -r requirements-test.txt
+      pip install -e "."
 
 
 Running the test suite
 ----------------------
 
-#. [Set up your environment](#setting-up-your-environment).
+#. `Set up your environment <#setting-up-your-environment>`_.
 
 #. Run the unit tests.
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        py.test tests
+      pytest tests
 
 #. Tests configuration
-    Env variable **PYXMLSEC_TEST_ITERATIONS** specifies number of test iterations to detect memory leaks.
 
-Reporting a issue
------------------
+   Env variable ``PYXMLSEC_TEST_ITERATIONS`` specifies number of
+   test iterations to detect memory leaks.
+
+Reporting an issue
+------------------
+
 Please attach the output of following information:
-version of python-xmlsec
-version of libxmlsec1
-version of libxml2
 
-output from command:
+* version of ``xmlsec``
+* version of ``libxmlsec1``
+* version of ``libxml2``
+* output from the command
 
-.. code-block:: bash
+  .. code-block:: bash
 
-    pkg-config --cflags xmlsec1
+     pkg-config --cflags xmlsec1
 
-
-******************
-Versions of python
-******************
-
-The following versions of python is supported:
-
- - python2.7
- - python3.4
- - python3.5 (required libxmlsec1 >=  1.2.18 and libxml2 >= 2.9.1)
- - python3.6 (required libxmlsec1 >=  1.2.18 and libxml2 >= 2.9.1)
- - python3.7 (required libxmlsec1 >=  1.2.18 and libxml2 >= 2.9.1)
-
-*******
 License
 *******
 
-Unless otherwise noted, all files contained within this project are liensed under the MIT opensource license.
-See the included file LICENSE or visit `opensource.org <http://opensource.org/licenses/MIT>`_ for more information.
+Unless otherwise noted, all files contained within this project are licensed under the MIT opensource license.
+See the included ``LICENSE`` file or visit `opensource.org <http://opensource.org/licenses/MIT>`_ for more information.
