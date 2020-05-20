@@ -7,6 +7,8 @@ python-xmlsec
    :target: https://ci.appveyor.com/project/hoefling/xmlsec
 .. image:: https://github.com/mehcode/python-xmlsec/workflows/manylinux2010/badge.svg
    :target: https://github.com/mehcode/python-xmlsec/actions?query=workflow%3A%22manylinux2010%22
+.. image:: https://github.com/mehcode/python-xmlsec/workflows/MacOS/badge.svg
+   :target: https://github.com/mehcode/python-xmlsec/actions?query=workflow%3A%22MacOS%22
 .. image:: https://codecov.io/gh/mehcode/python-xmlsec/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/mehcode/python-xmlsec
 .. image:: https://img.shields.io/pypi/v/xmlsec.svg
