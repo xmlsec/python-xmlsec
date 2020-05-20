@@ -444,6 +444,10 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Topic :: Text Processing :: Markup :: XML',
+        'Typing :: Typed',
     ],
     zip_safe=False,
+    packages=['xmlsec'],
+    package_dir={'': 'src'},
+    package_data={'xmlsec': ['py.typed', '*.pyi']},
 )
