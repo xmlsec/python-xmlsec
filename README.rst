@@ -3,8 +3,10 @@ python-xmlsec
 
 .. image:: https://travis-ci.org/mehcode/python-xmlsec.png?branch=master
     :target: https://travis-ci.org/mehcode/python-xmlsec
-.. image:: https://ci.appveyor.com/api/projects/status/20rtt2wv96gag9cy?svg=true
-    :target: https://ci.appveyor.com/project/bgaifullin/python-xmlsec
+.. image:: https://ci.appveyor.com/api/projects/status/ij87xk5wo8a39jua?svg=true
+    :target: https://ci.appveyor.com/project/hoefling/xmlsec
+.. image:: https://github.com/mehcode/python-xmlsec/workflows/manylinux2010/badge.svg
+    :target: https://github.com/mehcode/python-xmlsec/actions?query=workflow%3A%22manylinux2010%22
 .. image:: https://codecov.io/gh/mehcode/python-xmlsec/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/mehcode/python-xmlsec
 .. image:: https://img.shields.io/pypi/v/xmlsec.svg

@@ -1,6 +1,10 @@
-version: 1.3.{build}
-
 environment:
+  global:
+    TWINE_NON_INTERACTIVE: true
+    TWINE_REPOSITORY_URL: https://test.pypi.org/legacy/
+    TWINE_USERNAME: __token__
+    TWINE_PASSWORD:
+      secure: YI+izt+hzh/czFuDCrne4cyTkNhdK/svjrWoIkN3nurz1LO1/YUb+zl8ln6hlMONaPhWLDI9YqmCobf3XdQVa8pclSCRiEtxg1HENmVOLJTS1IQCOMZhQjfXt5iNH5ov601/pgS367akiuGryGUoPkhcmJ9oD8aRH9dZ+Abh+PYPRMa3ka4U3SLcIHgzRUizLvkd73+Z5S4tjwjnDa1XHDnt/fZbeLjVL7T/4B2bWxnBVvHAckV/MGeOX3XgSK3UWdpEDTsg4ns0X0OubSziww==
   matrix:
   - python: 27
   - python: 27-x64
@@ -10,27 +14,28 @@ environment:
   - python: 36-x64
   - python: 37
   - python: 37-x64
+  - python: 38
+  - python: 38-x64
 
 install:
-    - SET PATH=C:\\Python%PYTHON%;c:\\Python%PYTHON%\\scripts;%PATH%
-    - python -m pip.__main__ install -U pip wheel setuptools
-    - pip install -r requirements-test.txt
+  - SET PATH=C:\\Python%PYTHON%;c:\\Python%PYTHON%\\scripts;%PATH%
+  - python -m pip install -U pip wheel setuptools
 
 build: off
 build_script:
-   # configure version
-    - ps: >-
-        If ($env:APPVEYOR_REPO_TAG -Eq "true" ) {
-            $version = "$env:APPVEYOR_REPO_TAG_NAME"
-        } Else {
-            $version = "$env:APPVEYOR_BUILD_VERSION.dev0"
-        }
-        $version | Set-Content version.txt
-    - python setup.py build bdist_wheel
-    - ps: Get-ChildItem dist\*.whl | % { pip install $_.FullName }
+  - python setup.py bdist_wheel
 
 test: off
 test_script:
-    - pip list
-    - py.test -v tests
-    - ps: Get-ChildItem dist\*.whl | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
+  - pip install -r requirements-test.txt
+  - pip install xmlsec --only-binary=xmlsec --no-index --find-links=dist
+  - pytest -v --color=yes
+  - ps: Get-ChildItem dist\*.whl | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
+
+deploy: on
+deploy_script:
+  - ps: >-
+      If ($env:APPVEYOR_REPO_TAG -eq $TRUE) {
+        pip install twine
+        twine upload dist/*.whl
+      }

@@ -38,7 +38,7 @@ install:
 - travis_retry pip install coverage codecov -r requirements-test.txt --upgrade --force-reinstall
 - travis_retry pip install -e "."
 - pip list
-script: coverage run -m pytest -v tests
+script: coverage run -m pytest -v tests --color=yes
 after_success:
 - lcov --capture --directory . --output-file coverage.info
 - lcov --list coverage.info
@@ -46,14 +46,3 @@ after_success:
 before_deploy:
 - travis_retry pip install Sphinx
 - python setup.py build_sphinx
-deploy:
-  skip_cleanup: true
-  skip_upload_docs: false
-  provider: pypi
-  user: mehcode
-  on:
-    tags: true
-    distributions: sdist bdist_wheel
-    python: '2.7'
-  password:
-    secure: KNBbGaiAWirptxcuLjqNVgQ9E3jc75kj2+A5MRh+XvDVf6xFLAhrNg0+p/a3d+Tdap4/W5retxDdafLoMJ80ftyJFWV+lnrDxBhcrT686HGXPb0FCn58+Mho0RhM7CSHJIM8E85pVUV5E6QrmgmNWG8KKEaF3Vs5RJBhlP/g7Bg=

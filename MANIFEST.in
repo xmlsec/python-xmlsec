@@ -1,6 +1,14 @@
-include src/*
-include requirements*.txt
-include LICENSE
-include version.txt
-include xmlsec_setupinfo.py
-include xmlsec_extra.py
+recursive-include src *
+recursive-include tests *
+prune */__pycache__
+prune .github
+prune doc
+exclude .appveyor.yml
+exclude .editorconfig
+exclude .travis.yml
+exclude .gitattributes
+exclude .gitignore
+exclude requirements-test.txt
+exclude requirements.txt
+exclude xmlsec_extra.py
+exclude xmlsec_setupinfo.py
