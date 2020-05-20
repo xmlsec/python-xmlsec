@@ -41,8 +41,8 @@ Install
 
    pip install xmlsec
 
-Prerequisites
--------------
+Depending on your OS, you may need to install the required native
+libraries first:
 
 Linux (Debian)
 ^^^^^^^^^^^^^^
@@ -71,6 +71,14 @@ Linux (CentOS)
    yum install libxml2-devel xmlsec1-devel xmlsec1-openssl-devel libtool-ltdl-devel
 
 
+Linux (Fedora)
+^^^^^^^^^^^^^^
+
+.. code-block:: bash
+
+   dnf install libxml2-devel xmlsec1-devel xmlsec1-openssl-devel libtool-ltdl-devel
+
+
 Mac
 ^^^
 
@@ -86,8 +94,9 @@ Alpine
 
    apk add build-base libressl libffi-dev libressl-dev libxslt-dev libxml2-dev xmlsec-dev xmlsec
 
+
 Troubleshooting
----------------
+***************
 
 Mac
 ^^^
@@ -114,9 +123,9 @@ to build from source:
 
 
 Building from source
---------------------
+********************
 
-#. Clone the ``xmlsec`` repository to your local computer.
+#. Clone the ``xmlsec`` source code repository to your local computer.
 
    .. code-block:: bash
 
@@ -140,9 +149,9 @@ Contributing
 ************
 
 Setting up your environment
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-#. Follow steps 1 and 2 of the `manual installation instructions <#manual>`_.
+#. Follow steps 1 and 2 of the `manual installation instructions <#building-from-source>`_.
 
 
 #. Initialize a virtual environment to develop in.
@@ -171,7 +180,7 @@ Setting up your environment
 
 
 Running the test suite
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 #. `Set up your environment <#setting-up-your-environment>`_.
 
@@ -187,7 +196,7 @@ Running the test suite
    test iterations to detect memory leaks.
 
 Reporting an issue
-------------------
+^^^^^^^^^^^^^^^^^^
 
 Please attach the output of following information:
 
