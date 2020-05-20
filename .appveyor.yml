@@ -1,4 +1,9 @@
 environment:
+  global:
+    TWINE_NON_INTERACTIVE: true
+    TWINE_USERNAME: __token__
+    TWINE_PASSWORD:
+      secure: vI6C+FJexzk8S03SW+6DPhu6w5SILZ7yX10Xyh1G33YVXiUgDA0Erin+DLDYGJtmMATQcHayo0qMyo6rkJ7B+0uP41t+NSUsDx4equCYnzKu/GnCq9Fi9aWhbegT6UiSWoJ7H0DMRXZMcFY9jIhCo4VBDTpMn0mISYHJJXaIpsFzA1pnEZ1LDBRzLqZ/RHFV6QtKwYd6iI1j0QdqBTlT51JmlpjhgGs3rnrNp0FVQ5fVtbioLWwwD8L//LU4ec56h2AwF3nuvDcIHliAPHqG5w==
   matrix:
   - python: 27
   - python: 27-x64
@@ -25,3 +30,11 @@ test_script:
   - pip install xmlsec --only-binary=xmlsec --no-index --find-links=dist
   - pytest -v --color=yes
   - ps: Get-ChildItem dist\*.whl | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
+
+deploy: on
+deploy_script:
+  - ps: >-
+      If ($env:APPVEYOR_REPO_TAG -eq $TRUE) {
+        pip install twine
+        twine upload dist/*.whl
+      }
