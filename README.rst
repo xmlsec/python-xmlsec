@@ -47,7 +47,7 @@ Depending on your OS, you may need to install the required native
 libraries first:
 
 Linux (Debian/Ubuntu)
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: bash
 
