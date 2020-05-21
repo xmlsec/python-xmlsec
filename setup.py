@@ -75,6 +75,12 @@ class build_ext(build_ext_orig, object):
         ext.define_macros.extend(
             [('MODULE_NAME', self.distribution.metadata.name), ('MODULE_VERSION', self.distribution.metadata.version)]
         )
+        # escape the XMLSEC_CRYPTO macro value, see mehcode/python-xmlsec#141
+        for (key, value) in ext.define_macros:
+            if key == 'XMLSEC_CRYPTO' and not (value.startswith('"') and value.endswith('"')):
+                ext.define_macros.remove((key, value))
+                ext.define_macros.append((key, '"{0}"'.format(value)))
+                break
 
         if sys.platform == 'win32':
             ext.extra_compile_args.append('/Zi')
