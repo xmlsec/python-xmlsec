@@ -417,7 +417,7 @@ else:
             sources.append(os.path.join(root, file))
 
 pyxmlsec = Extension('xmlsec', sources=sources)
-setup_reqs = ['setuptools_scm[toml]>=3.4', 'pkgconfig', 'lxml>=3.8']
+setup_reqs = ['setuptools_scm[toml]>=3.4', 'pkgconfig>=1.5.1', 'lxml>=3.8']
 
 if sys.version_info < (3, 4):
     setup_reqs.append('pathlib2')
