@@ -1,7 +1,5 @@
-from tests import base
-
 import xmlsec
-
+from tests import base
 
 consts = xmlsec.constants
 
@@ -11,6 +9,14 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         ctx = xmlsec.EncryptionContext(manager=xmlsec.KeysManager())
         del ctx
 
+    def test_init_no_keys_manager(self):
+        ctx = xmlsec.EncryptionContext()
+        del ctx
+
+    def test_init_bad_args(self):
+        with self.assertRaisesRegex(TypeError, 'KeysManager required'):
+            xmlsec.EncryptionContext(manager='foo')
+
     def test_key(self):
         ctx = xmlsec.EncryptionContext(manager=xmlsec.KeysManager())
         self.assertIsNone(ctx.key)
@@ -19,9 +25,7 @@ class TestEncryptionContext(base.TestMemoryLeaks):
 
     def test_encrypt_xml(self):
         root = self.load_xml('enc1-in.xml')
-        enc_data = xmlsec.template.encrypted_data_create(
-            root, consts.TransformAes128Cbc, type=consts.TypeEncElement, ns="xenc"
-        )
+        enc_data = xmlsec.template.encrypted_data_create(root, consts.TransformAes128Cbc, type=consts.TypeEncElement, ns="xenc")
         xmlsec.template.encrypted_data_ensure_cipher_value(enc_data)
         ki = xmlsec.template.encrypted_data_ensure_key_info(enc_data, ns="dsig")
         ek = xmlsec.template.add_encrypted_key(ki, consts.TransformRsaOaep)
@@ -117,18 +121,16 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         self.assertIsNotNone(decrypted)
         self.assertEqual(self.load_xml("enc%d-in.xml" % i), root)
 
-
     def check_no_segfault(self):
-        namespaces = {
-            'soap': 'http://schemas.xmlsoap.org/soap/envelope/'
-        }
+        namespaces = {'soap': 'http://schemas.xmlsoap.org/soap/envelope/'}
 
         manager = xmlsec.KeysManager()
         key = xmlsec.Key.from_file(self.path("rsacert.pem"), format=consts.KeyDataFormatCertPem)
         manager.add_key(key)
         template = self.load_xml('enc-bad-in.xml')
         enc_data = xmlsec.template.encrypted_data_create(
-            template, xmlsec.Transform.AES128, type=xmlsec.EncryptionType.CONTENT, ns='xenc')
+            template, xmlsec.Transform.AES128, type=xmlsec.EncryptionType.CONTENT, ns='xenc'
+        )
         xmlsec.template.encrypted_data_ensure_cipher_value(enc_data)
         key_info = xmlsec.template.encrypted_data_ensure_key_info(enc_data, ns='dsig')
         enc_key = xmlsec.template.add_encrypted_key(key_info, xmlsec.Transform.RSA_PKCS1)
