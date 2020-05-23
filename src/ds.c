@@ -252,6 +252,7 @@ static int PyXmlSec_ProcessSignBinary(PyXmlSec_SignatureContext* ctx, const xmlS
 
     if (ctx->handle->signKey == NULL) {
         PyErr_SetString(PyXmlSec_Error, "Sign key is not specified.");
+        return -1;
     }
 
     if (ctx->handle->signMethod != NULL) {
