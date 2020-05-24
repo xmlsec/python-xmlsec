@@ -1,5 +1,5 @@
 import sys
-from typing import AnyStr, IO, Iterable, Optional, Type, TypeVar, Union
+from typing import AnyStr, IO, Iterable, Optional, Type, TypeVar, Union, overload
 
 from lxml.etree import _Element
 
@@ -24,6 +24,10 @@ _K = TypeVar('_K', bound=Key)
 def enable_debug_trace(enabled: bool = ...) -> None: ...
 def init() -> None: ...
 def shutdown() -> None: ...
+@overload
+def base64_default_line_size() -> int: ...
+@overload
+def base64_default_line_size(size: int) -> None: ...
 
 class EncryptionContext:
     key: Optional[Key]

@@ -14,6 +14,7 @@
 #include <xmlsec/xmlsec.h>
 #include <xmlsec/crypto.h>
 #include <xmlsec/errors.h>
+#include <xmlsec/base64.h>
 
 #define _PYXMLSEC_FREE_NONE 0
 #define _PYXMLSEC_FREE_XMLSEC 1
@@ -127,6 +128,34 @@ static PyObject* PyXmlSec_PyEnableDebugOutput(PyObject *self, PyObject* args, Py
     Py_RETURN_NONE;
 }
 
+static char PyXmlSec_PyBase64DefaultLineSize__doc__[] = \
+    "base64_default_line_size(size = None)\n"
+    "Configures the default maximum columns size for base64 encoding.\n\n"
+    "If ``size`` is not given, this function returns the current default size, acting as a getter. "
+    "If ``size`` is given, a new value is applied and this function returns nothing, acting as a setter.\n"
+    ":param size: new default size value (optional)\n"
+    ":type size: :class:`int` or :data:`None`";
+static PyObject* PyXmlSec_PyBase64DefaultLineSize(PyObject *self, PyObject *args, PyObject *kwargs) {
+    static char *kwlist[] = { "size", NULL };
+    PyObject *pySize = NULL;
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|O:base64_default_line_size", kwlist, &pySize)) {
+        return NULL;
+    }
+    if (pySize == NULL) {
+        return PyLong_FromLong(xmlSecBase64GetDefaultLineSize());
+    }
+    int size = (int)PyLong_AsLong(pySize);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+    if (size < 0) {
+        PyErr_SetString(PyExc_ValueError, "size must be positive");
+        return NULL;
+    }
+    xmlSecBase64SetDefaultLineSize(size);
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef PyXmlSec_MainMethods[] = {
     {
         "init",
@@ -145,6 +174,12 @@ static PyMethodDef PyXmlSec_MainMethods[] = {
         (PyCFunction)PyXmlSec_PyEnableDebugOutput,
         METH_VARARGS|METH_KEYWORDS,
         PyXmlSec_PyEnableDebugOutput__doc__
+    },
+    {
+        "base64_default_line_size",
+        (PyCFunction)PyXmlSec_PyBase64DefaultLineSize,
+        METH_VARARGS|METH_KEYWORDS,
+        PyXmlSec_PyBase64DefaultLineSize__doc__
     },
     {NULL, NULL} /* sentinel */
 };
