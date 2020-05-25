@@ -442,6 +442,7 @@ setup(
     maintainer='Oleg Hoefling',
     maintainer_email='oleg.hoefling@gmail.com',
     url='https://github.com/mehcode/python-xmlsec',
+    project_urls={'Documentation': 'https://xmlsec.readthedocs.io', 'Source': 'https://github.com/mehcode/python-xmlsec',},
     license='MIT',
     keywords=['xmlsec'],
     classifiers=[
