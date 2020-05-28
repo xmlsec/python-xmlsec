@@ -138,13 +138,14 @@ static char PyXmlSec_PyBase64DefaultLineSize__doc__[] = \
 static PyObject* PyXmlSec_PyBase64DefaultLineSize(PyObject *self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "size", NULL };
     PyObject *pySize = NULL;
+    int size;
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|O:base64_default_line_size", kwlist, &pySize)) {
         return NULL;
     }
     if (pySize == NULL) {
         return PyLong_FromLong(xmlSecBase64GetDefaultLineSize());
     }
-    int size = (int)PyLong_AsLong(pySize);
+    size = (int)PyLong_AsLong(pySize);
     if (PyErr_Occurred()) {
         return NULL;
     }
