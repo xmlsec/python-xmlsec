@@ -23,5 +23,12 @@ test: off
 test_script:
   - pip install -r requirements-test.txt
   - pip install xmlsec --only-binary=xmlsec --no-index --find-links=dist
-  - pytest -v --color=yes
+  - pytest -v --color=yes --junitxml=unittests.xml
   - ps: Get-ChildItem dist\*.whl | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
+
+on_finish:
+  - ps: |
+      # archive test results at AppVeyor
+      $wc = New-Object 'System.Net.WebClient'
+      $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\unittests.xml))
+      $LastExitCode = 0
