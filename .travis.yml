@@ -35,14 +35,14 @@ addons:
     - lcov
 install:
 - travis_retry pip install --upgrade pip setuptools wheel
-- travis_retry pip install coverage codecov -r requirements-test.txt --upgrade --force-reinstall
+- travis_retry pip install coverage -r requirements-test.txt --upgrade --force-reinstall
 - travis_retry pip install -e "."
 - pip list
 script: coverage run -m pytest -v tests --color=yes
 after_success:
 - lcov --capture --directory . --output-file coverage.info
 - lcov --list coverage.info
-- codecov --file coverage.info
+- bash <(curl -s https://codecov.io/bash) -f coverage.info
 before_deploy:
 - travis_retry pip install Sphinx -r doc/source/requirements.txt
 - git apply --verbose --no-index --unsafe-paths --directory=$(python -c "import site; print(site.getsitepackages()[0])") doc/source/sphinx-pr-6916.diff
