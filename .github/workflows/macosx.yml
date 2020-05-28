@@ -16,17 +16,29 @@ jobs:
         run: |
           pip install --upgrade pip setuptools wheel
           brew install libxml2 libxmlsec1 pkg-config
+      - name: Build macosx_x86_64 wheel
+        run: |
+          python setup.py bdist_wheel
       - name: Set environment variables
         shell: bash
         run: |
           echo ::set-env name=PKGVER::$(python setup.py --version)
-      - name: Build macosx_x86_64 wheel
-        run: |
-          python setup.py bdist_wheel
+          echo ::set-env name=LLVM_PROFILE_FILE::"pyxmlsec-%p.profraw"
       - name: Install test dependencies
+        env:
+          CC: clang
+          CFLAGS: "-fprofile-instr-generate -fcoverage-mapping"
+          LDFLAGS: "-fprofile-instr-generate -fcoverage-mapping"
         run: |
-          pip install --upgrade -r requirements-test.txt
-          pip install xmlsec --only-binary=xmlsec --no-index --find-links=dist/
+          rm -rf build/
+          pip install coverage --upgrade -r requirements-test.txt
+          pip install --editable .
       - name: Run tests
         run: |
-          pytest -v --color=yes
+          coverage run -m pytest -v --color=yes
+      - name: Report coverage to codecov
+        run: |
+          LIBFILE=$(python -c "import xmlsec; print(xmlsec.__file__)")
+          /Library/Developer/CommandLineTools/usr/bin/llvm-profdata merge -sparse pyxmlsec-*.profraw -output pyxmlsec.profdata
+          /Library/Developer/CommandLineTools/usr/bin/llvm-cov show ${LIBFILE} -instr-profile=pyxmlsec.profdata src > coverage.txt
+          bash <(curl -s https://codecov.io/bash) -f coverage.txt
