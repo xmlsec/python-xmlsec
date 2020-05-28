@@ -90,6 +90,15 @@ static int PyXmlSec_EncryptionContextKeySet(PyObject* self, PyObject* value, voi
     PyXmlSec_Key* key;
 
     PYXMLSEC_DEBUGF("%p, %p", self, value);
+
+    if (value == NULL) {  // key deletion
+        if (ctx->handle->encKey != NULL) {
+            xmlSecKeyDestroy(ctx->handle->encKey);
+            ctx->handle->encKey = NULL;
+        }
+        return 0;
+    }
+
     if (!PyObject_IsInstance(value, (PyObject*)PyXmlSec_KeyType)) {
         PyErr_SetString(PyExc_TypeError, "instance of *xmlsec.Key* expected.");
         return -1;

@@ -148,6 +148,12 @@ class TestKeys(base.TestMemoryLeaks):
         with self.assertRaisesRegex(ValueError, 'key is not ready'):
             key.name
 
+    def test_del_name(self):
+        key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)
+        key.name = "rsakey"
+        del key.name
+        self.assertIsNone(key.name)
+
     def test_set_name(self):
         key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)
         key.name = "rsakey"

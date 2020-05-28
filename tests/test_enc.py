@@ -23,6 +23,12 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         ctx.key = xmlsec.Key.from_file(self.path("rsacert.pem"), format=consts.KeyDataFormatCertPem)
         self.assertIsNotNone(ctx.key)
 
+    def test_del_key(self):
+        ctx = xmlsec.EncryptionContext(manager=xmlsec.KeysManager())
+        ctx.key = xmlsec.Key.from_file(self.path("rsacert.pem"), format=consts.KeyDataFormatCertPem)
+        del ctx.key
+        self.assertIsNone(ctx.key)
+
     def test_encrypt_xml(self):
         root = self.load_xml('enc1-in.xml')
         enc_data = xmlsec.template.encrypted_data_create(root, consts.TransformAes128Cbc, type=consts.TypeEncElement, ns="xenc")

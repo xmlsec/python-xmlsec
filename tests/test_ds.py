@@ -21,6 +21,12 @@ class TestSignContext(base.TestMemoryLeaks):
         ctx = xmlsec.SignatureContext(manager=xmlsec.KeysManager())
         self.assertIsNone(ctx.key)
 
+    def test_del_key(self):
+        ctx = xmlsec.SignatureContext(manager=xmlsec.KeysManager())
+        ctx.key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)
+        del ctx.key
+        self.assertIsNone(ctx.key)
+
     def test_set_key(self):
         ctx = xmlsec.SignatureContext(manager=xmlsec.KeysManager())
         ctx.key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)
