@@ -210,6 +210,14 @@ class TestSignContext(base.TestMemoryLeaks):
         sign = ctx.sign_binary(self.load("sign6-in.bin"), consts.TransformRsaSha1)
         self.assertEqual(self.load("sign6-out.bin"), sign)
 
+    def test_sign_binary_twice_not_possible(self):
+        ctx = xmlsec.SignatureContext()
+        ctx.key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)
+        data = self.load('sign6-in.bin')
+        ctx.sign_binary(data, consts.TransformRsaSha1)
+        with self.assertRaisesRegex(xmlsec.Error, 'Signature context already used; it is designed for one use only.'):
+            ctx.sign_binary(data, consts.TransformRsaSha1)
+
     def test_verify_bad_args(self):
         ctx = xmlsec.SignatureContext()
         ctx.key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)
@@ -269,3 +277,55 @@ class TestSignContext(base.TestMemoryLeaks):
         self.assertEqual("rsakey.pem", ctx.key.name)
         with self.assertRaises(xmlsec.Error):
             ctx.verify_binary(self.load("sign6-in.bin"), consts.TransformRsaSha1, b"invalid")
+
+    def test_enable_reference_transform(self):
+        ctx = xmlsec.SignatureContext()
+        ctx.key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)
+        ctx.enable_reference_transform(consts.TransformRsaSha1)
+
+    def test_enable_reference_transform_bad_args(self):
+        ctx = xmlsec.SignatureContext()
+        ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
+        with self.assertRaises(TypeError):
+            ctx.enable_reference_transform('')
+        with self.assertRaises(TypeError):
+            ctx.enable_reference_transform(0)
+        with self.assertRaises(TypeError):
+            ctx.enable_reference_transform(consts.KeyDataAes)
+
+    def test_enable_signature_transform(self):
+        ctx = xmlsec.SignatureContext()
+        ctx.key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)
+        ctx.enable_signature_transform(consts.TransformRsaSha1)
+
+    def test_enable_signature_transform_bad_args(self):
+        ctx = xmlsec.SignatureContext()
+        ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
+        with self.assertRaises(TypeError):
+            ctx.enable_signature_transform('')
+        with self.assertRaises(TypeError):
+            ctx.enable_signature_transform(0)
+        with self.assertRaises(TypeError):
+            ctx.enable_signature_transform(consts.KeyDataAes)
+
+    def test_set_enabled_key_data(self):
+        ctx = xmlsec.SignatureContext()
+        ctx.key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)
+        ctx.set_enabled_key_data([consts.KeyDataAes])
+
+    def test_set_enabled_key_data_empty(self):
+        ctx = xmlsec.SignatureContext()
+        ctx.key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)
+        ctx.set_enabled_key_data([])
+
+    def test_set_enabled_key_data_bad_args(self):
+        ctx = xmlsec.SignatureContext()
+        ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
+        with self.assertRaises(TypeError):
+            ctx.set_enabled_key_data(0)
+
+    def test_set_enabled_key_data_bad_list(self):
+        ctx = xmlsec.SignatureContext()
+        ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
+        with self.assertRaisesRegex(TypeError, 'expected list of KeyData constants.'):
+            ctx.set_enabled_key_data('foo')
