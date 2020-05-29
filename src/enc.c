@@ -233,7 +233,7 @@ static PyObject* PyXmlSec_EncryptionContextEncryptXml(PyObject* self, PyObject* 
     }
     tmpType = xmlGetProp(template->_c_node, XSTR("Type"));
     if (tmpType == NULL || !(xmlStrEqual(tmpType, xmlSecTypeEncElement) || xmlStrEqual(tmpType, xmlSecTypeEncContent))) {
-        PyErr_SetString(PyXmlSec_Error, "unsupported `Type`, it should be `element` or `content`)");
+        PyErr_SetString(PyXmlSec_Error, "unsupported `Type`, it should be `element` or `content`");
         goto ON_FAIL;
     }
 
