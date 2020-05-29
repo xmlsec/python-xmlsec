@@ -40,7 +40,7 @@ install:
 - pip list
 script: coverage run -m pytest -v tests --color=yes
 after_success:
-- lcov --capture --directory . --output-file coverage.info
+- lcov --capture --no-external --directory . --output-file coverage.info
 - lcov --list coverage.info
 - bash <(curl -s https://codecov.io/bash) -f coverage.info
 before_deploy:

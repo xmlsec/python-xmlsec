@@ -7,6 +7,9 @@ import xmlsec
 
 import unittest
 
+if sys.version_info < (3, ):
+    unittest.TestCase.assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
+
 
 etype = type(etree.Element("test"))
 

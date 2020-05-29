@@ -87,11 +87,21 @@ static int PyXmlSec_SignatureContextKeySet(PyObject* self, PyObject* value, void
     PyXmlSec_Key* key;
 
     PYXMLSEC_DEBUGF("%p, %p", self, value);
+
+    if (value == NULL) {  // key deletion
+        if (ctx->handle->signKey != NULL) {
+            xmlSecKeyDestroy(ctx->handle->signKey);
+            ctx->handle->signKey = NULL;
+        }
+        return 0;
+    }
+
     if (!PyObject_IsInstance(value, (PyObject*)PyXmlSec_KeyType)) {
         PyErr_SetString(PyExc_TypeError, "instance of *xmlsec.Key* expected.");
         return -1;
     }
     key = (PyXmlSec_Key*)value;
+
     if (key->handle == NULL) {
         PyErr_SetString(PyExc_TypeError, "empty key.");
         return -1;
@@ -252,6 +262,7 @@ static int PyXmlSec_ProcessSignBinary(PyXmlSec_SignatureContext* ctx, const xmlS
 
     if (ctx->handle->signKey == NULL) {
         PyErr_SetString(PyXmlSec_Error, "Sign key is not specified.");
+        return -1;
     }
 
     if (ctx->handle->signMethod != NULL) {

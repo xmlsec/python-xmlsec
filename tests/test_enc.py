@@ -1,7 +1,10 @@
-from tests import base
+import os
+import tempfile
+
+from lxml import etree
 
 import xmlsec
-
+from tests import base
 
 consts = xmlsec.constants
 
@@ -11,17 +14,48 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         ctx = xmlsec.EncryptionContext(manager=xmlsec.KeysManager())
         del ctx
 
-    def test_key(self):
+    def test_init_no_keys_manager(self):
+        ctx = xmlsec.EncryptionContext()
+        del ctx
+
+    def test_init_bad_args(self):
+        with self.assertRaisesRegex(TypeError, 'KeysManager required'):
+            xmlsec.EncryptionContext(manager='foo')
+
+    def test_no_key(self):
+        ctx = xmlsec.EncryptionContext(manager=xmlsec.KeysManager())
+        self.assertIsNone(ctx.key)
+
+    def test_get_key(self):
         ctx = xmlsec.EncryptionContext(manager=xmlsec.KeysManager())
         self.assertIsNone(ctx.key)
         ctx.key = xmlsec.Key.from_file(self.path("rsacert.pem"), format=consts.KeyDataFormatCertPem)
         self.assertIsNotNone(ctx.key)
 
+    def test_del_key(self):
+        ctx = xmlsec.EncryptionContext(manager=xmlsec.KeysManager())
+        ctx.key = xmlsec.Key.from_file(self.path("rsacert.pem"), format=consts.KeyDataFormatCertPem)
+        del ctx.key
+        self.assertIsNone(ctx.key)
+
+    def test_set_key(self):
+        ctx = xmlsec.EncryptionContext(manager=xmlsec.KeysManager())
+        ctx.key = xmlsec.Key.from_file(self.path("rsacert.pem"), format=consts.KeyDataFormatCertPem)
+        self.assertIsNotNone(ctx.key)
+
+    def test_set_key_bad_type(self):
+        ctx = xmlsec.EncryptionContext(manager=xmlsec.KeysManager())
+        with self.assertRaisesRegex(TypeError, r'instance of \*xmlsec.Key\* expected.'):
+            ctx.key = ''
+
+    def test_set_invalid_key(self):
+        ctx = xmlsec.EncryptionContext(manager=xmlsec.KeysManager())
+        with self.assertRaisesRegex(TypeError, 'empty key.'):
+            ctx.key = xmlsec.Key()
+
     def test_encrypt_xml(self):
         root = self.load_xml('enc1-in.xml')
-        enc_data = xmlsec.template.encrypted_data_create(
-            root, consts.TransformAes128Cbc, type=consts.TypeEncElement, ns="xenc"
-        )
+        enc_data = xmlsec.template.encrypted_data_create(root, consts.TransformAes128Cbc, type=consts.TypeEncElement, ns="xenc")
         xmlsec.template.encrypted_data_ensure_cipher_value(enc_data)
         ki = xmlsec.template.encrypted_data_ensure_key_info(enc_data, ns="dsig")
         ek = xmlsec.template.add_encrypted_key(ki, consts.TransformRsaOaep)
@@ -48,6 +82,30 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         self.assertEqual("http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p", enc_method2.get("Algorithm"))
         cipher_value = xmlsec.tree.find_node(ki, consts.NodeCipherValue, consts.EncNs)
         self.assertIsNotNone(cipher_value)
+
+    def test_encrypt_xml_bad_args(self):
+        ctx = xmlsec.EncryptionContext()
+        with self.assertRaises(TypeError):
+            ctx.encrypt_xml('', 0)
+
+    def test_encrypt_xml_bad_template(self):
+        ctx = xmlsec.EncryptionContext()
+        with self.assertRaisesRegex(xmlsec.Error, 'unsupported `Type`, it should be `element` or `content`'):
+            ctx.encrypt_xml(etree.Element('root'), etree.Element('node'))
+
+    def test_encrypt_xml_bad_template_bad_type_attribute(self):
+        ctx = xmlsec.EncryptionContext()
+        with self.assertRaisesRegex(xmlsec.Error, 'unsupported `Type`, it should be `element` or `content`'):
+            root = etree.Element('root')
+            root.attrib['Type'] = 'foo'
+            ctx.encrypt_xml(root, etree.Element('node'))
+
+    def test_encrypt_xml_fail(self):
+        ctx = xmlsec.EncryptionContext()
+        with self.assertRaisesRegex(xmlsec.Error, 'failed to encrypt xml'):
+            root = etree.Element('root')
+            root.attrib['Type'] = consts.TypeEncElement
+            ctx.encrypt_xml(root, etree.Element('node'))
 
     def test_encrypt_binary(self):
         root = self.load_xml('enc2-in.xml')
@@ -80,6 +138,61 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         self.assertEqual("http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p", enc_method2.get("Algorithm"))
         cipher_value = xmlsec.tree.find_node(ki, consts.NodeCipherValue, consts.EncNs)
         self.assertIsNotNone(cipher_value)
+
+    def test_encrypt_binary_bad_args(self):
+        ctx = xmlsec.EncryptionContext()
+        with self.assertRaises(TypeError):
+            ctx.encrypt_binary('', 0)
+
+    def test_encrypt_binary_bad_template(self):
+        ctx = xmlsec.EncryptionContext()
+        with self.assertRaisesRegex(xmlsec.Error, 'failed to encrypt binary'):
+            ctx.encrypt_binary(etree.Element('root'), b'data')
+
+    def test_encrypt_uri(self):
+        root = self.load_xml('enc2-in.xml')
+        enc_data = xmlsec.template.encrypted_data_create(
+            root, consts.TransformAes128Cbc, type=consts.TypeEncContent, ns="xenc", mime_type="binary/octet-stream"
+        )
+        xmlsec.template.encrypted_data_ensure_cipher_value(enc_data)
+        ki = xmlsec.template.encrypted_data_ensure_key_info(enc_data, ns="dsig")
+        ek = xmlsec.template.add_encrypted_key(ki, consts.TransformRsaOaep)
+        xmlsec.template.encrypted_data_ensure_cipher_value(ek)
+
+        manager = xmlsec.KeysManager()
+        manager.add_key(xmlsec.Key.from_file(self.path("rsacert.pem"), format=consts.KeyDataFormatCertPem))
+
+        ctx = xmlsec.EncryptionContext(manager)
+        ctx.key = xmlsec.Key.generate(consts.KeyDataAes, 128, consts.KeyDataTypeSession)
+
+        with tempfile.NamedTemporaryFile(delete=False) as tmpfile:
+            tmpfile.write(b'test')
+
+        encrypted = ctx.encrypt_binary(enc_data, 'file://' + tmpfile.name)
+        self.assertIsNotNone(encrypted)
+        self.assertEqual("{%s}%s" % (consts.EncNs, consts.NodeEncryptedData), encrypted.tag)
+
+        enc_method = xmlsec.tree.find_child(enc_data, consts.NodeEncryptionMethod, consts.EncNs)
+        self.assertIsNotNone(enc_method)
+        self.assertEqual("http://www.w3.org/2001/04/xmlenc#aes128-cbc", enc_method.get("Algorithm"))
+
+        ki = xmlsec.tree.find_child(enc_data, consts.NodeKeyInfo, consts.DSigNs)
+        self.assertIsNotNone(ki)
+        enc_method2 = xmlsec.tree.find_node(ki, consts.NodeEncryptionMethod, consts.EncNs)
+        self.assertIsNotNone(enc_method2)
+        self.assertEqual("http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p", enc_method2.get("Algorithm"))
+        cipher_value = xmlsec.tree.find_node(ki, consts.NodeCipherValue, consts.EncNs)
+        self.assertIsNotNone(cipher_value)
+
+    def test_encrypt_uri_bad_args(self):
+        ctx = xmlsec.EncryptionContext()
+        with self.assertRaises(TypeError):
+            ctx.encrypt_uri('', 0)
+
+    def test_encrypt_uri_fail(self):
+        ctx = xmlsec.EncryptionContext()
+        with self.assertRaisesRegex(xmlsec.InternalError, 'failed to encrypt URI'):
+            ctx.encrypt_uri(etree.Element('root'), '')
 
     def test_decrypt1(self):
         self.check_decrypt(1)
@@ -117,18 +230,21 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         self.assertIsNotNone(decrypted)
         self.assertEqual(self.load_xml("enc%d-in.xml" % i), root)
 
+    def test_decrypt_bad_args(self):
+        ctx = xmlsec.EncryptionContext()
+        with self.assertRaises(TypeError):
+            ctx.decrypt('')
 
     def check_no_segfault(self):
-        namespaces = {
-            'soap': 'http://schemas.xmlsoap.org/soap/envelope/'
-        }
+        namespaces = {'soap': 'http://schemas.xmlsoap.org/soap/envelope/'}
 
         manager = xmlsec.KeysManager()
         key = xmlsec.Key.from_file(self.path("rsacert.pem"), format=consts.KeyDataFormatCertPem)
         manager.add_key(key)
         template = self.load_xml('enc-bad-in.xml')
         enc_data = xmlsec.template.encrypted_data_create(
-            template, xmlsec.Transform.AES128, type=xmlsec.EncryptionType.CONTENT, ns='xenc')
+            template, xmlsec.Transform.AES128, type=xmlsec.EncryptionType.CONTENT, ns='xenc'
+        )
         xmlsec.template.encrypted_data_ensure_cipher_value(enc_data)
         key_info = xmlsec.template.encrypted_data_ensure_key_info(enc_data, ns='dsig')
         enc_key = xmlsec.template.add_encrypted_key(key_info, xmlsec.Transform.RSA_PKCS1)
