@@ -29,8 +29,8 @@ class build_ext(build_ext_orig, object):
             from pathlib2 import Path
 
         ext = self.ext_map['xmlsec']
-        self.debug = os.environ.get('DEBUG', False)
-        self.static = os.environ.get('STATIC_DEPS', False)
+        self.debug = os.environ.get('PYXMLSEC_ENABLE_DEBUG', False)
+        self.static = os.environ.get('PYXMLSEC_STATIC_DEPS', False)
 
         if self.static or sys.platform == 'win32':
             self.info('starting static build on {}'.format(sys.platform))
@@ -43,7 +43,7 @@ class build_ext(build_ext_orig, object):
             self.build_libs_dir = buildroot / 'libs'
             self.build_libs_dir.mkdir(exist_ok=True)
 
-            self.libs_dir = Path(os.environ.get('LIBS_DIR', 'libs'))
+            self.libs_dir = Path(os.environ.get('PYXMLSEC_LIBS_DIR', 'libs'))
             self.libs_dir.mkdir(exist_ok=True)
 
             if sys.platform == 'win32':
@@ -180,12 +180,12 @@ class build_ext(build_ext_orig, object):
         ext.include_dirs = [str(p.absolute()) for p in includes]
 
     def prepare_static_build_linux(self):
-        self.openssl_version = os.environ.get('OPENSSL_VERSION', '1.1.1g')
-        self.libiconv_version = os.environ.get('LIBICONV_VERSION', '1.16')
-        self.libxml2_version = os.environ.get('LIBXML2_VERSION', None)
-        self.libxslt_version = os.environ.get('LIBXLST_VERSION', None)
-        self.zlib_version = os.environ.get('ZLIB_VERSION', '1.2.11')
-        self.xmlsec1_version = os.environ.get('XMLSEC1_VERSION', '1.2.30')
+        self.openssl_version = os.environ.get('PYXMLSEC_OPENSSL_VERSION', '1.1.1g')
+        self.libiconv_version = os.environ.get('PYXMLSEC_LIBICONV_VERSION', '1.16')
+        self.libxml2_version = os.environ.get('PYXMLSEC_LIBXML2_VERSION', None)
+        self.libxslt_version = os.environ.get('PYXMLSEC_LIBXLST_VERSION', None)
+        self.zlib_version = os.environ.get('PYXMLSEC_ZLIB_VERSION', '1.2.11')
+        self.xmlsec1_version = os.environ.get('PYXMLSEC_XMLSEC1_VERSION', '1.2.30')
 
         self.info('Settings:')
         self.info('{:20} {}'.format('Lib sources in:', self.libs_dir.absolute()))

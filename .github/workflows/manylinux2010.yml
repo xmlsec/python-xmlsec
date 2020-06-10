@@ -18,7 +18,7 @@ jobs:
           echo ::set-env name=PKGVER::$(/opt/python/${{ matrix.python-abi }}/bin/python setup.py --version)
       - name: Build linux_x86_64 wheel
         env:
-          STATIC_DEPS: true
+          PYXMLSEC_STATIC_DEPS: true
         run: |
           /opt/python/${{ matrix.python-abi }}/bin/python setup.py bdist_wheel
       - name: Label manylinux2010_x86_64 wheel
