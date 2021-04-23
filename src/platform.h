@@ -19,11 +19,11 @@
 #include <windows.h>
 #endif /* MS_WIN32 */
 
-#define XMLSEC_VERSION_HEX ((XMLSEC_VERSION_MAJOR << 8) | (XMLSEC_VERSION_MINOR << 4) | (XMLSEC_VERSION_SUBMINOR))
+#define XMLSEC_VERSION_HEX ((XMLSEC_VERSION_MAJOR << 16) | (XMLSEC_VERSION_MINOR << 8) | (XMLSEC_VERSION_SUBMINOR))
 
 // XKMS support was removed in version 1.2.21
 // https://mail.gnome.org/archives/commits-list/2015-February/msg10555.html
-#if  XMLSEC_VERSION_HEX > 0x134
+#if  XMLSEC_VERSION_HEX > 0x10214
 #define XMLSEC_NO_XKMS 1
 #endif
 

@@ -27,7 +27,7 @@ static int free_mode = _PYXMLSEC_FREE_NONE;
 
 #ifndef XMLSEC_NO_CRYPTO_DYNAMIC_LOADING
 static const xmlChar* PyXmlSec_GetCryptoLibName() {
-#if XMLSEC_VERSION_HEX > 308
+#if XMLSEC_VERSION_HEX > 0x10214
     // xmlSecGetDefaultCrypto was introduced in version 1.2.21
     const xmlChar* cryptoLib = xmlSecGetDefaultCrypto();
 #else
