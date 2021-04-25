@@ -5,7 +5,6 @@ notifications:
   email: false
 matrix:
   include:
-  - python: 2.7
   - python: 3.5
   - python: 3.6
   - python: 3.7
@@ -36,8 +35,8 @@ addons:
 install:
 - travis_retry pip install --upgrade pip setuptools wheel
 - travis_retry pip install coverage -r requirements-test.txt --upgrade --force-reinstall
-- travis_retry pip install -e "."
-- pip list
+- python setup.py bdist_wheel
+- pip install xmlsec --only-binary=xmlsec --no-index --find-links=dist/
 script: coverage run -m pytest -v tests --color=yes
 after_success:
 - lcov --capture --no-external --directory . --output-file coverage.info

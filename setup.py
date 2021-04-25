@@ -7,15 +7,11 @@ import tarfile
 import zipfile
 from distutils import log
 from distutils.errors import DistutilsError
+from pathlib import Path
+from urllib.request import urlcleanup, urljoin, urlretrieve
 
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext as build_ext_orig
-
-if sys.version_info >= (3, 4):
-    from urllib.request import urlcleanup, urljoin, urlretrieve
-else:
-    from urllib import urlcleanup, urlretrieve
-    from urlparse import urljoin
 
 
 class build_ext(build_ext_orig, object):
@@ -23,11 +19,6 @@ class build_ext(build_ext_orig, object):
         self.announce(message, level=log.INFO)
 
     def run(self):
-        if sys.version_info >= (3, 4):
-            from pathlib import Path
-        else:
-            from pathlib2 import Path
-
         ext = self.ext_map['xmlsec']
         self.debug = os.environ.get('PYXMLSEC_ENABLE_DEBUG', False)
         self.static = os.environ.get('PYXMLSEC_STATIC_DEPS', False)
@@ -107,16 +98,10 @@ class build_ext(build_ext_orig, object):
 
     def prepare_static_build_win(self):
         release_url = 'https://github.com/bgaifullin/libxml2-win-binaries/releases/download/v2018.08/'
-        if sys.version_info < (3, 5):
-            if sys.maxsize > 2147483647:
-                suffix = 'vs2008.win64'
-            else:
-                suffix = "vs2008.win32"
+        if sys.maxsize > 2147483647:
+            suffix = 'win64'
         else:
-            if sys.maxsize > 2147483647:
-                suffix = "win64"
-            else:
-                suffix = "win32"
+            suffix = 'win32'
 
         libs = [
             'libxml2-2.9.4.{}.zip'.format(suffix),
@@ -185,7 +170,7 @@ class build_ext(build_ext_orig, object):
         self.libxml2_version = os.environ.get('PYXMLSEC_LIBXML2_VERSION', None)
         self.libxslt_version = os.environ.get('PYXMLSEC_LIBXLST_VERSION', None)
         self.zlib_version = os.environ.get('PYXMLSEC_ZLIB_VERSION', '1.2.11')
-        self.xmlsec1_version = os.environ.get('PYXMLSEC_XMLSEC1_VERSION', '1.2.30')
+        self.xmlsec1_version = os.environ.get('PYXMLSEC_XMLSEC1_VERSION', '1.2.31')
 
         self.info('Settings:')
         self.info('{:20} {}'.format('Lib sources in:', self.libs_dir.absolute()))
@@ -402,25 +387,10 @@ class build_ext(build_ext_orig, object):
         ext.extra_objects = [str(self.prefix_dir / 'lib' / o) for o in extra_objects]
 
 
-if sys.version_info >= (3, 4):
-    from pathlib import Path
-
-    src_root = Path(__file__).parent / 'src'
-    sources = [str(p.absolute()) for p in src_root.rglob('*.c')]
-else:
-    import fnmatch
-
-    src_root = os.path.join(os.path.dirname(__file__), 'src')
-    sources = []
-    for root, _, files in os.walk(src_root):
-        for file in fnmatch.filter(files, '*.c'):
-            sources.append(os.path.join(root, file))
-
+src_root = Path(__file__).parent / 'src'
+sources = [str(p.absolute()) for p in src_root.rglob('*.c')]
 pyxmlsec = Extension('xmlsec', sources=sources)
 setup_reqs = ['setuptools_scm[toml]>=3.4', 'pkgconfig>=1.5.1', 'lxml>=3.8']
-
-if sys.version_info < (3, 4):
-    setup_reqs.append('pathlib2')
 
 
 with io.open('README.rst', encoding='utf-8') as f:
@@ -434,7 +404,7 @@ setup(
     long_description=long_desc,
     ext_modules=[pyxmlsec],
     cmdclass={'build_ext': build_ext},
-    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
+    python_requires='>=3.5',
     setup_requires=setup_reqs,
     install_requires=['lxml>=3.8'],
     author="Bulat Gaifullin",
@@ -442,7 +412,10 @@ setup(
     maintainer='Oleg Hoefling',
     maintainer_email='oleg.hoefling@gmail.com',
     url='https://github.com/mehcode/python-xmlsec',
-    project_urls={'Documentation': 'https://xmlsec.readthedocs.io', 'Source': 'https://github.com/mehcode/python-xmlsec',},
+    project_urls={
+        'Documentation': 'https://xmlsec.readthedocs.io',
+        'Source': 'https://github.com/mehcode/python-xmlsec',
+    },
     license='MIT',
     keywords=['xmlsec'],
     classifiers=[
@@ -452,12 +425,12 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: C',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Text Processing :: Markup :: XML',
         'Typing :: Typed',
     ],
