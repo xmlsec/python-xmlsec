@@ -452,7 +452,8 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
 #ifndef XMLSEC_NO_DSA
     PYXMLSEC_ADD_KEYDATA_CONSTANT(KeyDataDsa, "DSA")
 #endif
-#if XMLSEC_VERSION_HEX > 306
+#if XMLSEC_VERSION_HEX > 0x10212
+    // from version 1.2.19
     PYXMLSEC_ADD_KEYDATA_CONSTANT(KeyDataEcdsa, "ECDSA")
 #endif
     PYXMLSEC_ADD_KEYDATA_CONSTANT(KeyDataHmac, "HMAC")
@@ -502,7 +503,8 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformDsaSha1, "DSA_SHA1");
 #endif
 
-#if XMLSEC_VERSION_HEX > 306
+#if XMLSEC_VERSION_HEX > 0x10212
+    // from version 1.2.19
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformEcdsaSha1, "ECDSA_SHA1");
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformEcdsaSha224, "ECDSA_SHA224");
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformEcdsaSha256, "ECDSA_SHA256");
@@ -543,7 +545,8 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformSha384, "SHA384");
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformSha512, "SHA512");
 
-#if XMLSEC_VERSION_HEX > 315
+#if XMLSEC_VERSION_HEX > 0x1021B
+    // from version 1.2.28
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformAes128Gcm, "AES128_GCM");
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformAes192Gcm, "AES192_GCM");
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformAes256Gcm, "AES256_GCM");
