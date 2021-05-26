@@ -1,3 +1,4 @@
+import unittest
 from lxml import etree
 
 import xmlsec
@@ -195,6 +196,7 @@ class TestTemplates(base.TestMemoryLeaks):
         with self.assertRaises(TypeError):
             xmlsec.template.encrypted_data_ensure_key_info('')
 
+    @unittest.skipIf(not hasattr(consts, 'TransformXslt'), reason='XSLT transformations not enabled')
     def test_transform_add_c14n_inclusive_namespaces(self):
         root = self.load_xml("doc.xml")
         sign = xmlsec.template.create(root, c14n_method=consts.TransformExclC14N, sign_method=consts.TransformRsaSha1)
