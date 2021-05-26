@@ -19,6 +19,8 @@ jobs:
       - name: Build linux_x86_64 wheel
         env:
           PYXMLSEC_STATIC_DEPS: true
+          # disable libxml2-2.9.12 because of https://gitlab.gnome.org/GNOME/libxslt/-/issues/52
+          PYXMLSEC_LIBXML2_VERSION: 2.9.10
         run: |
           /opt/python/${{ matrix.python-abi }}/bin/python setup.py bdist_wheel
       - name: Label manylinux2010_x86_64 wheel

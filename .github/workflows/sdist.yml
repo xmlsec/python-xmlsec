@@ -18,6 +18,8 @@ jobs:
       - name: Install test dependencies
         env:
           PYXMLSEC_STATIC_DEPS: true
+          # disable libxml2-2.9.12 because of https://gitlab.gnome.org/GNOME/libxslt/-/issues/52
+          PYXMLSEC_LIBXML2_VERSION: 2.9.10
         run: |
           pip install --upgrade -r requirements-test.txt
           pip install dist/xmlsec-$(python setup.py --version).tar.gz
