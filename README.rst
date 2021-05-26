@@ -11,6 +11,8 @@ python-xmlsec
    :target: https://github.com/mehcode/python-xmlsec/actions?query=workflow%3A%22manylinux2010%22
 .. image:: https://github.com/mehcode/python-xmlsec/workflows/MacOS/badge.svg
    :target: https://github.com/mehcode/python-xmlsec/actions?query=workflow%3A%22MacOS%22
+.. image:: https://github.com/mehcode/python-xmlsec/workflows/linuxbrew/badge.svg
+   :target: https://github.com/mehcode/python-xmlsec/actions?query=workflow%3A%22linuxbrew%22
 .. image:: https://codecov.io/gh/mehcode/python-xmlsec/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/mehcode/python-xmlsec
 .. image:: https://img.shields.io/readthedocs/xmlsec/latest?logo=read-the-docs

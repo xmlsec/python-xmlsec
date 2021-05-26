@@ -1,3 +1,4 @@
+import unittest
 import xmlsec
 from tests import base
 
@@ -194,6 +195,7 @@ class TestSignContext(base.TestMemoryLeaks):
         with self.assertRaisesRegex(xmlsec.Error, 'Sign key is not specified.'):
             ctx.sign_binary(bytes=b'', transform=consts.TransformRsaSha1)
 
+    @unittest.skipIf(not hasattr(consts, 'TransformXslt'), reason='XSLT transformations not enabled')
     def test_sign_binary_invalid_signature_method(self):
         ctx = xmlsec.SignatureContext()
         ctx.key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)

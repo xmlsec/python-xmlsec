@@ -6,7 +6,7 @@ jobs:
     container: quay.io/pypa/manylinux2010_x86_64
     strategy:
       matrix:
-        python-abi: [cp35-cp35m, cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
+        python-abi: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
     steps:
       - uses: actions/checkout@v1
       - name: Install build dependencies
@@ -19,6 +19,8 @@ jobs:
       - name: Build linux_x86_64 wheel
         env:
           PYXMLSEC_STATIC_DEPS: true
+          # disable libxml2-2.9.12 because of https://gitlab.gnome.org/GNOME/libxslt/-/issues/52
+          PYXMLSEC_LIBXML2_VERSION: 2.9.10
         run: |
           /opt/python/${{ matrix.python-abi }}/bin/python setup.py bdist_wheel
       - name: Label manylinux2010_x86_64 wheel
@@ -27,7 +29,7 @@ jobs:
           auditwheel show dist/xmlsec-${{ env.PKGVER }}-${{ matrix.python-abi }}-linux_x86_64.whl
           auditwheel repair dist/xmlsec-${{ env.PKGVER }}-${{ matrix.python-abi }}-linux_x86_64.whl
           ls -l wheelhouse/
-          auditwheel show wheelhouse/xmlsec-${{ env.PKGVER }}-${{ matrix.python-abi }}-manylinux2010_x86_64.whl
+          auditwheel show wheelhouse/xmlsec-${{ env.PKGVER }}-${{ matrix.python-abi }}-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
       - name: Install test dependencies
         run: |
           /opt/python/${{ matrix.python-abi }}/bin/pip install --upgrade -r requirements-test.txt

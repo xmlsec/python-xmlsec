@@ -485,7 +485,6 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformXPath, "XPATH");
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformXPath2, "XPATH2");
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformXPointer, "XPOINTER");
-    PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformXslt, "XSLT");
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformRemoveXmlTagsC14N, "REMOVE_XML_TAGS_C14N");
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformVisa3DHack, "VISA3D_HACK");
 
@@ -501,6 +500,9 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformKWDes3, "KW_DES3");
 #ifndef XMLSEC_NO_DSA
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformDsaSha1, "DSA_SHA1");
+#endif
+#ifndef XMLSEC_NO_XSLT
+    PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformXslt, "XSLT");
 #endif
 
 #if XMLSEC_VERSION_HEX > 0x10212
