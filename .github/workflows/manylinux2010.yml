@@ -29,7 +29,7 @@ jobs:
           auditwheel show dist/xmlsec-${{ env.PKGVER }}-${{ matrix.python-abi }}-linux_x86_64.whl
           auditwheel repair dist/xmlsec-${{ env.PKGVER }}-${{ matrix.python-abi }}-linux_x86_64.whl
           ls -l wheelhouse/
-          auditwheel show wheelhouse/xmlsec-${{ env.PKGVER }}-${{ matrix.python-abi }}-manylinux2010_x86_64.whl
+          auditwheel show wheelhouse/xmlsec-${{ env.PKGVER }}-${{ matrix.python-abi }}-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
       - name: Install test dependencies
         run: |
           /opt/python/${{ matrix.python-abi }}/bin/pip install --upgrade -r requirements-test.txt
