@@ -769,7 +769,7 @@ static PyObject* PyXmlSec_TemplateTransformAddC14NInclNamespaces(PyObject* self,
         sep = PyUnicode_FromString(" ");
         prefixes = PyObject_CallMethod(sep, "join", "O", prefixes);
         Py_DECREF(sep);
-    } else if (PyString_Check(prefixes)) {
+    } else if (PyUnicode_Check(prefixes)) {
         Py_INCREF(prefixes);
     } else {
         PyErr_SetString(PyExc_TypeError, "expected instance of str or list of str");

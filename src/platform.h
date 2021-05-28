@@ -37,7 +37,6 @@ typedef int Py_ssize_t;
 
 #if PY_MAJOR_VERSION >= 3
 #define PY3K 1
-#define PyString_Check PyUnicode_Check
 #define PyString_FromStringAndSize PyUnicode_FromStringAndSize
 
 #define PyString_AsString PyUnicode_AsUTF8
@@ -48,7 +47,6 @@ typedef int Py_ssize_t;
 #define PyString_FSConverter PyUnicode_FSConverter
 #else // PY3K
 
-#define PyBytes_Check PyString_Check
 #define PyBytes_FromStringAndSize PyString_FromStringAndSize
 
 #define PyBytes_AsString PyString_AsString
