@@ -165,6 +165,12 @@ void PyXmlSecEnableDebugTrace(int v) {
     PyXmlSec_PrintErrorMessage = v;
 }
 
+void PyXmlSec_InstallErrorCallback() {
+    if (PyXmlSec_LastErrorKey != 0) {
+        xmlSecErrorsSetCallback(PyXmlSec_ErrorCallback);
+    }
+}
+
 // initializes errors module
 int PyXmlSec_ExceptionsModule_Init(PyObject* package) {
     PyXmlSec_Error = NULL;
@@ -185,9 +191,7 @@ int PyXmlSec_ExceptionsModule_Init(PyObject* package) {
     if (PyModule_AddObject(package, "VerificationError", PyXmlSec_VerificationError) < 0) goto ON_FAIL;
 
     PyXmlSec_LastErrorKey = PyThread_create_key();
-    if (PyXmlSec_LastErrorKey != 0) {
-        xmlSecErrorsSetCallback(&PyXmlSec_ErrorCallback);
-    }
+    PyXmlSec_InstallErrorCallback();
 
     return 0;
 

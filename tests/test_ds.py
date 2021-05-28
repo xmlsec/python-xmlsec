@@ -1,4 +1,5 @@
 import unittest
+
 import xmlsec
 from tests import base
 
@@ -70,7 +71,7 @@ class TestSignContext(base.TestMemoryLeaks):
     def test_sign_fail(self):
         ctx = xmlsec.SignatureContext()
         ctx.key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)
-        with self.assertRaisesRegex(xmlsec.InternalError, 'failed to sign'):
+        with self.assertRaisesRegex(xmlsec.Error, 'failed to sign'):
             ctx.sign(self.load_xml('sign1-in.xml'))
 
     def test_sign_case1(self):
@@ -229,7 +230,7 @@ class TestSignContext(base.TestMemoryLeaks):
     def test_verify_fail(self):
         ctx = xmlsec.SignatureContext()
         ctx.key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)
-        with self.assertRaisesRegex(xmlsec.InternalError, 'failed to verify'):
+        with self.assertRaisesRegex(xmlsec.Error, 'failed to verify'):
             ctx.verify(self.load_xml('sign1-in.xml'))
 
     def test_verify_case_1(self):

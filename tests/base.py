@@ -1,13 +1,13 @@
 import gc
 import os
 import sys
-
-from lxml import etree
-import xmlsec
-
 import unittest
 
-if sys.version_info < (3, ):
+from lxml import etree
+
+import xmlsec
+
+if sys.version_info < (3,):
     unittest.TestCase.assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
 
 
@@ -21,6 +21,8 @@ try:
 
     def get_memory_usage():
         return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+
+
 except ImportError:
     resource = None
 
@@ -112,9 +114,7 @@ class TestMemoryLeaks(unittest.TestCase):
             self.fail('Tags do not match: %s and %s. %s' % (first.tag, second.tag, msg))
         for name, value in first.attrib.items():
             if second.attrib.get(name) != value:
-                self.fail(
-                    'Attributes do not match: %s=%r, %s=%r. %s' % (name, value, name, second.attrib.get(name), msg)
-                )
+                self.fail('Attributes do not match: %s=%r, %s=%r. %s' % (name, value, name, second.attrib.get(name), msg))
         for name in second.attrib.keys():
             if name not in first.attrib:
                 self.fail('x2 has an attribute x1 is missing: %s. %s' % (name, msg))

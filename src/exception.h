@@ -24,4 +24,6 @@ void PyXmlSec_ClearError(void);
 
 void PyXmlSecEnableDebugTrace(int);
 
+void PyXmlSec_InstallErrorCallback();
+
 #endif //__PYXMLSEC_EXCEPTIONS_H__
