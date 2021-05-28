@@ -203,8 +203,6 @@ int PyXmlSec_EncModule_Init(PyObject* package);
 // templates management
 int PyXmlSec_TemplateModule_Init(PyObject* package);
 
-#ifdef PY3K
-
 static int PyXmlSec_PyClear(PyObject *self) {
     PyXmlSec_Free(free_mode);
     return 0;
@@ -225,54 +223,12 @@ static PyModuleDef PyXmlSecModule = {
 
 #define PYENTRY_FUNC_NAME JOIN(PyInit_, MODULE_NAME)
 #define PY_MOD_RETURN(m) return m
-#else // PY3K
-#define PYENTRY_FUNC_NAME JOIN(init, MODULE_NAME)
-#define PY_MOD_RETURN(m) return
-
-static void PyXmlSec_PyModuleGuard__del__(PyObject* self)
-{
-    PyXmlSec_Free(free_mode);
-    Py_TYPE(self)->tp_free(self);
-}
-
-// we need guard to free resources on module unload
-typedef struct {
-    PyObject_HEAD
-} PyXmlSec_PyModuleGuard;
-
-static PyTypeObject PyXmlSec_PyModuleGuardType = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    STRINGIFY(MODULE_NAME) "__Guard",              /* tp_name */
-    sizeof(PyXmlSec_PyModuleGuard),                /* tp_basicsize */
-    0,                                             /* tp_itemsize */
-    PyXmlSec_PyModuleGuard__del__,                 /* tp_dealloc */
-    0,                                             /* tp_print */
-    0,                                             /* tp_getattr */
-    0,                                             /* tp_setattr */
-    0,                                             /* tp_reserved */
-    0,                                             /* tp_repr */
-    0,                                             /* tp_as_number */
-    0,                                             /* tp_as_sequence */
-    0,                                             /* tp_as_mapping */
-    0,                                             /* tp_hash  */
-    0,                                             /* tp_call */
-    0,                                             /* tp_str */
-    0,                                             /* tp_getattro */
-    0,                                             /* tp_setattro */
-    0,                                             /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                            /* tp_flags */
-};
-#endif  // PY3K
 
 PyMODINIT_FUNC
 PYENTRY_FUNC_NAME(void)
 {
     PyObject *module = NULL;
-#ifdef PY3K
     module = PyModule_Create(&PyXmlSecModule);
-#else
-    module = Py_InitModule3(STRINGIFY(MODULE_NAME), PyXmlSec_MainMethods, MODULE_DOC);
-#endif
     if (!module) {
         PY_MOD_RETURN(NULL); /* this really should never happen */
     }
@@ -293,13 +249,6 @@ PYENTRY_FUNC_NAME(void)
     if (PyXmlSec_DSModule_Init(module) < 0) goto ON_FAIL;
     if (PyXmlSec_EncModule_Init(module) < 0) goto ON_FAIL;
     if (PyXmlSec_TemplateModule_Init(module) < 0) goto ON_FAIL;
-
-#ifndef PY3K
-    if (PyType_Ready(&PyXmlSec_PyModuleGuardType) < 0) goto ON_FAIL;
-    PYXMLSEC_DEBUGF("%p", &PyXmlSec_PyModuleGuardType);
-    // added guard to free resources on module unload, this should be called after last
-    if (PyModule_AddObject(module, "__guard", _PyObject_New(&PyXmlSec_PyModuleGuardType)) < 0) goto ON_FAIL;
-#endif
 
     PY_MOD_RETURN(module);
 ON_FAIL:

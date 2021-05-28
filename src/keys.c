@@ -249,7 +249,7 @@ static PyObject* PyXmlSec_KeyFromBinaryFile(PyObject* self, PyObject* args, PyOb
 
     PYXMLSEC_DEBUG("load symmetric key - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!O&:from_binary_file", kwlist,
-        PyXmlSec_KeyDataType, &keydata,  PyString_FSConverter, &filepath))
+        PyXmlSec_KeyDataType, &keydata, PyUnicode_FSConverter, &filepath))
     {
         goto ON_FAIL;
     }
@@ -436,7 +436,7 @@ static PyObject* PyXmlSec_KeyNameGet(PyObject* self, void* closure) {
     }
     cname = (const char*)xmlSecKeyGetName(key->handle);
     if (cname != NULL) {
-        return PyString_FromString(cname);
+        return PyUnicode_FromString(cname);
     }
     Py_RETURN_NONE;
 }
@@ -460,7 +460,7 @@ static int PyXmlSec_KeyNameSet(PyObject* self, PyObject* value, void* closure) {
         return 0;
     }
 
-    name = PyString_AsString(value);
+    name = PyUnicode_AsUTF8(value);
     if (name == NULL) return -1;
 
     if (xmlSecKeySetName(key->handle, XSTR(name)) < 0) {
@@ -698,7 +698,7 @@ static PyObject* PyXmlSec_KeysManagerLoadCert(PyObject* self, PyObject* args, Py
 
     PYXMLSEC_DEBUGF("%p: load cert - start", self);
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&II:load_cert", kwlist,
-        PyString_FSConverter, &filepath, &format, &type)) {
+        PyUnicode_FSConverter, &filepath, &format, &type)) {
         goto ON_FAIL;
     }
 

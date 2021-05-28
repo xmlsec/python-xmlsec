@@ -27,7 +27,7 @@ static PyObject* PyXmlSec_Transform__str__(PyObject* self) {
     else
         snprintf(buf, sizeof(buf), "%s, None", transform->id->name);
 
-    return PyString_FromString(buf);
+    return PyUnicode_FromString(buf);
 }
 
 // __repr__ method
@@ -38,18 +38,18 @@ static PyObject* PyXmlSec_Transform__repr__(PyObject* self) {
         snprintf(buf, sizeof(buf), "__Transform('%s', '%s', %d)", transform->id->name, transform->id->href, transform->id->usage);
     else
         snprintf(buf, sizeof(buf), "__Transform('%s', None, %d)", transform->id->name, transform->id->usage);
-    return PyString_FromString(buf);
+    return PyUnicode_FromString(buf);
 }
 
 static const char PyXmlSec_TransformNameGet__doc__[] = "The transform's name.";
 static PyObject* PyXmlSec_TransformNameGet(PyXmlSec_Transform* self, void* closure) {
-    return PyString_FromString((const char*)self->id->name);
+    return PyUnicode_FromString((const char*)self->id->name);
 }
 
 static const char PyXmlSec_TransformHrefGet__doc__[] = "The transform's identification string (href).";
 static PyObject* PyXmlSec_TransformHrefGet(PyXmlSec_Transform* self, void* closure) {
     if (self->id->href != NULL)
-        return PyString_FromString((const char*)self->id->href);
+        return PyUnicode_FromString((const char*)self->id->href);
     Py_RETURN_NONE;
 }
 
@@ -149,7 +149,7 @@ static PyObject* PyXmlSec_KeyData__str__(PyObject* self) {
         snprintf(buf, sizeof(buf), "%s, %s", keydata->id->name, keydata->id->href);
     else
         snprintf(buf, sizeof(buf), "%s, None", keydata->id->name);
-    return PyString_FromString(buf);
+    return PyUnicode_FromString(buf);
 }
 
 // __repr__ method
@@ -160,18 +160,18 @@ static PyObject* PyXmlSec_KeyData__repr__(PyObject* self) {
         snprintf(buf, sizeof(buf), "__KeyData('%s', '%s')", keydata->id->name, keydata->id->href);
     else
         snprintf(buf, sizeof(buf), "__KeyData('%s', None)", keydata->id->name);
-    return PyString_FromString(buf);
+    return PyUnicode_FromString(buf);
 }
 
 static const char PyXmlSec_KeyDataNameGet__doc__[] = "The key data's name.";
 static PyObject* PyXmlSec_KeyDataNameGet(PyXmlSec_KeyData* self, void* closure) {
-    return PyString_FromString((const char*)self->id->name);
+    return PyUnicode_FromString((const char*)self->id->name);
 }
 
 static const char PyXmlSec_KeyDataHrefGet__doc__[] = "The key data's identification string (href).";
 static PyObject* PyXmlSec_KeyDataHrefGet(PyXmlSec_KeyData* self, void* closure) {
     if (self->id->href != NULL)
-        return PyString_FromString((const char*)self->id->href);
+        return PyUnicode_FromString((const char*)self->id->href);
     Py_RETURN_NONE;
 }
 
@@ -245,7 +245,6 @@ static PyObject* PyXmlSec_KeyDataNew(xmlSecKeyDataId id) {
     return (PyObject*)keydata;
 }
 
-#ifdef PY3K
 static PyModuleDef PyXmlSec_ConstantsModule =
 {
     PyModuleDef_HEAD_INIT,
@@ -253,7 +252,6 @@ static PyModuleDef PyXmlSec_ConstantsModule =
     PYXMLSEC_CONSTANTS_DOC,
     -1, NULL, NULL, NULL, NULL, NULL
 };
-#endif  // PY3K
 
 // initialize constants module and registers it base package
 int PyXmlSec_ConstantsModule_Init(PyObject* package) {
@@ -267,12 +265,7 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
     PyObject* keyDataTypeCls = NULL;
     PyObject* tmp = NULL;
 
-#ifdef PY3K
     constants = PyModule_Create(&PyXmlSec_ConstantsModule);
-#else
-    constants = Py_InitModule3(STRINGIFY(MODULE_NAME) ".constants", NULL, PYXMLSEC_CONSTANTS_DOC);
-    Py_XINCREF(constants);
-#endif
 
     if (!constants) return -1;
 
@@ -292,7 +285,7 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
 #undef PYXMLSEC_ADD_INT_CONSTANT
 
 #define PYXMLSEC_DECLARE_NAMESPACE(var, name) \
-    if (!(var = PyCreateDummyObject(name))) goto ON_FAIL; \
+    if (!(var = PyModule_New(name))) goto ON_FAIL; \
     if (PyModule_AddObject(package, name, var) < 0) goto ON_FAIL; \
     Py_INCREF(var); // add object steels reference
 
@@ -308,7 +301,7 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
 
 
 #define PYXMLSEC_ADD_NS_CONSTANT(name, lname) \
-    tmp = PyString_FromString((const char*)(JOIN(xmlSec, name))); \
+    tmp = PyUnicode_FromString((const char*)(JOIN(xmlSec, name))); \
     PYXMLSEC_ADD_CONSTANT(nsCls, name, lname);
 
     // namespaces
@@ -334,7 +327,7 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
 
 
 #define PYXMLSEC_ADD_ENC_CONSTANT(name, lname) \
-    tmp = PyString_FromString((const char*)(JOIN(xmlSec, name))); \
+    tmp = PyUnicode_FromString((const char*)(JOIN(xmlSec, name))); \
     PYXMLSEC_ADD_CONSTANT(encryptionTypeCls, name, lname);
 
     // encryption type
@@ -349,7 +342,7 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
 
 
 #define PYXMLSEC_ADD_NODE_CONSTANT(name, lname) \
-    tmp = PyString_FromString((const char*)(JOIN(xmlSec, name))); \
+    tmp = PyUnicode_FromString((const char*)(JOIN(xmlSec, name))); \
     PYXMLSEC_ADD_CONSTANT(nodeCls, name, lname);
 
     // node

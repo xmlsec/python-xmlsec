@@ -25,14 +25,14 @@ PyObject* PyXmlSec_GetFilePathOrContent(PyObject* file, int* is_content) {
         return data;
     }
     *is_content = 0;
-    if (!PyString_FSConverter(file, &tmp)) {
+    if (!PyUnicode_FSConverter(file, &tmp)) {
         return NULL;
     }
     return tmp;
 }
 
 int PyXmlSec_SetStringAttr(PyObject* obj, const char* name, const char* value) {
-    PyObject* tmp = PyString_FromString(value);
+    PyObject* tmp = PyUnicode_FromString(value);
     int r;
 
     if (tmp == NULL) {

@@ -182,7 +182,7 @@ static PyObject* PyXmlSec_TreeAddIds(PyObject* self, PyObject *args, PyObject *k
         tmp = PyObject_GetItem(ids, key);
         Py_DECREF(key);
         if (tmp == NULL) goto ON_FAIL;
-        list[i] = XSTR(PyString_AsString(tmp));
+        list[i] = XSTR(PyUnicode_AsUTF8(tmp));
         Py_DECREF(tmp);
         if (list[i] == NULL) goto ON_FAIL;
     }
@@ -230,7 +230,6 @@ static PyMethodDef PyXmlSec_TreeMethods[] = {
     {NULL, NULL} /* sentinel */
 };
 
-#ifdef PY3K
 static PyModuleDef PyXmlSec_TreeModule =
 {
     PyModuleDef_HEAD_INIT,
@@ -243,16 +242,10 @@ static PyModuleDef PyXmlSec_TreeModule =
     NULL,                     /* m_clear */
     NULL,                     /* m_free */
 };
-#endif  // PY3K
 
 
 int PyXmlSec_TreeModule_Init(PyObject* package) {
-#ifdef PY3K
     PyObject* tree = PyModule_Create(&PyXmlSec_TreeModule);
-#else
-    PyObject* tree = Py_InitModule3(STRINGIFY(MODULE_NAME) ".tree", PyXmlSec_TreeMethods, PYXMLSEC_TREE_DOC);
-    Py_XINCREF(tree);
-#endif
 
     if (!tree) goto ON_FAIL;
 

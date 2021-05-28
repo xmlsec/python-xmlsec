@@ -35,50 +35,6 @@ typedef int Py_ssize_t;
 #define PY_SSIZE_T_MIN INT_MIN
 #endif
 
-#if PY_MAJOR_VERSION >= 3
-#define PY3K 1
-#define PyString_Check PyUnicode_Check
-#define PyString_FromStringAndSize PyUnicode_FromStringAndSize
-
-#define PyString_FromString PyUnicode_FromString
-
-#define PyString_AsString PyUnicode_AsUTF8
-#define PyString_AsUtf8AndSize PyUnicode_AsUTF8AndSize
-
-#define PyCreateDummyObject PyModule_New
-
-#define PyString_FSConverter PyUnicode_FSConverter
-#else // PY3K
-
-#define PyBytes_Check PyString_Check
-#define PyBytes_FromStringAndSize PyString_FromStringAndSize
-
-#define PyBytes_AsString PyString_AsString
-#define PyBytes_AsStringAndSize PyString_AsStringAndSize
-
-static inline char* PyString_AsUtf8AndSize(PyObject *obj, Py_ssize_t* length) {
-    char* buffer = NULL;
-    return (PyString_AsStringAndSize(obj, &buffer, length) < 0) ? (char*)(0) : buffer;
-}
-
-static inline PyObject* PyCreateDummyObject(const char* name) {
-    PyObject* tmp = Py_InitModule(name, NULL);
-    Py_INCREF(tmp);
-    return tmp;
-}
-
-static inline int PyString_FSConverter(PyObject* o, PyObject** p) {
-    if (o == NULL) {
-        return 0;
-    }
-
-    Py_INCREF(o);
-    *p = o;
-    return 1;
-}
-
-#endif // PYTHON3
-
 static inline char* PyBytes_AsStringAndSize2(PyObject *obj, Py_ssize_t* length) {
     char* buffer = NULL;
     return ((PyBytes_AsStringAndSize(obj, &buffer, length) < 0) ? (char*)(0) : buffer);

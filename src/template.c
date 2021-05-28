@@ -766,10 +766,10 @@ static PyObject* PyXmlSec_TemplateTransformAddC14NInclNamespaces(PyObject* self,
         goto ON_FAIL;
     }
     if (PyList_Check(prefixes) || PyTuple_Check(prefixes)) {
-        sep = PyString_FromString(" ");
+        sep = PyUnicode_FromString(" ");
         prefixes = PyObject_CallMethod(sep, "join", "O", prefixes);
         Py_DECREF(sep);
-    } else if (PyString_Check(prefixes)) {
+    } else if (PyUnicode_Check(prefixes)) {
         Py_INCREF(prefixes);
     } else {
         PyErr_SetString(PyExc_TypeError, "expected instance of str or list of str");
@@ -781,7 +781,7 @@ static PyObject* PyXmlSec_TemplateTransformAddC14NInclNamespaces(PyObject* self,
     }
 
 
-    c_prefixes = PyString_AsString(prefixes);
+    c_prefixes = PyUnicode_AsUTF8(prefixes);
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplTransformAddC14NInclNamespaces(node->_c_node, XSTR(c_prefixes));
     Py_END_ALLOW_THREADS;
@@ -918,7 +918,6 @@ static PyMethodDef PyXmlSec_TemplateMethods[] = {
     {NULL, NULL} /* sentinel */
 };
 
-#ifdef PY3K
 static PyModuleDef PyXmlSec_TemplateModule =
 {
     PyModuleDef_HEAD_INIT,
@@ -931,15 +930,9 @@ static PyModuleDef PyXmlSec_TemplateModule =
     NULL,                     /* m_clear */
     NULL,                     /* m_free */
 };
-#endif  // PY3K
 
 int PyXmlSec_TemplateModule_Init(PyObject* package) {
-#ifdef PY3K
     PyObject* template = PyModule_Create(&PyXmlSec_TemplateModule);
-#else
-    PyObject* template = Py_InitModule3(STRINGIFY(MODULE_NAME) ".template", PyXmlSec_TemplateMethods, PYXMLSEC_TEMPLATES_DOC);
-    Py_XINCREF(template);
-#endif
 
     if (!template) goto ON_FAIL;
     PYXMLSEC_DEBUGF("%p", template);
