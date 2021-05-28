@@ -292,7 +292,7 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
 #undef PYXMLSEC_ADD_INT_CONSTANT
 
 #define PYXMLSEC_DECLARE_NAMESPACE(var, name) \
-    if (!(var = PyCreateDummyObject(name))) goto ON_FAIL; \
+    if (!(var = PyModule_New(name))) goto ON_FAIL; \
     if (PyModule_AddObject(package, name, var) < 0) goto ON_FAIL; \
     Py_INCREF(var); // add object steels reference
 
