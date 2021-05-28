@@ -191,7 +191,7 @@ class TestEncryptionContext(base.TestMemoryLeaks):
 
     def test_encrypt_uri_fail(self):
         ctx = xmlsec.EncryptionContext()
-        with self.assertRaisesRegex(xmlsec.InternalError, 'failed to encrypt URI'):
+        with self.assertRaisesRegex(xmlsec.Error, 'failed to encrypt URI'):
             ctx.encrypt_uri(etree.Element('root'), '')
 
     def test_decrypt1(self):

@@ -1,7 +1,8 @@
 """Test constants from :mod:`xmlsec.constants` module."""
 
-import xmlsec
 from hypothesis import given, strategies
+
+import xmlsec
 
 
 def _constants(typename):

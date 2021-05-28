@@ -239,6 +239,11 @@ PYENTRY_FUNC_NAME(void)
 
     if (PyXmlSec_Init() < 0) goto ON_FAIL;
 
+    // xmlsec will install default callback in PyXmlSec_Init,
+    // overwriting any custom callbacks.
+    // We thus install our callback again now.
+    PyXmlSec_InstallErrorCallback();
+
     if (PyModule_AddStringConstant(module, "__version__", STRINGIFY(MODULE_VERSION)) < 0) goto ON_FAIL;
 
     if (PyXmlSec_InitLxmlModule() < 0) goto ON_FAIL;

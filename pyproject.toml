@@ -18,14 +18,7 @@ exclude = '''
 '''
 
 [tool.isort]
-force_alphabetical_sort_within_sections = true
-recursive = true
-line_length = 130
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-combine_as_imports = true
+profile = 'black'
 known_first_party = ['xmlsec']
 known_third_party = ['lxml', 'pytest', '_pytest', 'hypothesis']
 

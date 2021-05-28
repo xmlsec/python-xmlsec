@@ -1,4 +1,5 @@
 import unittest
+
 from lxml import etree
 
 import xmlsec
@@ -36,7 +37,7 @@ class TestTemplates(base.TestMemoryLeaks):
         self.assertEqual("Id", ki.get("Id"))
 
     def test_ensure_key_info_fail(self):
-        with self.assertRaisesRegex(xmlsec.InternalError, 'cannot ensure key info.'):
+        with self.assertRaisesRegex(xmlsec.Error, 'cannot ensure key info.'):
             xmlsec.template.ensure_key_info(etree.fromstring(b'<Data/>'), id="Id")
 
     def test_ensure_key_info_bad_args(self):
@@ -88,7 +89,7 @@ class TestTemplates(base.TestMemoryLeaks):
             xmlsec.template.add_reference(etree.Element('root'), '')
 
     def test_add_reference_fail(self):
-        with self.assertRaisesRegex(xmlsec.InternalError, 'cannot add reference.'):
+        with self.assertRaisesRegex(xmlsec.Error, 'cannot add reference.'):
             xmlsec.template.add_reference(etree.Element('root'), consts.TransformSha1)
 
     def test_add_transform_bad_args(self):
