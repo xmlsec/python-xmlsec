@@ -918,7 +918,6 @@ static PyMethodDef PyXmlSec_TemplateMethods[] = {
     {NULL, NULL} /* sentinel */
 };
 
-#ifdef PY3K
 static PyModuleDef PyXmlSec_TemplateModule =
 {
     PyModuleDef_HEAD_INIT,
@@ -931,15 +930,9 @@ static PyModuleDef PyXmlSec_TemplateModule =
     NULL,                     /* m_clear */
     NULL,                     /* m_free */
 };
-#endif  // PY3K
 
 int PyXmlSec_TemplateModule_Init(PyObject* package) {
-#ifdef PY3K
     PyObject* template = PyModule_Create(&PyXmlSec_TemplateModule);
-#else
-    PyObject* template = Py_InitModule3(STRINGIFY(MODULE_NAME) ".template", PyXmlSec_TemplateMethods, PYXMLSEC_TEMPLATES_DOC);
-    Py_XINCREF(template);
-#endif
 
     if (!template) goto ON_FAIL;
     PYXMLSEC_DEBUGF("%p", template);

@@ -245,7 +245,6 @@ static PyObject* PyXmlSec_KeyDataNew(xmlSecKeyDataId id) {
     return (PyObject*)keydata;
 }
 
-#ifdef PY3K
 static PyModuleDef PyXmlSec_ConstantsModule =
 {
     PyModuleDef_HEAD_INIT,
@@ -253,7 +252,6 @@ static PyModuleDef PyXmlSec_ConstantsModule =
     PYXMLSEC_CONSTANTS_DOC,
     -1, NULL, NULL, NULL, NULL, NULL
 };
-#endif  // PY3K
 
 // initialize constants module and registers it base package
 int PyXmlSec_ConstantsModule_Init(PyObject* package) {
@@ -267,12 +265,7 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
     PyObject* keyDataTypeCls = NULL;
     PyObject* tmp = NULL;
 
-#ifdef PY3K
     constants = PyModule_Create(&PyXmlSec_ConstantsModule);
-#else
-    constants = Py_InitModule3(STRINGIFY(MODULE_NAME) ".constants", NULL, PYXMLSEC_CONSTANTS_DOC);
-    Py_XINCREF(constants);
-#endif
 
     if (!constants) return -1;
 

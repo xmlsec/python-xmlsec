@@ -35,14 +35,6 @@ typedef int Py_ssize_t;
 #define PY_SSIZE_T_MIN INT_MIN
 #endif
 
-#if PY_MAJOR_VERSION >= 3
-#define PY3K 1
-#else // PY3K
-
-#define PyBytes_AsStringAndSize PyString_AsStringAndSize
-
-#endif // PYTHON3
-
 static inline char* PyBytes_AsStringAndSize2(PyObject *obj, Py_ssize_t* length) {
     char* buffer = NULL;
     return ((PyBytes_AsStringAndSize(obj, &buffer, length) < 0) ? (char*)(0) : buffer);
