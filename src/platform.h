@@ -40,8 +40,6 @@ typedef int Py_ssize_t;
 #define PyString_Check PyUnicode_Check
 #define PyString_FromStringAndSize PyUnicode_FromStringAndSize
 
-#define PyString_FromString PyUnicode_FromString
-
 #define PyString_AsString PyUnicode_AsUTF8
 #define PyString_AsUtf8AndSize PyUnicode_AsUTF8AndSize
 

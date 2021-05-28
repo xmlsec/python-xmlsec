@@ -32,7 +32,7 @@ PyObject* PyXmlSec_GetFilePathOrContent(PyObject* file, int* is_content) {
 }
 
 int PyXmlSec_SetStringAttr(PyObject* obj, const char* name, const char* value) {
-    PyObject* tmp = PyString_FromString(value);
+    PyObject* tmp = PyUnicode_FromString(value);
     int r;
 
     if (tmp == NULL) {

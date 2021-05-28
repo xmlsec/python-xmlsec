@@ -436,7 +436,7 @@ static PyObject* PyXmlSec_KeyNameGet(PyObject* self, void* closure) {
     }
     cname = (const char*)xmlSecKeyGetName(key->handle);
     if (cname != NULL) {
-        return PyString_FromString(cname);
+        return PyUnicode_FromString(cname);
     }
     Py_RETURN_NONE;
 }

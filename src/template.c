@@ -766,7 +766,7 @@ static PyObject* PyXmlSec_TemplateTransformAddC14NInclNamespaces(PyObject* self,
         goto ON_FAIL;
     }
     if (PyList_Check(prefixes) || PyTuple_Check(prefixes)) {
-        sep = PyString_FromString(" ");
+        sep = PyUnicode_FromString(" ");
         prefixes = PyObject_CallMethod(sep, "join", "O", prefixes);
         Py_DECREF(sep);
     } else if (PyString_Check(prefixes)) {
