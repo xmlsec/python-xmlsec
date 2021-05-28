@@ -781,7 +781,7 @@ static PyObject* PyXmlSec_TemplateTransformAddC14NInclNamespaces(PyObject* self,
     }
 
 
-    c_prefixes = PyString_AsString(prefixes);
+    c_prefixes = PyUnicode_AsUTF8(prefixes);
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplTransformAddC14NInclNamespaces(node->_c_node, XSTR(c_prefixes));
     Py_END_ALLOW_THREADS;

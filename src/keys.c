@@ -460,7 +460,7 @@ static int PyXmlSec_KeyNameSet(PyObject* self, PyObject* value, void* closure) {
         return 0;
     }
 
-    name = PyString_AsString(value);
+    name = PyUnicode_AsUTF8(value);
     if (name == NULL) return -1;
 
     if (xmlSecKeySetName(key->handle, XSTR(name)) < 0) {

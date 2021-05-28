@@ -182,7 +182,7 @@ static PyObject* PyXmlSec_TreeAddIds(PyObject* self, PyObject *args, PyObject *k
         tmp = PyObject_GetItem(ids, key);
         Py_DECREF(key);
         if (tmp == NULL) goto ON_FAIL;
-        list[i] = XSTR(PyString_AsString(tmp));
+        list[i] = XSTR(PyUnicode_AsUTF8(tmp));
         Py_DECREF(tmp);
         if (list[i] == NULL) goto ON_FAIL;
     }

@@ -38,14 +38,11 @@ typedef int Py_ssize_t;
 #if PY_MAJOR_VERSION >= 3
 #define PY3K 1
 
-#define PyString_AsString PyUnicode_AsUTF8
-
 #define PyCreateDummyObject PyModule_New
 
 #define PyString_FSConverter PyUnicode_FSConverter
 #else // PY3K
 
-#define PyBytes_AsString PyString_AsString
 #define PyBytes_AsStringAndSize PyString_AsStringAndSize
 
 static inline PyObject* PyCreateDummyObject(const char* name) {
