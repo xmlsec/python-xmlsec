@@ -87,6 +87,11 @@ static int PyXmlSec_Init(void) {
         PyXmlSec_Free(_PYXMLSEC_FREE_ALL);
         return -1;
     }
+    // xmlsec will install default callback in xmlSecCryptoInit,
+    // overwriting any custom callbacks.
+    // We thus reinstall our callback now.
+    PyXmlSec_InstallErrorCallback();
+
     free_mode = _PYXMLSEC_FREE_ALL;
     return 0;
 }
@@ -238,11 +243,6 @@ PYENTRY_FUNC_NAME(void)
     if (PyXmlSec_ExceptionsModule_Init(module) < 0) goto ON_FAIL;
 
     if (PyXmlSec_Init() < 0) goto ON_FAIL;
-
-    // xmlsec will install default callback in PyXmlSec_Init,
-    // overwriting any custom callbacks.
-    // We thus install our callback again now.
-    PyXmlSec_InstallErrorCallback();
 
     if (PyModule_AddStringConstant(module, "__version__", STRINGIFY(MODULE_VERSION)) < 0) goto ON_FAIL;
 
