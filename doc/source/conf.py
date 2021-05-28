@@ -4,7 +4,6 @@ import sys
 import urllib.request
 
 import lxml
-
 from docutils.nodes import reference
 from packaging.version import parse
 from sphinx.errors import ExtensionError
@@ -35,7 +34,7 @@ exclude_patterns = []
 pygments_style = 'sphinx'
 todo_include_todos = False
 
-html_theme = 'nature'
+html_theme = 'furo'
 html_static_path = []
 htmlhelp_basename = 'python-xmlsecdoc'
 
