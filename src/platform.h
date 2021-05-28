@@ -37,21 +37,9 @@ typedef int Py_ssize_t;
 
 #if PY_MAJOR_VERSION >= 3
 #define PY3K 1
-
-#define PyString_FSConverter PyUnicode_FSConverter
 #else // PY3K
 
 #define PyBytes_AsStringAndSize PyString_AsStringAndSize
-
-static inline int PyString_FSConverter(PyObject* o, PyObject** p) {
-    if (o == NULL) {
-        return 0;
-    }
-
-    Py_INCREF(o);
-    *p = o;
-    return 1;
-}
 
 #endif // PYTHON3
 

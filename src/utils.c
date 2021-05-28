@@ -25,7 +25,7 @@ PyObject* PyXmlSec_GetFilePathOrContent(PyObject* file, int* is_content) {
         return data;
     }
     *is_content = 0;
-    if (!PyString_FSConverter(file, &tmp)) {
+    if (!PyUnicode_FSConverter(file, &tmp)) {
         return NULL;
     }
     return tmp;

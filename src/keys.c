@@ -249,7 +249,7 @@ static PyObject* PyXmlSec_KeyFromBinaryFile(PyObject* self, PyObject* args, PyOb
 
     PYXMLSEC_DEBUG("load symmetric key - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!O&:from_binary_file", kwlist,
-        PyXmlSec_KeyDataType, &keydata,  PyString_FSConverter, &filepath))
+        PyXmlSec_KeyDataType, &keydata, PyUnicode_FSConverter, &filepath))
     {
         goto ON_FAIL;
     }
@@ -698,7 +698,7 @@ static PyObject* PyXmlSec_KeysManagerLoadCert(PyObject* self, PyObject* args, Py
 
     PYXMLSEC_DEBUGF("%p: load cert - start", self);
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&II:load_cert", kwlist,
-        PyString_FSConverter, &filepath, &format, &type)) {
+        PyUnicode_FSConverter, &filepath, &format, &type)) {
         goto ON_FAIL;
     }
 
