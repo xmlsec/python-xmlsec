@@ -1,5 +1,5 @@
 import sys
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 if sys.version_info >= (3, 8):
     from typing import Final
@@ -7,12 +7,12 @@ else:
     from typing_extensions import Final
 
 class __KeyData(NamedTuple):  # __KeyData type
-    href: str
     name: str
+    href: Optional[str]
 
 class __Transform(NamedTuple):  # __Transform type
-    href: str
     name: str
+    href: Optional[str]
     usage: int
 
 DSigNs: Final = 'http://www.w3.org/2000/09/xmldsig#'
@@ -109,7 +109,9 @@ TransformInclC14N11WithComments: Final = __Transform(
     'c14n11-with-comments', 'http://www.w3.org/2006/12/xml-c14n11#WithComments', 3
 )
 TransformInclC14NWithComments: Final = __Transform(
-    'c14n-with-comments', 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments', 3
+    'c14n-with-comments',
+    'http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments',
+    3,
 )
 TransformKWAes128: Final = __Transform('kw-aes128', 'http://www.w3.org/2001/04/xmlenc#kw-aes128', 16)
 TransformKWAes192: Final = __Transform('kw-aes192', 'http://www.w3.org/2001/04/xmlenc#kw-aes192', 16)
