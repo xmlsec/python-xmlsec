@@ -76,9 +76,9 @@ static PyXmlSec_ErrorHolder* PyXmlSec_ExchangeLastError(PyXmlSec_ErrorHolder* e)
     int r;
 
     #if PY_MINOR_VERSION >= 7
-    if (PyThread_tss_is_created(&PyXmlSec_LastErrorKey) != 0) {
+    if (PyThread_tss_is_created(&PyXmlSec_LastErrorKey) == 0) {
     #else
-    if (PyXmlSec_LastErrorKey != 0) {
+    if (PyXmlSec_LastErrorKey == 0) {
     #endif
         PYXMLSEC_DEBUG("WARNING: There is no error key.");
         PyXmlSec_ErrorHolderFree(e);
@@ -209,7 +209,7 @@ int PyXmlSec_ExceptionsModule_Init(PyObject* package) {
     if (PyModule_AddObject(package, "VerificationError", PyXmlSec_VerificationError) < 0) goto ON_FAIL;
 
     #if PY_MINOR_VERSION >= 7
-    if (PyThread_tss_create(&PyXmlSec_LastErrorKey)) {
+    if (PyThread_tss_create(&PyXmlSec_LastErrorKey) == 0) {
         PyXmlSec_InstallErrorCallback();
     }
     #else
