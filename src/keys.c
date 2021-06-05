@@ -453,7 +453,7 @@ static int PyXmlSec_KeyNameSet(PyObject* self, PyObject* value, void* closure) {
     }
 
     if (value == NULL) {
-        if (xmlSecKeySetName(key->handle, value) < 0) {
+        if (xmlSecKeySetName(key->handle, NULL) < 0) {
             PyXmlSec_SetLastError("cannot delete name");
             return -1;
         }
