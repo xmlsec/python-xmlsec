@@ -507,7 +507,10 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformEcdsaSha512, "ECDSA_SHA512");
 #endif
 
+#ifndef XMLSEC_NO_MD5
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformHmacMd5, "HMAC_MD5");
+#endif
+
 #ifndef XMLSEC_NO_RIPEMD160
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformHmacRipemd160, "HMAC_RIPEMD160");
 #endif
@@ -517,7 +520,10 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformHmacSha384, "HMAC_SHA384");
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformHmacSha512, "HMAC_SHA512");
 
+#ifndef XMLSEC_NO_MD5
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformRsaMd5, "RSA_MD5");
+#endif
+
 #ifndef XMLSEC_NO_RIPEMD160
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformRsaRipemd160, "RSA_RIPEMD160");
 #endif
@@ -529,7 +535,10 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformRsaPkcs1, "RSA_PKCS1");
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformRsaOaep, "RSA_OAEP");
 
+#ifndef XMLSEC_NO_MD5
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformMd5, "MD5");
+#endif
+
 #ifndef XMLSEC_NO_RIPEMD160
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformRipemd160, "RIPEMD160");
 #endif
