@@ -53,7 +53,7 @@ Linux (Debian)
 
 .. code-block:: bash
 
-   apt-get install libxml2-dev libxmlsec1-dev libxmlsec1-openssl
+   apt-get install pkg-config libxml2-dev libxmlsec1-dev libxmlsec1-openssl
 
 
 Note: There is no required version of LibXML2 for Ubuntu Precise,
