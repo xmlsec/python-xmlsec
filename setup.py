@@ -415,6 +415,7 @@ setup(
     project_urls={
         'Documentation': 'https://xmlsec.readthedocs.io',
         'Source': 'https://github.com/mehcode/python-xmlsec',
+        'Changelog': 'https://github.com/mehcode/python-xmlsec/releases',
     },
     license='MIT',
     keywords=['xmlsec'],
