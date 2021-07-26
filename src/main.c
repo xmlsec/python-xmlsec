@@ -15,6 +15,7 @@
 #include <xmlsec/crypto.h>
 #include <xmlsec/errors.h>
 #include <xmlsec/base64.h>
+#include <xmlsec/io.h>
 
 #define _PYXMLSEC_FREE_NONE 0
 #define _PYXMLSEC_FREE_XMLSEC 1
@@ -133,6 +134,229 @@ static PyObject* PyXmlSec_PyEnableDebugOutput(PyObject *self, PyObject* args, Py
     Py_RETURN_NONE;
 }
 
+// NB: This whole thing assumes that the `xmlsec` callbacks are not re-entrant
+// (i.e. that xmlsec won't come across a link in the reference it's processing
+// and try to open that with these callbacks too).
+typedef struct CbList {
+  PyObject* match_cb;
+  PyObject* open_cb;
+  PyObject* read_cb;
+  PyObject* close_cb;
+  struct CbList* next;
+} CbList;
+
+static CbList* registered_callbacks = NULL;
+static CbList* rcb_tail = NULL;
+
+static void RCBListAppend(CbList* cb_list_item) {
+    if (registered_callbacks == NULL) {
+      registered_callbacks = cb_list_item;
+    } else {
+      rcb_tail->next = cb_list_item;
+    }
+    rcb_tail = cb_list_item;
+}
+
+static void RCBListClear() {
+    CbList* cb_list_item = registered_callbacks;
+    while (cb_list_item) {
+        Py_XDECREF(cb_list_item->match_cb);
+        Py_XDECREF(cb_list_item->open_cb);
+        Py_XDECREF(cb_list_item->read_cb);
+        Py_XDECREF(cb_list_item->close_cb);
+        CbList* next = cb_list_item->next;
+        free(cb_list_item);
+        cb_list_item = next;
+    }
+    registered_callbacks = NULL;
+    rcb_tail = NULL;
+}
+
+// The currently executing set of Python callbacks:
+static CbList* cur_cb_list_item = NULL;
+
+static int PyXmlSec_MatchCB(const char* filename) {
+    if (!cur_cb_list_item) {
+      cur_cb_list_item = registered_callbacks;
+    }
+    while (cur_cb_list_item && !cur_cb_list_item->match_cb) {
+        // Spool past any default callback placeholders executed since we were
+        // last called back:
+        cur_cb_list_item = cur_cb_list_item->next;
+    }
+    PyGILState_STATE state = PyGILState_Ensure();
+    PyObject* args = Py_BuildValue("(y)", filename);
+    while (cur_cb_list_item && cur_cb_list_item->match_cb) {
+        PyObject* result = PyObject_CallObject(cur_cb_list_item->match_cb, args);
+        if (result && PyObject_IsTrue(result)) {
+            Py_DECREF(result);
+            Py_DECREF(args);
+            PyGILState_Release(state);
+            return 1;
+        }
+        cur_cb_list_item = cur_cb_list_item->next;
+    }
+    // FIXME: why does having this decref of args cause a segfault?!
+    Py_DECREF(args);
+    PyGILState_Release(state);
+    return 0;
+}
+
+static void* PyXmlSec_OpenCB(const char* filename) {
+    PyGILState_STATE state = PyGILState_Ensure();
+
+    // NB: Assumes the match callback left the current callback list item in the
+    // right place:
+    PyObject* args = Py_BuildValue("(y)", filename);
+    PyObject* result = PyObject_CallObject(cur_cb_list_item->open_cb, args);
+    Py_DECREF(args);
+
+    PyGILState_Release(state);
+    return result;
+}
+
+static int PyXmlSec_ReadCB(void* context, char* buffer, int len) {
+    PyGILState_STATE state = PyGILState_Ensure();
+
+    // NB: Assumes the match callback left the current callback list item in the
+    // right place:
+    PyObject* py_buffer = PyMemoryView_FromMemory(buffer, (Py_ssize_t) len, PyBUF_WRITE);
+    PyObject* args = Py_BuildValue("(OO)", context, py_buffer);
+    PyObject* py_bytes_read = PyObject_CallObject(cur_cb_list_item->read_cb, args);
+    Py_DECREF(args);
+    Py_DECREF(py_buffer);
+    int result;
+    if (py_bytes_read && PyLong_Check(py_bytes_read)) {
+        result = (int)PyLong_AsLong(py_bytes_read);
+        Py_DECREF(py_bytes_read);
+    } else {
+        result = EOF;
+    }
+
+    PyGILState_Release(state);
+    return result;
+}
+
+static int PyXmlSec_CloseCB(void* context) {
+    PyGILState_STATE state = PyGILState_Ensure();
+
+    PyObject* args = Py_BuildValue("(O)", context);
+    PyObject* result = PyObject_CallObject(cur_cb_list_item->close_cb, args);
+    Py_DECREF(args);
+    Py_DECREF(context);
+    Py_DECREF(result);
+
+    PyGILState_Release(state);
+    // We reset `cur_cb_list_item` because we've finished processing the set of
+    // callbacks that was matched
+    cur_cb_list_item = NULL;
+    return 0;
+}
+
+static char PyXmlSec_PyIOCleanupCallbacks__doc__[] = \
+    "Unregister globally all sets of IO callbacks from xmlsec.";
+static PyObject* PyXmlSec_PyIOCleanupCallbacks(PyObject *self) {
+    xmlSecIOCleanupCallbacks();
+    // We always have callbacks registered to delegate to any Python callbacks
+    // we have registered within these bindings:
+    if (xmlSecIORegisterCallbacks(
+            PyXmlSec_MatchCB, PyXmlSec_OpenCB, PyXmlSec_ReadCB,
+            PyXmlSec_CloseCB) < 0) {
+        return NULL;
+    };
+    RCBListClear();
+    Py_RETURN_NONE;
+}
+
+static char PyXmlSec_PyIORegisterDefaultCallbacks__doc__[] = \
+    "Register globally xmlsec's own default set of IO callbacks.";
+static PyObject* PyXmlSec_PyIORegisterDefaultCallbacks(PyObject *self) {
+    if (xmlSecIORegisterDefaultCallbacks() < 0) {
+        return NULL;
+    }
+    // We place a nulled item on the callback list to represent whenever the
+    // default callbacks are going to be invoked:
+    CbList* cb_list_item = malloc(sizeof(CbList));
+    if (cb_list_item == NULL) {
+      return NULL;
+    }
+    cb_list_item->match_cb = NULL;
+    cb_list_item->open_cb = NULL;
+    cb_list_item->read_cb = NULL;
+    cb_list_item->close_cb = NULL;
+    cb_list_item->next = NULL;
+    RCBListAppend(cb_list_item);
+    // We need to make sure we can continue trying to match futher Python
+    // callbacks if the default callback doesn't match:
+    if (xmlSecIORegisterCallbacks(
+            PyXmlSec_MatchCB, PyXmlSec_OpenCB, PyXmlSec_ReadCB,
+            PyXmlSec_CloseCB) < 0) {
+        return NULL;
+    };
+    Py_RETURN_NONE;
+}
+
+static char PyXmlSec_PyIORegisterCallbacks__doc__[] = \
+    "Register globally a custom set of IO callbacks with xmlsec.\n\n"
+    ":param callable input_match_callback: A callable that takes a filename `bytestring` and "
+    "returns a boolean as to whether the other callbacks in this set can handle that name.\n"
+    ":param callable input_open_callback: A callable that takes a filename and returns some "
+    "context object (e.g. a file object) that the remaining callables in this set will be passed "
+    "during handling.\n"
+    // FIXME: How do we handle failures in ^^ (e.g. can't find the file)?
+    ":param callable input_read_callback: A callable that that takes the context object from the "
+    "open callback and a buffer, and should fill the buffer with data (e.g. BytesIO.readinto()). "
+    "xmlsec will call this function several times until there is no more data returned.\n"
+    ":param callable input_close_callback: A callable that takes the context object from the "
+    "open callback and can do any resource cleanup necessary.\n"
+    ;
+static PyObject* PyXmlSec_PyIORegisterCallbacks(PyObject *self, PyObject *args, PyObject *kwargs) {
+    static char *kwlist[] = {
+        "input_match_callback",
+        "input_open_callback",
+        "input_read_callback",
+        "input_close_callback",
+        NULL
+    };
+    CbList* cb_list_item = malloc(sizeof(CbList));
+    if (cb_list_item == NULL) {
+      return NULL;
+    }
+    if (!PyArg_ParseTupleAndKeywords(
+            args, kwargs, "OOOO:register_callbacks", kwlist,
+            &cb_list_item->match_cb, &cb_list_item->open_cb, &cb_list_item->read_cb,
+            &cb_list_item->close_cb)) {
+        free(cb_list_item);
+        return NULL;
+    }
+    if (!PyCallable_Check(cb_list_item->match_cb)) {
+        PyErr_SetString(PyExc_TypeError, "input_match_callback must be a callable");
+        return NULL;
+    }
+    if (!PyCallable_Check(cb_list_item->open_cb)) {
+        PyErr_SetString(PyExc_TypeError, "input_open_callback must be a callable");
+        return NULL;
+    }
+    if (!PyCallable_Check(cb_list_item->read_cb)) {
+        PyErr_SetString(PyExc_TypeError, "input_read_callback must be a callable");
+        return NULL;
+    }
+    if (!PyCallable_Check(cb_list_item->close_cb)) {
+        PyErr_SetString(PyExc_TypeError, "input_close_callback must be a callable");
+        return NULL;
+    }
+    Py_INCREF(cb_list_item->match_cb);
+    Py_INCREF(cb_list_item->open_cb);
+    Py_INCREF(cb_list_item->read_cb);
+    Py_INCREF(cb_list_item->close_cb);
+    cb_list_item->next = NULL;
+    RCBListAppend(cb_list_item);
+    // NB: We don't need to register the callbacks with `xmlsec` here, because
+    // we've already registered our helper functions that will trawl through our
+    // list of callbacks.
+    Py_RETURN_NONE;
+}
+
 static char PyXmlSec_PyBase64DefaultLineSize__doc__[] = \
     "base64_default_line_size(size = None)\n"
     "Configures the default maximum columns size for base64 encoding.\n\n"
@@ -180,6 +404,24 @@ static PyMethodDef PyXmlSec_MainMethods[] = {
         (PyCFunction)PyXmlSec_PyEnableDebugOutput,
         METH_VARARGS|METH_KEYWORDS,
         PyXmlSec_PyEnableDebugOutput__doc__
+    },
+    {
+        "cleanup_callbacks",
+        (PyCFunction)PyXmlSec_PyIOCleanupCallbacks,
+        METH_NOARGS,
+        PyXmlSec_PyIOCleanupCallbacks__doc__
+    },
+    {
+        "register_default_callbacks",
+        (PyCFunction)PyXmlSec_PyIORegisterDefaultCallbacks,
+        METH_NOARGS,
+        PyXmlSec_PyIORegisterDefaultCallbacks__doc__
+    },
+    {
+        "register_callbacks",
+        (PyCFunction)PyXmlSec_PyIORegisterCallbacks,
+        METH_VARARGS|METH_KEYWORDS,
+        PyXmlSec_PyIORegisterCallbacks__doc__
     },
     {
         "base64_default_line_size",
