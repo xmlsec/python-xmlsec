@@ -194,9 +194,9 @@ static int PyXmlSec_MatchCB(const char* filename) {
             PyGILState_Release(state);
             return 1;
         }
+        Py_XDECREF(result);
         cur_cb_list_item = cur_cb_list_item->next;
     }
-    // FIXME: why does having this decref of args cause a segfault?!
     Py_DECREF(args);
     PyGILState_Release(state);
     return 0;
@@ -228,10 +228,10 @@ static int PyXmlSec_ReadCB(void* context, char* buffer, int len) {
     int result;
     if (py_bytes_read && PyLong_Check(py_bytes_read)) {
         result = (int)PyLong_AsLong(py_bytes_read);
-        Py_DECREF(py_bytes_read);
     } else {
         result = EOF;
     }
+    Py_XDECREF(py_bytes_read);
 
     PyGILState_Release(state);
     return result;
@@ -331,18 +331,22 @@ static PyObject* PyXmlSec_PyIORegisterCallbacks(PyObject *self, PyObject *args, 
     }
     if (!PyCallable_Check(cb_list_item->match_cb)) {
         PyErr_SetString(PyExc_TypeError, "input_match_callback must be a callable");
+        free(cb_list_item);
         return NULL;
     }
     if (!PyCallable_Check(cb_list_item->open_cb)) {
         PyErr_SetString(PyExc_TypeError, "input_open_callback must be a callable");
+        free(cb_list_item);
         return NULL;
     }
     if (!PyCallable_Check(cb_list_item->read_cb)) {
         PyErr_SetString(PyExc_TypeError, "input_read_callback must be a callable");
+        free(cb_list_item);
         return NULL;
     }
     if (!PyCallable_Check(cb_list_item->close_cb)) {
         PyErr_SetString(PyExc_TypeError, "input_close_callback must be a callable");
+        free(cb_list_item);
         return NULL;
     }
     Py_INCREF(cb_list_item->match_cb);
