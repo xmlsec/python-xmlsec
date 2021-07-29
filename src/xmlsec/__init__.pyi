@@ -1,5 +1,7 @@
 import sys
-from typing import AnyStr, IO, Iterable, Optional, Type, TypeVar, Union, overload
+from typing import (
+    Any, AnyStr, Callable, IO, Iterable, Optional, Type, TypeVar, Union,
+    overload)
 
 from lxml.etree import _Element
 
@@ -24,6 +26,14 @@ _K = TypeVar('_K', bound=Key)
 def enable_debug_trace(enabled: bool = ...) -> None: ...
 def init() -> None: ...
 def shutdown() -> None: ...
+def cleanup_callbacks() -> None: ...
+def register_default_callbacks() -> None: ...
+def register_callbacks(
+        input_match_callback: Callable[[bytes], bool],
+        input_open_callback: Callable[[bytes], Any],
+        input_read_callback: Callable[[Any, memoryview], int],
+        input_close_callback: Callable[[Any], None],
+) -> None: ...
 @overload
 def base64_default_line_size() -> int: ...
 @overload
