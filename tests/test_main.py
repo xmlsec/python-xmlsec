@@ -3,7 +3,6 @@ from xmlsec import constants as consts
 
 from io import BytesIO
 
-from hypothesis import given, strategies
 import pytest
 from tests import base
 
@@ -42,20 +41,6 @@ class TestCallbacks(base.TestMemoryLeaks):
     def setUp(self):
         super().setUp()
         xmlsec.cleanup_callbacks()
-
-    @given(funcs=strategies.lists(
-        strategies.sampled_from([
-            lambda: None
-            # xmlsec.cleanup_callbacks,
-            # xmlsec.register_default_callbacks,
-        ])
-    ))
-    def test_arbitrary_cleaning_and_default_callback_registration(self, funcs):
-        # FIXME: This test seems to detelct unreferenced objects and memory
-        # leaks even if it never does anything!
-        pass
-        # for f in funcs:
-        #     f()
 
     def _sign_doc(self):
         root = self.load_xml("doc.xml")
@@ -122,13 +107,7 @@ class TestCallbacks(base.TestMemoryLeaks):
         self._register_match_callbacks()
         self._verify_external_data_signature()
 
-    @given(
-        num_prior_mismatches=strategies.integers(min_value=1, max_value=50),
-        num_post_mismatches=strategies.integers(min_value=1, max_value=50),
-    )
-    def test_sign_data_not_first_callback(
-            self, num_prior_mismatches, num_post_mismatches
-    ):
+    def test_sign_data_not_first_callback(self):
         bad_match_calls = 0
 
         def match_cb(filename):
@@ -136,12 +115,12 @@ class TestCallbacks(base.TestMemoryLeaks):
             bad_match_calls += 1
             False
 
-        for _ in range(num_post_mismatches):
+        for _ in range(2):
             self._register_mismatch_callbacks(match_cb)
 
         self._register_match_callbacks()
 
-        for _ in range(num_prior_mismatches):
+        for _ in range(2):
             self._register_mismatch_callbacks()
 
         self._verify_external_data_signature()
