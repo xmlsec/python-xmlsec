@@ -60,8 +60,8 @@ class TestCallbacks(base.TestMemoryLeaks):
         return sign
 
     def _expect_sign_failure(self):
-        exc_info = pytest.raises(xmlsec.Error, self._sign_doc)
-        self.assertEqual(exc_info.value.args, (1, 'failed to sign'))
+        with self.assertRaisesRegex(xmlsec.Error, 'failed to sign'):
+            self._sign_doc()
 
     def _register_mismatch_callbacks(self, match_cb=lambda filename: False):
         xmlsec.register_callbacks(
