@@ -80,10 +80,15 @@ class TestCallbacks(base.TestMemoryLeaks):
         )
 
     def _find(self, elem, *tags):
-        for tag in tags:
-            elem = elem.find(
-                '{{http://www.w3.org/2000/09/xmldsig#}}{}'.format(tag))
-        return elem
+        try:
+            return elem.xpath(
+                './' + '/'.join('xmldsig:{}'.format(tag) for tag in tags),
+                namespaces={
+                    'xmldsig': 'http://www.w3.org/2000/09/xmldsig#',
+                }
+            )[0]
+        except IndexError as e:
+            raise KeyError(tags) from e
 
     def _verify_external_data_signature(self):
         signature = self._sign_doc()
