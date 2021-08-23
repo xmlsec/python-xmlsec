@@ -62,13 +62,16 @@ class TestCallbacks(base.TestMemoryLeaks):
         with self.assertRaisesRegex(xmlsec.Error, 'failed to sign'):
             self._sign_doc()
 
-    def _register_mismatch_callbacks(self, match_cb=lambda filename: False):
-        xmlsec.register_callbacks(
+    def _mismatch_callbacks(self, match_cb=lambda filename: False):
+        return [
             match_cb,
             lambda filename: None,
             lambda none, buf: 0,
             lambda none: None,
-        )
+        ]
+
+    def _register_mismatch_callbacks(self, match_cb=lambda filename: False):
+        xmlsec.register_callbacks(*self._mismatch_callbacks(match_cb))
 
     def _register_match_callbacks(self):
         xmlsec.register_callbacks(
@@ -147,3 +150,9 @@ class TestCallbacks(base.TestMemoryLeaks):
         self._register_mismatch_callbacks(mismatch_cb)
         self._expect_sign_failure()
         self.assertEqual(mismatch_calls, 2)
+
+    def test_register_non_callables(self):
+        for idx in range(4):
+            cbs = self._mismatch_callbacks()
+            cbs[idx] = None
+            self.assertRaises(TypeError, xmlsec.register_callbacks, *cbs)
