@@ -1,4 +1,3 @@
-from lxml import etree
 import xmlsec
 from xmlsec import constants as consts
 
