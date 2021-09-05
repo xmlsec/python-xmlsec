@@ -156,3 +156,12 @@ class TestCallbacks(base.TestMemoryLeaks):
             cbs = self._mismatch_callbacks()
             cbs[idx] = None
             self.assertRaises(TypeError, xmlsec.register_callbacks, *cbs)
+
+    def test_sign_external_data_fails_on_read_callback_wrong_returns(self):
+        xmlsec.register_callbacks(
+            lambda filename: filename == b'cid:123456',
+            lambda filename: BytesIO(b'<html><head/><body/></html>'),
+            lambda bio, buf: None,
+            lambda bio: bio.close(),
+        )
+        self._expect_sign_failure()
