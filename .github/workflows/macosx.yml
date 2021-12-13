@@ -14,7 +14,7 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Install build dependencies
         run: |
-          pip install --upgrade pip setuptools wheel
+          pip install --upgrade pip setuptools wheel build
           brew install libxml2 libxmlsec1 pkg-config
       - name: Build macosx_x86_64 wheel
         env:
@@ -22,7 +22,7 @@ jobs:
           CFLAGS: "-fprofile-instr-generate -fcoverage-mapping"
           LDFLAGS: "-fprofile-instr-generate -fcoverage-mapping"
         run: |
-          python setup.py bdist_wheel
+          python -m build
           rm -rf build/
       - name: Set environment variables
         shell: bash

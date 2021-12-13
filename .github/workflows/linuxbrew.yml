@@ -18,11 +18,11 @@ jobs:
           echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.profile
           brew update
           brew install python gcc libxml2 libxmlsec1 pkg-config
-          pip3 install --upgrade setuptools wheel
+          pip3 install --upgrade setuptools wheel build
           ln -s $(brew --prefix)/bin/gcc-11 $(brew --prefix)/bin/gcc-5
       - name: Build linux_x86_64 wheel
         run: |
-          python3 setup.py bdist_wheel
+          python3 -m build
           rm -rf build/
       - name: Install test dependencies
         run: |
