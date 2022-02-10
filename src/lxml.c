@@ -11,7 +11,7 @@
 #include "lxml.h"
 
 #include <etree_defs.h>
-#include <lxml.etree_api.h>
+#include <etree_api.h>
 
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
