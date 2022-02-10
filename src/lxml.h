@@ -16,7 +16,7 @@
 #include <libxml/valid.h>
 
 #include <lxml-version.h>
-#include <lxml.etree.h>
+#include <etree.h>
 
 typedef struct LxmlElement* PyXmlSec_LxmlElementPtr;
 typedef struct LxmlDocument* PyXmlSec_LxmlDocumentPtr;
