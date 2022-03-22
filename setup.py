@@ -168,7 +168,7 @@ class build_ext(build_ext_orig, object):
         self.openssl_version = os.environ.get('PYXMLSEC_OPENSSL_VERSION', '1.1.1g')
         self.libiconv_version = os.environ.get('PYXMLSEC_LIBICONV_VERSION', '1.16')
         self.libxml2_version = os.environ.get('PYXMLSEC_LIBXML2_VERSION', None)
-        self.libxslt_version = os.environ.get('PYXMLSEC_LIBXLST_VERSION', None)
+        self.libxslt_version = os.environ.get('PYXMLSEC_LIBXSLT_VERSION', None)
         self.zlib_version = os.environ.get('PYXMLSEC_ZLIB_VERSION', '1.2.11')
         self.xmlsec1_version = os.environ.get('PYXMLSEC_XMLSEC1_VERSION', '1.2.31')
 
