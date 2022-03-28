@@ -99,10 +99,11 @@ class TestMemoryLeaks(unittest.TestCase):
 
     def load_xml(self, name, xpath=None):
         """returns xml.etree"""
-        root = etree.parse(self.path(name)).getroot()
-        if xpath is None:
-            return root
-        return root.find(xpath)
+        with open(self.path(name)) as f:
+            root = etree.parse(f).getroot()
+            if xpath is None:
+                return root
+            return root.find(xpath)
 
     def dump(self, root):
         print(etree.tostring(root))
