@@ -275,18 +275,23 @@ static PyObject* PyXmlSec_PyIORegisterDefaultCallbacks(PyObject *self) {
 }
 
 static char PyXmlSec_PyIORegisterCallbacks__doc__[] = \
+    "register_callbacks(input_match_callback, input_open_callback, input_read_callback, input_close_callback) -> None\n"
     "Register globally a custom set of IO callbacks with xmlsec.\n\n"
-    ":param callable input_match_callback: A callable that takes a filename `bytestring` and "
+    ":param input_match_callback: A callable that takes a filename `bytestring` and "
     "returns a boolean as to whether the other callbacks in this set can handle that name.\n"
-    ":param callable input_open_callback: A callable that takes a filename and returns some "
+    ":type input_match_callback: ~collections.abc.Callable[[bytes], bool]\n"
+    ":param input_open_callback: A callable that takes a filename and returns some "
     "context object (e.g. a file object) that the remaining callables in this set will be passed "
     "during handling.\n"
+    ":type input_open_callback: ~collections.abc.Callable[[bytes], Any]\n"
     // FIXME: How do we handle failures in ^^ (e.g. can't find the file)?
-    ":param callable input_read_callback: A callable that that takes the context object from the "
+    ":param input_read_callback: A callable that that takes the context object from the "
     "open callback and a buffer, and should fill the buffer with data (e.g. BytesIO.readinto()). "
     "xmlsec will call this function several times until there is no more data returned.\n"
-    ":param callable input_close_callback: A callable that takes the context object from the "
+    ":type input_read_callback: ~collections.abc.Callable[[Any, memoryview], int]\n"
+    ":param input_close_callback: A callable that takes the context object from the "
     "open callback and can do any resource cleanup necessary.\n"
+    ":type input_close_callback: ~collections.abc.Callable[[Any], None]\n"
     ;
 static PyObject* PyXmlSec_PyIORegisterCallbacks(PyObject *self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = {
