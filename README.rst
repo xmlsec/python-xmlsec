@@ -7,12 +7,14 @@ python-xmlsec
    :target: https://travis-ci.org/mehcode/python-xmlsec
 .. image:: https://img.shields.io/appveyor/ci/hoefling/xmlsec/master.svg?logo=appveyor&logoColor=white&label=AppVeyor
    :target: https://ci.appveyor.com/project/hoefling/xmlsec
-.. image:: https://github.com/mehcode/python-xmlsec/workflows/manylinux2010/badge.svg
-   :target: https://github.com/mehcode/python-xmlsec/actions?query=workflow%3A%22manylinux2010%22
-.. image:: https://github.com/mehcode/python-xmlsec/workflows/MacOS/badge.svg
-   :target: https://github.com/mehcode/python-xmlsec/actions?query=workflow%3A%22MacOS%22
-.. image:: https://github.com/mehcode/python-xmlsec/workflows/linuxbrew/badge.svg
-   :target: https://github.com/mehcode/python-xmlsec/actions?query=workflow%3A%22linuxbrew%22
+.. image:: https://github.com/mehcode/python-xmlsec/actions/workflows/manylinux.yml/badge.svg
+   :target: https://github.com/mehcode/python-xmlsec/actions/workflows/manylinux.yml
+.. image:: https://github.com/mehcode/python-xmlsec/actions/workflows/macosx.yml/badge.svg
+   :target: https://github.com/mehcode/python-xmlsec/actions/workflows/macosx.yml
+.. image:: https://github.com/mehcode/python-xmlsec/actions/workflows/linuxbrew.yml/badge.svg
+   :target: https://github.com/mehcode/python-xmlsec/actions/workflows/linuxbrew.yml
+.. image:: https://github.com/mehcode/python-xmlsec/actions/workflows/opensuse-tumbleweed.yml/badge.svg
+   :target: https://github.com/mehcode/python-xmlsec/actions/workflows/opensuse-tumbleweed.yml
 .. image:: https://codecov.io/gh/mehcode/python-xmlsec/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/mehcode/python-xmlsec
 .. image:: https://img.shields.io/readthedocs/xmlsec/latest?logo=read-the-docs
