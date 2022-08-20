@@ -8,9 +8,11 @@ jobs:
       matrix:
         python-abi: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v1
       - name: Install build dependencies
         run: |
+          # https://github.com/actions/runner/issues/2033
+          chown -R $(id -u):$(id -g) $PWD
           /opt/python/${{ matrix.python-abi }}/bin/pip install --upgrade pip setuptools wheel build
       - name: Set environment variables
         shell: bash
