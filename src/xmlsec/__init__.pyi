@@ -1,12 +1,12 @@
 from collections.abc import Callable, Iterable
-from typing import Any, AnyStr, IO, typeVar, overload
+from typing import Any, AnyStr, IO, TypeVar, overload
 from _typeshed import GenericPath, Self, StrOrBytesPath
 
 from lxml.etree import _Element
 
 from xmlsec.constants import __KeyData as KeyData, __Transform as Transform
 
-_E = typeVar('_E', bound=_Element)
+_E = TypeVar('_E', bound=_Element)
 
 def enable_debug_trace(enabled: bool = ...) -> None: ...
 def init() -> None: ...
