@@ -20,6 +20,7 @@ jobs:
           PYXMLSEC_STATIC_DEPS: true
         run: |
           pip install --upgrade -r requirements-test.txt
+          pip install black  # for stub generation tests
           pip install dist/xmlsec-$(python setup.py --version).tar.gz
       - name: Run tests
         run: |
