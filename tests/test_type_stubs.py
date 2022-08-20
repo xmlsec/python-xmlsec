@@ -1,8 +1,6 @@
 """Test type stubs for correctness where possible."""
 
 import os
-import pathlib
-import sys
 
 import pytest
 
@@ -50,7 +48,6 @@ def gen_constants_stub():
 
     names = list(sorted(name for name in dir(xmlsec.constants) if not name.startswith('__')))
     lines = [process_constant(name) for name in names]
-    pathlib.Path('constants_stub_gen.pyi').write_text(constants_stub_header + os.linesep.join(lines))
     return constants_stub_header + os.linesep.join(lines)
 
 
