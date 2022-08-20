@@ -1,0 +1,29 @@
+name: opensuse-tumbleweed
+on: [push, pull_request]
+jobs:
+  tumbleweed:
+    runs-on: ubuntu-latest
+    container: opensuse/tumbleweed
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install build dependencies
+        run: |
+          zypper -n install -t pattern devel_basis
+          PKGVER_NO_DOT=$(tr -d '.' <<< ${{ matrix.python-version }})
+          zypper -n install git libxmlsec1-openssl1 xmlsec1-openssl-devel python${PKGVER_NO_DOT}-devel python${PKGVER_NO_DOT}-pip
+          python${{ matrix.python-version }} -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip setuptools wheel
+      - name: Build linux_x86_64 wheel
+        run: |
+          .venv/bin/python setup.py bdist_wheel
+          rm -rf build/
+      - name: Install test dependencies
+        run: |
+          .venv/bin/python -m pip install --upgrade -r requirements-test.txt
+          .venv/bin/python -m pip install xmlsec --only-binary=xmlsec --no-index --find-links=dist/
+      - name: Run tests
+        run: |
+          .venv/bin/python -m pytest -v --color=yes
