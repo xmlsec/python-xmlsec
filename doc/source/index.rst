@@ -3,9 +3,6 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root ``toctree`` directive.
 
-.. role:: xml(code)
-   :language: xml
-
 Welcome to python-xmlsec's documentation!
 =========================================
 

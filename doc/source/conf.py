@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import sys
+from __future__ import annotations
+
 import urllib.request
+import importlib.metadata
 
 import lxml
 from docutils.nodes import Text, reference
@@ -10,11 +12,6 @@ from sphinx.addnodes import pending_xref
 from sphinx.application import Sphinx
 from sphinx.environment import BuildEnvironment
 from sphinx.errors import ExtensionError
-
-if sys.version_info >= (3, 8):
-    from importlib import metadata as importlib_metadata
-else:
-    import importlib_metadata
 
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinx.ext.intersphinx']
@@ -28,11 +25,10 @@ master_doc = 'index'
 project = u'python-xmlsec'
 copyright = u'2020, Oleg Hoefling <oleg.hoefling@gmail.com>'  # noqa: A001
 author = u'Bulat Gaifullin <gaifullinbf@gmail.com>'
-release = importlib_metadata.version('xmlsec')
+release = importlib.metadata.version('xmlsec')
 parsed: Version = parse(release)
 version = '{}.{}'.format(parsed.major, parsed.minor)
 
-language = None
 exclude_patterns: list[str] = []
 pygments_style = 'sphinx'
 todo_include_todos = False
@@ -68,6 +64,12 @@ texinfo_documents = [
 
 autodoc_member_order = 'groupwise'
 autodoc_docstring_signature = True
+
+
+rst_prolog = '''
+.. role:: xml(code)
+   :language: xml
+'''
 
 # LXML crossref'ing stuff:
 # LXML doesn't have an intersphinx docs,
