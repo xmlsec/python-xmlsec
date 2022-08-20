@@ -44,7 +44,6 @@ build_script:
 test: off
 test_script:
   - pip install -r requirements-test.txt
-  - pip install black  # for stub generation tests
   - pip install xmlsec --only-binary=xmlsec --no-index --find-links=dist
   - pytest -v --color=yes --junitxml=unittests.xml
   - ps: Get-ChildItem dist\*.whl | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
