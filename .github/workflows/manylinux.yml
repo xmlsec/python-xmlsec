@@ -9,6 +9,7 @@ jobs:
         image:
           - manylinux2010_x86_64
           - manylinux_2_24_x86_64
+          - musllinux_1_1_x86_64
         exclude:
           - image: manylinux2010_x86_64
             python-abi: cp310-cp310
@@ -31,7 +32,7 @@ jobs:
           PYXMLSEC_STATIC_DEPS: true
         run: |
           /opt/python/${{ matrix.python-abi }}/bin/python -m build
-      - name: Label manylinux2010_x86_64 wheel
+      - name: Label manylinux wheel
         run: |
           ls -la dist/
           auditwheel show dist/xmlsec-${{ env.PKGVER }}-${{ matrix.python-abi }}-linux_x86_64.whl
