@@ -285,7 +285,7 @@ class build_ext(build_ext_orig):
                 url = latest_libxml2_release()
                 self.info('{:10}: {}'.format('libxml2', 'PYXMLSEC_LIBXML2_VERSION unset, downloading latest from {}'.format(url)))
             else:
-                version_prefix, _ = self.libxml2_version.split('.', -1)
+                version_prefix, _ = self.libxml2_version.rsplit('.', 1)
                 url = 'https://download.gnome.org/sources/libxml2/{}/libxml2-{}.tar.xz'.format(
                     version_prefix, self.libxml2_version
                 )
@@ -305,7 +305,7 @@ class build_ext(build_ext_orig):
                 url = latest_libxslt_release()
                 self.info('{:10}: {}'.format('libxslt', 'PYXMLSEC_LIBXSLT_VERSION unset, downloading latest from {}'.format(url)))
             else:
-                version_prefix, _ = self.libxslt_version.split('.', -1)
+                version_prefix, _ = self.libxslt_version.rsplit('.', 1)
                 url = 'https://download.gnome.org/sources/libxslt/{}/libxslt-{}.tar.xz'.format(
                     version_prefix, self.libxslt_version
                 )
