@@ -1,3 +1,24 @@
+[tool.mypy]
+files = ['src']
+ignore_missing_imports = false
+warn_unused_configs = true
+disallow_subclassing_any = true
+disallow_any_generics = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+disallow_any_unimported = true
+strict_optional = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_no_return = true
+no_implicit_reexport = true
+show_error_codes = true
+
 [tool.black]
 line_length = 130
 skip-string-normalization = true

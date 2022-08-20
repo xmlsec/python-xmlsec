@@ -5,6 +5,7 @@
 !.appveyor*
 !.git*
 !.readthedocs.yaml
+!.pre-commit-config.yaml
 
 # Python
 /dist

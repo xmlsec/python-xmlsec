@@ -4,8 +4,11 @@ import sys
 import urllib.request
 
 import lxml
-from docutils.nodes import reference
-from packaging.version import parse
+from docutils.nodes import Text, reference
+from packaging.version import Version, parse
+from sphinx.addnodes import pending_xref
+from sphinx.application import Sphinx
+from sphinx.environment import BuildEnvironment
 from sphinx.errors import ExtensionError
 
 if sys.version_info >= (3, 8):
@@ -23,22 +26,22 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 project = u'python-xmlsec'
-copyright = u'2020, Oleg Hoefling <oleg.hoefling@gmail.com>'
+copyright = u'2020, Oleg Hoefling <oleg.hoefling@gmail.com>'  # noqa: A001
 author = u'Bulat Gaifullin <gaifullinbf@gmail.com>'
 release = importlib_metadata.version('xmlsec')
-parsed = parse(release)
+parsed: Version = parse(release)
 version = '{}.{}'.format(parsed.major, parsed.minor)
 
 language = None
-exclude_patterns = []
+exclude_patterns: list[str] = []
 pygments_style = 'sphinx'
 todo_include_todos = False
 
 html_theme = 'furo'
-html_static_path = []
+html_static_path: list[str] = []
 htmlhelp_basename = 'python-xmlsecdoc'
 
-latex_elements = {}
+latex_elements: dict[str, str] = {}
 latex_documents = [
     (
         master_doc,
@@ -72,7 +75,7 @@ autodoc_docstring_signature = True
 lxml_element_cls_doc_uri = 'https://lxml.de/api/lxml.etree._Element-class.html'
 
 
-def lxml_element_doc_reference(app, env, node, contnode):
+def lxml_element_doc_reference(app: Sphinx, env: BuildEnvironment, node: pending_xref, contnode: Text) -> reference:
     """
     Handle a missing reference only if it is a ``lxml.etree._Element`` ref.
 
@@ -83,13 +86,13 @@ def lxml_element_doc_reference(app, env, node, contnode):
         and node.get('reftarget', None) == 'lxml.etree._Element'
         and contnode.astext() in ('lxml.etree._Element', '_Element')
     ):
-        reftitle = '(in lxml v{})'.format(lxml.__version__)
+        reftitle = '(in lxml v{})'.format(lxml.__version__)  # type: ignore[attr-defined]
         newnode = reference('', '', internal=False, refuri=lxml_element_cls_doc_uri, reftitle=reftitle)
         newnode.append(contnode)
         return newnode
 
 
-def setup(app):
+def setup(app: Sphinx) -> None:
     # first, check whether the doc URL is still valid
     if urllib.request.urlopen(lxml_element_cls_doc_uri).getcode() != 200:
         raise ExtensionError('URL to `lxml.etree._Element` docs is not accesible.')
