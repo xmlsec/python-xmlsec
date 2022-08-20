@@ -13,7 +13,7 @@ jobs:
         run: |
           zypper -n install -t pattern devel_basis
           PKGVER_NO_DOT=$(tr -d '.' <<< ${{ matrix.python-version }})
-          zypper -n -t install git libxmlsec1-openssl1 xmlsec1-openssl-devel python${PKGVER_NO_DOT}-devel python${PKGVER_NO_DOT}-pip
+          zypper -n install git libxmlsec1-openssl1 xmlsec1-openssl-devel python${PKGVER_NO_DOT}-devel python${PKGVER_NO_DOT}-pip
           python${{ matrix.python-version }} -m venv .venv
           .venv/bin/python -m pip install --upgrade pip setuptools wheel
       - name: Build linux_x86_64 wheel
