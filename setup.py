@@ -10,8 +10,8 @@ import sys
 import tarfile
 import zipfile
 from distutils import log
-from distutils.version import StrictVersion as Version
 from distutils.errors import DistutilsError
+from distutils.version import StrictVersion as Version
 from pathlib import Path
 from urllib.request import urlcleanup, urljoin, urlopen, urlretrieve
 
@@ -59,33 +59,23 @@ def latest_release_from_gnome_org_cache(url, lib_name):
 
 
 def latest_zlib_release():
-    return latest_release_from_html(
-        'https://zlib.net/fossils', re.compile('zlib-(?P<version>.*).tar.gz')
-    )
+    return latest_release_from_html('https://zlib.net/fossils', re.compile('zlib-(?P<version>.*).tar.gz'))
 
 
 def latest_libiconv_release():
-    return latest_release_from_html(
-        'https://ftp.gnu.org/pub/gnu/libiconv', re.compile('libiconv-(?P<version>.*).tar.gz')
-    )
+    return latest_release_from_html('https://ftp.gnu.org/pub/gnu/libiconv', re.compile('libiconv-(?P<version>.*).tar.gz'))
 
 
 def latest_libxml2_release():
-    return latest_release_from_gnome_org_cache(
-        'https://download.gnome.org/sources/libxml2', 'libxml2'
-    )
+    return latest_release_from_gnome_org_cache('https://download.gnome.org/sources/libxml2', 'libxml2')
 
 
 def latest_libxslt_release():
-    return latest_release_from_gnome_org_cache(
-        'https://download.gnome.org/sources/libxslt', 'libxslt'
-    )
+    return latest_release_from_gnome_org_cache('https://download.gnome.org/sources/libxslt', 'libxslt')
 
 
 def latest_xmlsec_release():
-    return latest_release_from_html(
-        'https://www.aleksey.com/xmlsec/download/', re.compile('xmlsec1-(?P<version>.*).tar.gz')
-    )
+    return latest_release_from_html('https://www.aleksey.com/xmlsec/download/', re.compile('xmlsec1-(?P<version>.*).tar.gz'))
 
 
 class build_ext(build_ext_orig):
@@ -265,7 +255,9 @@ class build_ext(build_ext_orig):
                 self.info('{:10}: {}'.format('zlib', 'PYXMLSEC_ZLIB_VERSION unset, downloading latest from {}'.format(url)))
             else:
                 url = 'https://zlib.net/fossils/zlib-{}.tar.gz'.format(self.zlib_version)
-                self.info('{:10}: {}'.format('zlib', 'PYXMLSEC_ZLIB_VERSION={}, downloading from {}'.format(self.zlib_version, url)))
+                self.info(
+                    '{:10}: {}'.format('zlib', 'PYXMLSEC_ZLIB_VERSION={}, downloading from {}'.format(self.zlib_version, url))
+                )
             urlretrieve(url, str(zlib_tar))
 
         # fetch libiconv
@@ -278,7 +270,11 @@ class build_ext(build_ext_orig):
                 self.info('{:10}: {}'.format('zlib', 'PYXMLSEC_LIBICONV_VERSION unset, downloading latest from {}'.format(url)))
             else:
                 url = 'https://ftp.gnu.org/pub/gnu/libiconv/libiconv-{}.tar.gz'.format(self.libiconv_version)
-                self.info('{:10}: {}'.format('zlib', 'PYXMLSEC_LIBICONV_VERSION={}, downloading from {}'.format(self.libiconv_version, url)))
+                self.info(
+                    '{:10}: {}'.format(
+                        'zlib', 'PYXMLSEC_LIBICONV_VERSION={}, downloading from {}'.format(self.libiconv_version, url)
+                    )
+                )
             urlretrieve(url, str(libiconv_tar))
 
         # fetch libxml2
@@ -290,8 +286,14 @@ class build_ext(build_ext_orig):
                 self.info('{:10}: {}'.format('libxml2', 'PYXMLSEC_LIBXML2_VERSION unset, downloading latest from {}'.format(url)))
             else:
                 version_prefix, _ = self.libxml2_version.split('.', -1)
-                url = 'https://download.gnome.org/sources/libxml2/{}/libxml2-{}.tar.xz'.format(version_prefix, self.libxml2_version)
-                self.info('{:10}: {}'.format('libxml2', 'PYXMLSEC_LIBXML2_VERSION={}, downloading from {}'.format(self.libxml2_version, url)))
+                url = 'https://download.gnome.org/sources/libxml2/{}/libxml2-{}.tar.xz'.format(
+                    version_prefix, self.libxml2_version
+                )
+                self.info(
+                    '{:10}: {}'.format(
+                        'libxml2', 'PYXMLSEC_LIBXML2_VERSION={}, downloading from {}'.format(self.libxml2_version, url)
+                    )
+                )
             libxml2_tar = self.libs_dir / 'libxml2.tar.xz'
             urlretrieve(url, str(libxml2_tar))
 
@@ -304,8 +306,14 @@ class build_ext(build_ext_orig):
                 self.info('{:10}: {}'.format('libxslt', 'PYXMLSEC_LIBXSLT_VERSION unset, downloading latest from {}'.format(url)))
             else:
                 version_prefix, _ = self.libxslt_version.split('.', -1)
-                url = 'https://download.gnome.org/sources/libxslt/{}/libxslt-{}.tar.xz'.format(version_prefix, self.libxslt_version)
-                self.info('{:10}: {}'.format('libxslt', 'PYXMLSEC_LIBXSLT_VERSION={}, downloading from {}'.format(self.libxslt_version, url)))
+                url = 'https://download.gnome.org/sources/libxslt/{}/libxslt-{}.tar.xz'.format(
+                    version_prefix, self.libxslt_version
+                )
+                self.info(
+                    '{:10}: {}'.format(
+                        'libxslt', 'PYXMLSEC_LIBXSLT_VERSION={}, downloading from {}'.format(self.libxslt_version, url)
+                    )
+                )
             libxslt_tar = self.libs_dir / 'libxslt.tar.gz'
             urlretrieve(url, str(libxslt_tar))
 
@@ -318,7 +326,11 @@ class build_ext(build_ext_orig):
                 self.info('{:10}: {}'.format('xmlsec1', 'PYXMLSEC_XMLSEC1_VERSION unset, downloading latest from {}'.format(url)))
             else:
                 url = 'https://www.aleksey.com/xmlsec/download/xmlsec1-{}.tar.gz'.format(self.xmlsec1_version)
-                self.info('{:10}: {}'.format('xmlsec1', 'PYXMLSEC_XMLSEC1_VERSION={}, downloading from {}'.format(self.xmlsec1_version, url)))
+                self.info(
+                    '{:10}: {}'.format(
+                        'xmlsec1', 'PYXMLSEC_XMLSEC1_VERSION={}, downloading from {}'.format(self.xmlsec1_version, url)
+                    )
+                )
             xmlsec1_tar = self.libs_dir / 'xmlsec1.tar.gz'
             urlretrieve(url, str(xmlsec1_tar))
 
