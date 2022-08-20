@@ -4,6 +4,7 @@ from _typeshed import GenericPath, Self, StrOrBytesPath
 
 from lxml.etree import _Element
 
+from xmlsec import constants as constants, tree as tree
 from xmlsec.constants import __KeyData as KeyData, __Transform as Transform
 
 _E = TypeVar('_E', bound=_Element)
