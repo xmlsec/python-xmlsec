@@ -18,17 +18,23 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Final
 
-
 class __KeyData(NamedTuple):  # __KeyData type
-    href: str | None
+    href: str
     name: str
 
+class __KeyDataNoHref(NamedTuple):  # __KeyData type
+    href: None
+    name: str
 
 class __Transform(NamedTuple):  # __Transform type
-    href: str | None
+    href: str
     name: str
     usage: int
 
+class __TransformNoHref(NamedTuple):  # __Transform type
+    href: None
+    name: str
+    usage: int
 
 """
 
@@ -44,7 +50,10 @@ def gen_constants_stub():
     def process_constant(name):
         """Generate line in stub file for constant name."""
         obj = getattr(xmlsec.constants, name)
-        return '{name}: Final[{type_name}]'.format(name=name, type_name=type(obj).__name__)
+        type_name = type(obj).__name__
+        if type_name in ('__KeyData', '__Transform') and obj.href is None:
+            type_name += 'NoHref'
+        return '{name}: Final[{type_name}]'.format(name=name, type_name=type_name)
 
     names = list(sorted(name for name in dir(xmlsec.constants) if not name.startswith('__')))
     lines = [process_constant(name) for name in names]

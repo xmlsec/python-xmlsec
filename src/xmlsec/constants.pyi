@@ -7,11 +7,20 @@ else:
     from typing_extensions import Final
 
 class __KeyData(NamedTuple):  # __KeyData type
-    href: str | None
+    href: str
+    name: str
+
+class __KeyDataNoHref(NamedTuple):  # __KeyData type
+    href: None
     name: str
 
 class __Transform(NamedTuple):  # __Transform type
-    href: str | None
+    href: str
+    name: str
+    usage: int
+
+class __TransformNoHref(NamedTuple):  # __Transform type
+    href: None
     name: str
     usage: int
 
@@ -32,9 +41,9 @@ KeyDataFormatPkcs8Der: Final[int]
 KeyDataFormatPkcs8Pem: Final[int]
 KeyDataFormatUnknown: Final[int]
 KeyDataHmac: Final[__KeyData]
-KeyDataName: Final[__KeyData]
+KeyDataName: Final[__KeyDataNoHref]
 KeyDataRawX509Cert: Final[__KeyData]
-KeyDataRetrievalMethod: Final[__KeyData]
+KeyDataRetrievalMethod: Final[__KeyDataNoHref]
 KeyDataRsa: Final[__KeyData]
 KeyDataTypeAny: Final[int]
 KeyDataTypeNone: Final[int]
@@ -45,7 +54,7 @@ KeyDataTypeSession: Final[int]
 KeyDataTypeSymmetric: Final[int]
 KeyDataTypeTrusted: Final[int]
 KeyDataTypeUnknown: Final[int]
-KeyDataValue: Final[__KeyData]
+KeyDataValue: Final[__KeyDataNoHref]
 KeyDataX509: Final[__KeyData]
 NodeCanonicalizationMethod: Final[str]
 NodeCipherData: Final[str]
@@ -110,7 +119,7 @@ TransformKWAes192: Final[__Transform]
 TransformKWAes256: Final[__Transform]
 TransformKWDes3: Final[__Transform]
 TransformMd5: Final[__Transform]
-TransformRemoveXmlTagsC14N: Final[__Transform]
+TransformRemoveXmlTagsC14N: Final[__TransformNoHref]
 TransformRipemd160: Final[__Transform]
 TransformRsaMd5: Final[__Transform]
 TransformRsaOaep: Final[__Transform]
@@ -133,7 +142,7 @@ TransformUsageDigestMethod: Final[int]
 TransformUsageEncryptionMethod: Final[int]
 TransformUsageSignatureMethod: Final[int]
 TransformUsageUnknown: Final[int]
-TransformVisa3DHack: Final[__Transform]
+TransformVisa3DHack: Final[__TransformNoHref]
 TransformXPath: Final[__Transform]
 TransformXPath2: Final[__Transform]
 TransformXPointer: Final[__Transform]
