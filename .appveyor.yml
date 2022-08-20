@@ -9,9 +9,9 @@ environment:
   - python: 38
   - python: 38-x64
   - python: 39
-    python_version: 3.9.0
+    python_version: 3.9.13
   - python: 39-x64
-    python_version: 3.9.0
+    python_version: 3.9.13
 
 install:
   - ps: |
