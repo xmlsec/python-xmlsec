@@ -2,10 +2,9 @@ from lxml import etree
 
 import xmlsec
 
-manager = xmlsec.KeysManager()
-key = xmlsec.Key.from_file('rsacert.pem', xmlsec.constants.KeyDataFormatCertPem, None)
-manager.add_key(key)
-template = etree.parse('enc1-doc.xml').getroot()
+with open('enc1-doc.xml') as fp:
+    template = etree.parse(fp).getroot()
+
 enc_data = xmlsec.template.encrypted_data_create(
     template,
     xmlsec.constants.TransformAes128Cbc,
@@ -20,6 +19,10 @@ xmlsec.template.encrypted_data_ensure_cipher_value(enc_key)
 data = template.find('./Data')
 
 # Encryption
+manager = xmlsec.KeysManager()
+key = xmlsec.Key.from_file('rsacert.pem', xmlsec.constants.KeyDataFormatCertPem, None)
+manager.add_key(key)
+
 enc_ctx = xmlsec.EncryptionContext(manager)
 enc_ctx.key = xmlsec.Key.generate(
     xmlsec.constants.KeyDataAes, 128, xmlsec.constants.KeyDataTypeSession

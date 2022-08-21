@@ -2,7 +2,9 @@ from lxml import etree
 
 import xmlsec
 
-template = etree.parse('sign1-res.xml').getroot()
+with open('sign1-res.xml') as fp:
+    template = etree.parse(fp).getroot()
+
 xmlsec.tree.add_ids(template, ["ID"])
 signature_node = xmlsec.tree.find_node(template, xmlsec.constants.NodeSignature)
 # Create a digital signature context (no key manager is needed).
