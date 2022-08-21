@@ -2,7 +2,8 @@ from lxml import etree
 
 import xmlsec
 
-template = etree.parse('sign1-tmpl.xml').getroot()
+with open('sign1-tmpl.xml') as fp:
+    template = etree.parse(fp).getroot()
 
 signature_node = xmlsec.tree.find_node(template, xmlsec.constants.NodeSignature)
 ctx = xmlsec.SignatureContext()
