@@ -1,4 +1,3 @@
-import os
 import tempfile
 
 from lxml import etree
@@ -125,7 +124,7 @@ class TestEncryptionContext(base.TestMemoryLeaks):
 
         encrypted = ctx.encrypt_binary(enc_data, b'test')
         self.assertIsNotNone(encrypted)
-        self.assertEqual("{%s}%s" % (consts.EncNs, consts.NodeEncryptedData), encrypted.tag)
+        self.assertEqual("{{{}}}{}".format(consts.EncNs, consts.NodeEncryptedData), encrypted.tag)
 
         enc_method = xmlsec.tree.find_child(enc_data, consts.NodeEncryptionMethod, consts.EncNs)
         self.assertIsNotNone(enc_method)
@@ -170,7 +169,7 @@ class TestEncryptionContext(base.TestMemoryLeaks):
 
         encrypted = ctx.encrypt_binary(enc_data, 'file://' + tmpfile.name)
         self.assertIsNotNone(encrypted)
-        self.assertEqual("{%s}%s" % (consts.EncNs, consts.NodeEncryptedData), encrypted.tag)
+        self.assertEqual("{{{}}}{}".format(consts.EncNs, consts.NodeEncryptedData), encrypted.tag)
 
         enc_method = xmlsec.tree.find_child(enc_data, consts.NodeEncryptionMethod, consts.EncNs)
         self.assertIsNotNone(enc_method)
@@ -219,7 +218,7 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         self.assertEqual(self.load_xml("enc3-in.xml"), decrypted)
 
     def check_decrypt(self, i):
-        root = self.load_xml('enc%d-out.xml' % i)
+        root = self.load_xml('enc{}-out.xml'.format(i))
         enc_data = xmlsec.tree.find_child(root, consts.NodeEncryptedData, consts.EncNs)
         self.assertIsNotNone(enc_data)
 
@@ -228,7 +227,7 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         ctx = xmlsec.EncryptionContext(manager)
         decrypted = ctx.decrypt(enc_data)
         self.assertIsNotNone(decrypted)
-        self.assertEqual(self.load_xml("enc%d-in.xml" % i), root)
+        self.assertEqual(self.load_xml("enc{}-in.xml".format(i)), root)
 
     def test_decrypt_bad_args(self):
         ctx = xmlsec.EncryptionContext()

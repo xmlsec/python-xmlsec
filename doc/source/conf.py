@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 from __future__ import annotations
 
-import urllib.request
 import importlib.metadata
+import urllib.request
 
 import lxml
 from docutils.nodes import Text, reference
@@ -12,7 +10,6 @@ from sphinx.addnodes import pending_xref
 from sphinx.application import Sphinx
 from sphinx.environment import BuildEnvironment
 from sphinx.errors import ExtensionError
-
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinx.ext.intersphinx']
 

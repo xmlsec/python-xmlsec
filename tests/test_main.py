@@ -112,7 +112,7 @@ class TestCallbacks(base.TestMemoryLeaks):
         def match_cb(filename):
             nonlocal bad_match_calls
             bad_match_calls += 1
-            False
+            return False
 
         for _ in range(2):
             self._register_mismatch_callbacks(match_cb)
@@ -132,7 +132,7 @@ class TestCallbacks(base.TestMemoryLeaks):
         def mismatch_cb(filename):
             nonlocal mismatch_calls
             mismatch_calls += 1
-            False
+            return False
 
         # NB: These first two sets of callbacks should never get called,
         # because the default callbacks always match beforehand:
