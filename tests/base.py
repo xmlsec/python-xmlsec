@@ -1,6 +1,5 @@
 import gc
 import os
-import resource
 import sys
 import unittest
 
@@ -8,26 +7,23 @@ from lxml import etree
 
 import xmlsec
 
-etype = type(etree.Element("test"))
+etype = type(etree.Element('test'))
 
 ns = {'dsig': xmlsec.constants.DSigNs, 'enc': xmlsec.constants.EncNs}
 
 
-def get_iterations():
-    """Parse iterations amount."""
-    if sys.platform in ('win32',):
-        return 0
+try:
+    import resource
 
-    try:
-        return int(os.getenv("PYXMLSEC_TEST_ITERATIONS", "10"))
-    except ValueError:
-        return 0
+    test_iterations = int(os.environ.get('PYXMLSEC_TEST_ITERATIONS', '10'))
+except (ImportError, ValueError):
+    test_iterations = 0
 
 
 class TestMemoryLeaks(unittest.TestCase):
     maxDiff = None
 
-    iterations = get_iterations()
+    iterations = test_iterations
 
     data_dir = os.path.join(os.path.dirname(__file__), "data")
 
