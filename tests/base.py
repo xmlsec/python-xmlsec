@@ -1,5 +1,6 @@
 import gc
 import os
+import resource
 import sys
 import unittest
 
@@ -12,20 +13,8 @@ etype = type(etree.Element("test"))
 ns = {'dsig': xmlsec.constants.DSigNs, 'enc': xmlsec.constants.EncNs}
 
 
-try:
-    import resource
-
-    def get_memory_usage():
-        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-
-except ImportError:
-    resource = None
-
-    def get_memory_usage():
-        return 0
-
-
 def get_iterations():
+    """Parse iterations amount."""
     if sys.platform in ('win32',):
         return 0
 
@@ -114,9 +103,9 @@ class TestMemoryLeaks(unittest.TestCase):
         for name in second.attrib.keys():
             if name not in first.attrib:
                 self.fail('x2 has an attribute x1 is missing: {}. {}'.format(name, msg))
-        if not xml_text_compare(first.text, second.text):
+        if not _xml_text_compare(first.text, second.text):
             self.fail('text: {!r} != {!r}. {}'.format(first.text, second.text, msg))
-        if not xml_text_compare(first.tail, second.tail):
+        if not _xml_text_compare(first.tail, second.tail):
             self.fail('tail: {!r} != {!r}. {}'.format(first.tail, second.tail, msg))
         cl1 = sorted(first.getchildren(), key=lambda x: x.tag)
         cl2 = sorted(second.getchildren(), key=lambda x: x.tag)
@@ -128,7 +117,7 @@ class TestMemoryLeaks(unittest.TestCase):
             self.assertXmlEqual(c1, c2)
 
 
-def xml_text_compare(t1, t2):
+def _xml_text_compare(t1, t2):
     if not t1 and not t2:
         return True
     if t1 == '*' or t2 == '*':

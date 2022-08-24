@@ -1,5 +1,3 @@
-from lxml import etree
-
 import xmlsec
 
 ctx = xmlsec.SignatureContext()

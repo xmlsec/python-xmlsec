@@ -132,7 +132,6 @@ class TestSignContext(base.TestMemoryLeaks):
 
     def test_sign_case4(self):
         """Should sign a file using a dynamically created template, key from PEM and an X509 cert with custom ns."""
-
         root = self.load_xml("sign4-in.xml")
         xmlsec.tree.add_ids(root, ["ID"])
         elem_id = root.get('ID', None)
@@ -249,7 +248,7 @@ class TestSignContext(base.TestMemoryLeaks):
         self.check_verify(5)
 
     def check_verify(self, i):
-        root = self.load_xml("sign%d-out.xml" % i)
+        root = self.load_xml("sign{}-out.xml".format(i))
         xmlsec.tree.add_ids(root, ["ID"])
         sign = xmlsec.tree.find_node(root, consts.NodeSignature)
         self.assertIsNotNone(sign)

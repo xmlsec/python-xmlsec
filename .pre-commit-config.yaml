@@ -1,6 +1,5 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
-exclude: ".*.diff"  # exclude patches
 repos:
 -   repo: https://github.com/psf/black
     rev: 22.6.0
@@ -21,6 +20,7 @@ repos:
     -   id: check-merge-conflict
     -   id: check-json
     -   id: detect-private-key
+        exclude: ^.*/rsakey.pem$
     -   id: mixed-line-ending
     -   id: pretty-format-json
         args: [--autofix]
