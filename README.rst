@@ -16,8 +16,8 @@ python-xmlsec
    :target: https://github.com/mehcode/python-xmlsec/actions/workflows/linuxbrew.yml
 .. image:: https://github.com/mehcode/python-xmlsec/actions/workflows/opensuse-tumbleweed.yml/badge.svg
    :target: https://github.com/mehcode/python-xmlsec/actions/workflows/opensuse-tumbleweed.yml
-.. image:: https://codecov.io/gh/mehcode/python-xmlsec/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/mehcode/python-xmlsec
+.. image:: https://codecov.io/gh/xmlsec/python-xmlsec/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/xmlsec/python-xmlsec
 .. image:: https://img.shields.io/readthedocs/xmlsec/latest?logo=read-the-docs
    :target: https://xmlsec.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
