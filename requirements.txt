@@ -1,1 +1,2 @@
+--no-binary lxml
 lxml >= 3.8.0, !=4.7.0
