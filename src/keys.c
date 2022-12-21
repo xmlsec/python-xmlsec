@@ -185,6 +185,47 @@ ON_FAIL:
     return NULL;
 }
 
+static const char PyXmlSec_KeyFromEngine__doc__[] = \
+    "from_engine(engine_and_key_id) -> xmlsec.Key\n"
+    "Loads PKI key from an engine.\n\n"
+    ":param engine_and_key_id: engine and key id, i.e. 'pkcs11;pkcs11:token=XmlsecToken;object=XmlsecKey;pin-value=password'\n"
+    ":type engine_and_key_id: :class:`str`, "
+    ":return: pointer to newly created key\n"
+    ":rtype: :class:`~xmlsec.Key`";
+static PyObject* PyXmlSec_KeyFromEngine(PyObject* self, PyObject* args, PyObject* kwargs) {
+    static char *kwlist[] = {"engine_and_key_id", NULL};
+
+    const char* engine_and_key_id = NULL;
+    PyXmlSec_Key* key = NULL;
+
+    PYXMLSEC_DEBUG("load key from engine - start");
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s:from_engine", kwlist, &engine_and_key_id)) {
+        goto ON_FAIL;
+    }
+
+    if ((key = PyXmlSec_NewKey1((PyTypeObject*)self)) == NULL) goto ON_FAIL;
+
+    Py_BEGIN_ALLOW_THREADS;
+    key->handle = xmlSecCryptoAppKeyLoad(engine_and_key_id, xmlSecKeyDataFormatEngine, NULL, xmlSecCryptoAppGetDefaultPwdCallback(),
+                                         (void*)engine_and_key_id);
+    Py_END_ALLOW_THREADS;
+
+    if (key->handle == NULL) {
+        PyXmlSec_SetLastError("cannot read key");
+        goto ON_FAIL;
+    }
+
+    key->is_own = 1;
+
+    PYXMLSEC_DEBUG("load key from engine - ok");
+    return (PyObject*)key;
+
+ON_FAIL:
+    PYXMLSEC_DEBUG("load key from engine - fail");
+    Py_XDECREF(key);
+    return NULL;
+}
+
 static const char PyXmlSec_KeyGenerate__doc__[] = \
     "generate(klass, size, type) -> xmlsec.Key\n"
     "Generates key of kind ``klass`` with ``size`` and ``type``.\n\n"
@@ -493,6 +534,12 @@ static PyMethodDef PyXmlSec_KeyMethods[] = {
         (PyCFunction)PyXmlSec_KeyFromFile,
         METH_CLASS|METH_VARARGS|METH_KEYWORDS,
         PyXmlSec_KeyFromFile__doc__
+    },
+    {
+        "from_engine",
+        (PyCFunction)PyXmlSec_KeyFromEngine,
+        METH_CLASS|METH_VARARGS|METH_KEYWORDS,
+        PyXmlSec_KeyFromEngine__doc__
     },
     {
         "generate",
