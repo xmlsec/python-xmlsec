@@ -5,16 +5,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-abi: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39, cp310-cp310]
+        python-abi: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39, cp310-cp310, cp311-cp311]
         image:
           - manylinux2010_x86_64
           - manylinux_2_24_x86_64
           - musllinux_1_1_x86_64
         exclude:
           - image: manylinux2010_x86_64
-            python-abi: cp310-cp310
+            python-abi: cp311-cp311
           - image: manylinux2010_i686
-            python-abi: cp310-cp310
+            python-abi: cp311-cp311
     container: quay.io/pypa/${{ matrix.image }}
     steps:
       - uses: actions/checkout@v1

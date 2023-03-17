@@ -16,6 +16,9 @@ matrix:
   - python: 3.9
     dist: xenial
     sudo: required
+  - python: 3.11
+    dist: xenial
+    sudo: required
 env:
   global:
   - CFLAGS=-coverage
