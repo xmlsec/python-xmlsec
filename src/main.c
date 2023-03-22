@@ -119,6 +119,13 @@ static PyObject* PyXmlSec_PyShutdown(PyObject* self) {
     Py_RETURN_NONE;
 }
 
+static char PyXmlSec_GetLibXmlSecVersion__doc__[] = \
+    "get_libxmlsec_version() -> tuple\n"
+    "Returns Version tuple of wrapped libxml library.";
+static PyObject* PyXmlSec_GetLibXmlSecVersion() {
+    return Py_BuildValue("(iii)", XMLSEC_VERSION_MAJOR, XMLSEC_VERSION_MINOR, XMLSEC_VERSION_SUBMINOR);
+}
+
 static char PyXmlSec_PyEnableDebugOutput__doc__[] = \
     "enable_debug_trace(enabled) -> None\n"
     "Enables or disables calling LibXML2 callback from the default errors callback.\n\n"
@@ -385,6 +392,12 @@ static PyMethodDef PyXmlSec_MainMethods[] = {
         (PyCFunction)PyXmlSec_PyShutdown,
         METH_NOARGS,
         PyXmlSec_PyShutdown__doc__
+    },
+    {
+        "get_libxmlsec_version",
+        (PyCFunction)PyXmlSec_GetLibXmlSecVersion,
+        METH_NOARGS,
+        PyXmlSec_GetLibXmlSecVersion__doc__
     },
     {
         "enable_debug_trace",

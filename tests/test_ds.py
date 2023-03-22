@@ -182,7 +182,11 @@ class TestSignContext(base.TestMemoryLeaks):
         self.assertEqual("rsakey.pem", ctx.key.name)
 
         ctx.sign(sign)
-        self.assertEqual(self.load_xml("sign5-out.xml"), root)
+        if (1, 2, 36) <= xmlsec.get_libxmlsec_version() <= (1, 2, 37):
+            expected_xml_file = 'sign5-out-xmlsec_1_2_36_to_37.xml'
+        else:
+            expected_xml_file = 'sign5-out.xml'
+        self.assertEqual(self.load_xml(expected_xml_file), root)
 
     def test_sign_binary_bad_args(self):
         ctx = xmlsec.SignatureContext()
