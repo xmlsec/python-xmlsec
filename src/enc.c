@@ -17,6 +17,11 @@
 #include <xmlsec/xmlenc.h>
 #include <xmlsec/xmltree.h>
 
+// Backwards compatibility with xmlsec 1.2
+#ifndef XMLSEC_KEYINFO_FLAGS_LAX_KEY_SEARCH
+#define XMLSEC_KEYINFO_FLAGS_LAX_KEY_SEARCH 0x00008000
+#endif
+
 typedef struct {
     PyObject_HEAD
     xmlSecEncCtxPtr handle;
@@ -50,6 +55,13 @@ static int PyXmlSec_EncryptionContext__init__(PyObject* self, PyObject* args, Py
     }
     ctx->manager = manager;
     PYXMLSEC_DEBUGF("%p: init enc context - ok, manager - %p", self, manager);
+
+    // xmlsec 1.3 changed the key search to strict mode, causing various examples
+    // in the docs to fail. For backwards compatibility, this changes it back to
+    // lax mode for now.
+    ctx->handle->keyInfoReadCtx.flags = XMLSEC_KEYINFO_FLAGS_LAX_KEY_SEARCH;
+    ctx->handle->keyInfoWriteCtx.flags = XMLSEC_KEYINFO_FLAGS_LAX_KEY_SEARCH;
+
     return 0;
 ON_FAIL:
     PYXMLSEC_DEBUGF("%p: init enc context - failed", self);
