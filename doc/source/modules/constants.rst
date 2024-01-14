@@ -47,7 +47,7 @@ KeyData
 
    The DSA key klass.
 
-.. data:: xmlsec.constants.KeyDataEcdsa
+.. data:: xmlsec.constants.KeyDataEc
 
    The ECDSA key klass.
 
