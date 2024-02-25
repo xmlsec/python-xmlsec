@@ -5,6 +5,7 @@ from _typeshed import GenericPath, Self, StrOrBytesPath
 from lxml.etree import _Element
 
 from xmlsec import constants as constants
+from xmlsec import template as template
 from xmlsec import tree as tree
 from xmlsec.constants import __KeyData as KeyData
 from xmlsec.constants import __Transform as Transform
