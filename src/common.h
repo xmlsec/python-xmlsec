@@ -13,7 +13,7 @@
 #include "debug.h"
 
 #ifndef MODULE_NAME
-#define MODULE_NAME "xmlsec"
+#define MODULE_NAME xmlsec
 #endif
 
 #define JOIN(X,Y) DO_JOIN1(X,Y)
