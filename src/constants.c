@@ -439,7 +439,9 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
     PYXMLSEC_ADD_KEYDATA_CONSTANT(KeyDataRetrievalMethod, "RETRIEVALMETHOD")
     PYXMLSEC_ADD_KEYDATA_CONSTANT(KeyDataEncryptedKey, "ENCRYPTEDKEY")
     PYXMLSEC_ADD_KEYDATA_CONSTANT(KeyDataAes, "AES")
+#ifndef XMLSEC_NO_DES
     PYXMLSEC_ADD_KEYDATA_CONSTANT(KeyDataDes, "DES")
+#endif
 #ifndef XMLSEC_NO_DSA
     PYXMLSEC_ADD_KEYDATA_CONSTANT(KeyDataDsa, "DSA")
 #endif
@@ -487,8 +489,10 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformKWAes192, "KW_AES192");
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformKWAes256, "KW_AES256");
 
+#ifndef XMLSEC_NO_DES
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformDes3Cbc, "DES3");
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformKWDes3, "KW_DES3");
+#endif
 #ifndef XMLSEC_NO_DSA
     PYXMLSEC_ADD_TRANSFORM_CONSTANT(TransformDsaSha1, "DSA_SHA1");
 #endif
