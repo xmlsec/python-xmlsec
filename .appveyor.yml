@@ -16,6 +16,10 @@ environment:
     python_version: 3.10.6
   - python: 310-x64
     python_version: 3.10.6
+  - python: 311
+    python_version: 3.11.2
+  - python: 311-x64
+    python_version: 3.11.2
 
 install:
   - ps: |
