@@ -37,7 +37,7 @@ Check the `examples <https://xmlsec.readthedocs.io/en/latest/examples.html>`_ se
 Requirements
 ************
 - ``libxml2 >= 2.9.1``
-- ``libxmlsec1 >= 1.2.18``
+- ``libxmlsec1 >= 1.2.33``
 
 Install
 *******
