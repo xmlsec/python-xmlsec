@@ -86,6 +86,7 @@ class build_ext(build_ext_orig):
         ext = self.ext_map['xmlsec']
         self.debug = os.environ.get('PYXMLSEC_ENABLE_DEBUG', False)
         self.static = os.environ.get('PYXMLSEC_STATIC_DEPS', False)
+        self.size_opt = os.environ.get('PYXMLSEC_OPTIMIZE_SIZE', True)
 
         if self.static or sys.platform == 'win32':
             self.info('starting static build on {}'.format(sys.platform))
@@ -153,11 +154,18 @@ class build_ext(build_ext_orig):
             )
 
         if self.debug:
-            ext.extra_compile_args.append('-Wall')
-            ext.extra_compile_args.append('-O0')
             ext.define_macros.append(('PYXMLSEC_ENABLE_DEBUG', '1'))
+            if sys.platform == 'win32':
+                ext.extra_compile_args.append('/Od')
+            else:
+                ext.extra_compile_args.append('-Wall')
+                ext.extra_compile_args.append('-O0')
         else:
-            ext.extra_compile_args.append('-Os')
+            if self.size_opt:
+                if sys.platform == 'win32':
+                    ext.extra_compile_args.append('/Os')
+                else:
+                    ext.extra_compile_args.append('-Os')
 
         super(build_ext, self).run()
 

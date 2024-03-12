@@ -233,22 +233,3 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         ctx = xmlsec.EncryptionContext()
         with self.assertRaises(TypeError):
             ctx.decrypt('')
-
-    def check_no_segfault(self):
-        namespaces = {'soap': 'http://schemas.xmlsoap.org/soap/envelope/'}
-
-        manager = xmlsec.KeysManager()
-        key = xmlsec.Key.from_file(self.path("rsacert.pem"), format=consts.KeyDataFormatCertPem)
-        manager.add_key(key)
-        template = self.load_xml('enc-bad-in.xml')
-        enc_data = xmlsec.template.encrypted_data_create(
-            template, xmlsec.Transform.AES128, type=xmlsec.EncryptionType.CONTENT, ns='xenc'
-        )
-        xmlsec.template.encrypted_data_ensure_cipher_value(enc_data)
-        key_info = xmlsec.template.encrypted_data_ensure_key_info(enc_data, ns='dsig')
-        enc_key = xmlsec.template.add_encrypted_key(key_info, xmlsec.Transform.RSA_PKCS1)
-        xmlsec.template.encrypted_data_ensure_cipher_value(enc_key)
-        data = template.find('soap:Body', namespaces=namespaces)
-        enc_ctx = xmlsec.EncryptionContext(manager)
-        enc_ctx.key = xmlsec.Key.generate(xmlsec.KeyData.AES, 192, xmlsec.KeyDataType.SESSION)
-        self.assertRaises(Exception, enc_ctx.encrypt_xml(enc_data, data))

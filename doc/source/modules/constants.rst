@@ -47,7 +47,7 @@ KeyData
 
    The DSA key klass.
 
-.. data:: xmlsec.constants.KeyDataEcdsa
+.. data:: xmlsec.constants.KeyDataEc
 
    The ECDSA key klass.
 
@@ -165,12 +165,6 @@ Namespaces
 
 .. data:: xmlsec.constants.XPointerNs
    :annotation: = 'http://www.w3.org/2001/04/xmldsig-more/xptr'
-
-.. data:: xmlsec.constants.Soap11Ns
-   :annotation: = 'http://schemas.xmlsoap.org/soap/envelope/'
-
-.. data:: xmlsec.constants.Soap12Ns
-   :annotation: = 'http://www.w3.org/2002/06/soap-envelope'
 
 .. data:: xmlsec.constants.NsExcC14N
    :annotation: = 'http://www.w3.org/2001/10/xml-exc-c14n#'

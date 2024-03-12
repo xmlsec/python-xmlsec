@@ -163,7 +163,7 @@ static PyObject* PyXmlSec_KeyFromFile(PyObject* self, PyObject* args, PyObject* 
     if (is_content) {
         key->handle = xmlSecCryptoAppKeyLoadMemory((const xmlSecByte*)data, (xmlSecSize)data_size, format, password, NULL, NULL);
     } else {
-        key->handle = xmlSecCryptoAppKeyLoad(data, format, password, NULL, NULL);
+        key->handle = xmlSecCryptoAppKeyLoadEx(data, xmlSecKeyDataTypePrivate, format, password, NULL, NULL);
     }
     Py_END_ALLOW_THREADS;
 
