@@ -445,8 +445,11 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
 #ifndef XMLSEC_NO_DSA
     PYXMLSEC_ADD_KEYDATA_CONSTANT(KeyDataDsa, "DSA")
 #endif
-#if XMLSEC_VERSION_HEX > 0x10212
-    // from version 1.2.19
+#if XMLSEC_VERSION_HEX > 0x10212 && XMLSEC_VERSION_HEX < 0x10303
+    // from version 1.2.19 to version 1.3.2 (inclusive)
+    PYXMLSEC_ADD_KEYDATA_CONSTANT(KeyDataEcdsa, "ECDSA")
+#elif XMLSEC_VERSION_HEX >= 0x10303
+    // from version 1.3.3 (inclusive)
     PYXMLSEC_ADD_KEYDATA_CONSTANT(KeyDataEc, "ECDSA")
 #endif
     PYXMLSEC_ADD_KEYDATA_CONSTANT(KeyDataHmac, "HMAC")

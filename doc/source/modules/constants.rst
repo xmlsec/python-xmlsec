@@ -47,9 +47,13 @@ KeyData
 
    The DSA key klass.
 
+.. data:: xmlsec.constants.KeyDataEcdsa
+
+   (Deprecated. The EC key klass) The ECDSA key klass.
+
 .. data:: xmlsec.constants.KeyDataEc
 
-   The ECDSA key klass.
+   The EC key klass.
 
 .. data:: xmlsec.constants.KeyDataHmac
 
