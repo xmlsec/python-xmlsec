@@ -136,7 +136,7 @@ Building from source
 
    .. code-block:: bash
 
-      git clone https://github.com/mehcode/python-xmlsec.git
+      git clone https://github.com/xmlsec/python-xmlsec.git
 
 #. Change into the ``python-xmlsec`` root directory.
 
