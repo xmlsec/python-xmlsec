@@ -206,7 +206,7 @@ static PyObject* PyXmlSec_KeyFromEngine(PyObject* self, PyObject* args, PyObject
     if ((key = PyXmlSec_NewKey1((PyTypeObject*)self)) == NULL) goto ON_FAIL;
 
     Py_BEGIN_ALLOW_THREADS;
-    key->handle = xmlSecCryptoAppKeyLoad(engine_and_key_id, xmlSecKeyDataFormatEngine, NULL, xmlSecCryptoAppGetDefaultPwdCallback(),
+    key->handle = xmlSecCryptoAppKeyLoadEx(engine_and_key_id, xmlSecKeyDataTypePrivate, xmlSecKeyDataFormatEngine, NULL, xmlSecCryptoAppGetDefaultPwdCallback(),
                                          (void*)engine_and_key_id);
     Py_END_ALLOW_THREADS;
 
