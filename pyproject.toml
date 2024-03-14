@@ -44,4 +44,31 @@ known_first_party = ['xmlsec']
 known_third_party = ['lxml', 'pytest', '_pytest', 'hypothesis']
 
 [build-system]
-requires = ['setuptools>=42', 'wheel', 'setuptools_scm[toml]>=3.4', "pkgconfig>=1.5.1", "lxml>=3.8, !=4.7.0"]
+requires = ['setuptools>=42', 'wheel', 'setuptools_scm[toml]>=3.4', "pkgconfig>=1.5.1", "lxml>=5.0.0"]
+
+[tool.cibuildwheel]
+build-verbosity = 1
+build-frontend = "build"
+skip = ["pp*", "*-musllinux_i686"]
+test-command = "pytest -v --color=yes {package}/tests"
+before-test = "pip install -r requirements-test.txt"
+test-skip = "*-macosx_arm64"
+
+[tool.cibuildwheel.environment]
+PYXMLSEC_LIBXML2_VERSION = "2.12.3"
+PYXMLSEC_LIBXSLT_VERSION = "1.1.39"
+PYXMLSEC_STATIC_DEPS = "true"
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64", "aarch64", "i686"]
+environment-pass = [
+    "PYXMLSEC_LIBXML2_VERSION",
+    "PYXMLSEC_LIBXSLT_VERSION",
+    "PYXMLSEC_STATIC_DEPS"
+]
+
+[tool.cibuildwheel.windows]
+archs = ["AMD64", "x86"]
+
+[tool.cibuildwheel.macos]
+archs = ["x86_64", "arm64"]

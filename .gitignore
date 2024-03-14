@@ -14,3 +14,7 @@
 *.pyo
 *.egg*
 *.so
+
+# Built wheels
+/wheelhouse
+/libs

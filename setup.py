@@ -11,7 +11,7 @@ import tarfile
 import zipfile
 from distutils import log
 from distutils.errors import DistutilsError
-from distutils.version import StrictVersion as Version
+from distutils.version import LooseVersion, StrictVersion
 from pathlib import Path
 from urllib.request import urlcleanup, urljoin, urlopen, urlretrieve
 
@@ -31,7 +31,7 @@ class HrefCollector(html.parser.HTMLParser):
                     self.hrefs.append(value)
 
 
-def latest_release_from_html(url, matcher):
+def latest_release_from_html(url, matcher, version_cls=StrictVersion):
     with contextlib.closing(urlopen(url)) as r:
         charset = r.headers.get_content_charset() or 'utf-8'
         content = r.read().decode(charset)
@@ -41,9 +41,9 @@ def latest_release_from_html(url, matcher):
 
         def comp(text):
             try:
-                return Version(matcher.match(text).groupdict()['version'])
+                return version_cls(matcher.match(text).groupdict()['version'])
             except (AttributeError, ValueError):
-                return Version('0.0')
+                return version_cls('0.0')
 
         latest = max(hrefs, key=comp)
         return '{}/{}'.format(url, latest)
@@ -56,6 +56,12 @@ def latest_release_from_gnome_org_cache(url, lib_name):
         latest_version = cache[2][lib_name][-1]
         latest_source = cache[1][lib_name][latest_version]['tar.xz']
         return '{}/{}'.format(url, latest_source)
+
+
+def latest_openssl_release():
+    return latest_release_from_html(
+        'https://www.openssl.org/source/old/1.1.1', re.compile('^openssl-(?P<version>.*).tar.gz$'), LooseVersion
+    )
 
 
 def latest_zlib_release():
@@ -76,6 +82,17 @@ def latest_libxslt_release():
 
 def latest_xmlsec_release():
     return latest_release_from_html('https://www.aleksey.com/xmlsec/download/', re.compile('xmlsec1-(?P<version>.*).tar.gz'))
+
+
+class CrossCompileInfo:
+    def __init__(self, host, arch, compiler):
+        self.host = host
+        self.arch = arch
+        self.compiler = compiler
+
+    @property
+    def triplet(self):
+        return f"{self.host}-{self.arch}-{self.compiler}"
 
 
 class build_ext(build_ext_orig):
@@ -106,7 +123,9 @@ class build_ext(build_ext_orig):
             if sys.platform == 'win32':
                 self.prepare_static_build_win()
             elif 'linux' in sys.platform:
-                self.prepare_static_build_linux()
+                self.prepare_static_build_linux_osx(sys.platform)
+            elif 'darwin' in sys.platform:
+                self.prepare_static_build_linux_osx(sys.platform)
         else:
             import pkgconfig
 
@@ -210,7 +229,7 @@ class build_ext(build_ext_orig):
             ('XMLSEC_CRYPTO_OPENSSL', '1'),
             ('UNICODE', '1'),
             ('_UNICODE', '1'),
-            ('LIBXML_ICONV_ENABLED', 1),
+            ('LIBXML_ICONV_ENABLED', '1'),
             ('LIBXML_STATIC', '1'),
             ('LIBXSLT_STATIC', '1'),
             ('XMLSEC_STATIC', '1'),
@@ -237,8 +256,8 @@ class build_ext(build_ext_orig):
         includes.append(next(p / 'xmlsec' for p in includes if (p / 'xmlsec').is_dir()))
         ext.include_dirs = [str(p.absolute()) for p in includes]
 
-    def prepare_static_build_linux(self):
-        self.openssl_version = os.environ.get('PYXMLSEC_OPENSSL_VERSION', '1.1.1q')
+    def prepare_static_build_linux_osx(self, platform):
+        self.openssl_version = os.environ.get('PYXMLSEC_OPENSSL_VERSION')
         self.libiconv_version = os.environ.get('PYXMLSEC_LIBICONV_VERSION')
         self.libxml2_version = os.environ.get('PYXMLSEC_LIBXML2_VERSION')
         self.libxslt_version = os.environ.get('PYXMLSEC_LIBXSLT_VERSION')
@@ -250,8 +269,13 @@ class build_ext(build_ext_orig):
         if openssl_tar is None:
             self.info('{:10}: {}'.format('OpenSSL', 'source tar not found, downloading ...'))
             openssl_tar = self.libs_dir / 'openssl.tar.gz'
-            self.info('{:10}: {} {}'.format('OpenSSL', 'version', self.openssl_version))
-            urlretrieve('https://www.openssl.org/source/openssl-{}.tar.gz'.format(self.openssl_version), str(openssl_tar))
+            if self.openssl_version is None:
+                url = latest_openssl_release()
+                self.info('{:10}: {}'.format('OpenSSL', 'PYXMLSEC_OPENSSL_VERSION unset, downloading latest from {}'.format(url)))
+            else:
+                url = 'https://www.openssl.org/source/openssl-{}.tar.gz'.format(self.openssl_version)
+                self.info('{:10}: {} {}'.format('OpenSSL', 'version', self.openssl_version))
+            urlretrieve(url, str(openssl_tar))
 
         # fetch zlib
         zlib_tar = next(self.libs_dir.glob('zlib*.tar.gz'), None)
@@ -352,16 +376,42 @@ class build_ext(build_ext_orig):
 
         prefix_arg = '--prefix={}'.format(self.prefix_dir)
 
-        cflags = ['-fPIC']
         env = os.environ.copy()
-        if 'CFLAGS' in env:
-            env['CFLAGS'].append(' '.join(cflags))
-        else:
-            env['CFLAGS'] = ' '.join(cflags)
+        cflags = []
+        if env.get('CFLAGS'):
+            cflags.append(env['CFLAGS'])
+        cflags.append('-fPIC')
+        ldflags = []
+        if env.get('LDFLAGS'):
+            ldflags.append(env['LDFLAGS'])
+
+        cross_compiling = False
+        if platform == 'darwin':
+            import platform
+
+            arch = self.plat_name.rsplit('-', 1)[1]
+            if arch != platform.machine() and arch in ('x86_64', 'arm64'):
+                self.info('Cross-compiling for {}'.format(arch))
+                cflags.append('-arch {}'.format(arch))
+                ldflags.append('-arch {}'.format(arch))
+                cross_compiling = CrossCompileInfo('darwin64', arch, 'cc')
+            major_version, minor_version = tuple(map(int, platform.mac_ver()[0].split('.')[:2]))
+            if major_version >= 11:
+                if 'MACOSX_DEPLOYMENT_TARGET' not in env:
+                    env['MACOSX_DEPLOYMENT_TARGET'] = "11.0"
+
+        env['CFLAGS'] = ' '.join(cflags)
+        env['LDFLAGS'] = ' '.join(ldflags)
 
         self.info('Building OpenSSL')
         openssl_dir = next(self.build_libs_dir.glob('openssl-*'))
-        subprocess.check_output(['./config', prefix_arg, 'no-shared', '-fPIC'], cwd=str(openssl_dir), env=env)
+        openssl_config_cmd = [prefix_arg, 'no-shared', '-fPIC']
+        if cross_compiling:
+            openssl_config_cmd.insert(0, './Configure')
+            openssl_config_cmd.append(cross_compiling.triplet)
+        else:
+            openssl_config_cmd.insert(0, './config')
+        subprocess.check_output(openssl_config_cmd, cwd=str(openssl_dir), env=env)
         subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(openssl_dir), env=env)
         subprocess.check_output(
             ['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install_sw'], cwd=str(openssl_dir), env=env
@@ -373,10 +423,22 @@ class build_ext(build_ext_orig):
         subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(zlib_dir), env=env)
         subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(zlib_dir), env=env)
 
+        host_arg = ""
+        if cross_compiling:
+            host_arg = f'--host={cross_compiling.arch}'
+
         self.info('Building libiconv')
         libiconv_dir = next(self.build_libs_dir.glob('libiconv-*'))
         subprocess.check_output(
-            ['./configure', prefix_arg, '--disable-dependency-tracking', '--disable-shared'], cwd=str(libiconv_dir), env=env
+            [
+                './configure',
+                prefix_arg,
+                '--disable-dependency-tracking',
+                '--disable-shared',
+                host_arg,
+            ],
+            cwd=str(libiconv_dir),
+            env=env,
         )
         subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(libiconv_dir), env=env)
         subprocess.check_output(
@@ -391,11 +453,11 @@ class build_ext(build_ext_orig):
                 prefix_arg,
                 '--disable-dependency-tracking',
                 '--disable-shared',
-                '--enable-rebuild-docs=no',
                 '--without-lzma',
                 '--without-python',
                 '--with-iconv={}'.format(self.prefix_dir),
                 '--with-zlib={}'.format(self.prefix_dir),
+                host_arg,
             ],
             cwd=str(libxml2_dir),
             env=env,
@@ -416,6 +478,7 @@ class build_ext(build_ext_orig):
                 '--without-python',
                 '--without-crypto',
                 '--with-libxml-prefix={}'.format(self.prefix_dir),
+                host_arg,
             ],
             cwd=str(libxslt_dir),
             env=env,
@@ -426,10 +489,8 @@ class build_ext(build_ext_orig):
         )
 
         self.info('Building xmlsec1')
-        if 'LDFLAGS' in env:
-            env['LDFLAGS'].append(' -lpthread')
-        else:
-            env['LDFLAGS'] = '-lpthread'
+        ldflags.append('-lpthread')
+        env['LDFLAGS'] = ' '.join(ldflags)
         xmlsec1_dir = next(self.build_libs_dir.glob('xmlsec1-*'))
         subprocess.check_output(
             [
@@ -437,6 +498,7 @@ class build_ext(build_ext_orig):
                 prefix_arg,
                 '--disable-shared',
                 '--disable-gost',
+                '--enable-md5',
                 '--disable-crypto-dl',
                 '--enable-static=yes',
                 '--enable-shared=no',
@@ -445,6 +507,7 @@ class build_ext(build_ext_orig):
                 '--with-openssl={}'.format(self.prefix_dir),
                 '--with-libxml={}'.format(self.prefix_dir),
                 '--with-libxslt={}'.format(self.prefix_dir),
+                host_arg,
             ],
             cwd=str(xmlsec1_dir),
             env=env,
@@ -482,7 +545,8 @@ class build_ext(build_ext_orig):
         ext.include_dirs.extend([str(p.absolute()) for p in (self.prefix_dir / 'include').iterdir() if p.is_dir()])
 
         ext.library_dirs = []
-        ext.libraries = ['m', 'rt']
+        if platform == 'linux':
+            ext.libraries = ['m', 'rt']
         extra_objects = [
             'libxmlsec1.a',
             'libxslt.a',
@@ -513,9 +577,9 @@ setup(
     long_description=long_desc,
     ext_modules=[pyxmlsec],
     cmdclass={'build_ext': build_ext},
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     setup_requires=setup_reqs,
-    install_requires=['lxml>=3.8'],
+    install_requires=['lxml>=5.0.0,<=5.1.0'],
     author="Bulat Gaifullin",
     author_email='support@mehcode.com',
     maintainer='Oleg Hoefling',
@@ -536,12 +600,12 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: C',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Topic :: Text Processing :: Markup :: XML',
         'Typing :: Typed',
     ],
