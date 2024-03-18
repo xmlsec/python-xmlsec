@@ -133,7 +133,7 @@ class build_ext(build_ext_orig):
             [('MODULE_NAME', self.distribution.metadata.name), ('MODULE_VERSION', self.distribution.metadata.version)]
         )
         # escape the XMLSEC_CRYPTO macro value, see mehcode/python-xmlsec#141
-        for (key, value) in ext.define_macros:
+        for key, value in ext.define_macros:
             if key == 'XMLSEC_CRYPTO' and not (value.startswith('"') and value.endswith('"')):
                 ext.define_macros.remove((key, value))
                 ext.define_macros.append((key, '"{0}"'.format(value)))
