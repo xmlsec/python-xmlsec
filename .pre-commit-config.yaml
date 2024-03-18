@@ -2,14 +2,14 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 -   repo: https://github.com/psf/black
-    rev: 22.8.0
+    rev: 24.3.0
     hooks:
     -   id: black
         types: []
         files: ^.*.pyi?$
         exclude: ^doc/
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: v4.5.0
     hooks:
     -   id: no-commit-to-branch
     -   id: trailing-whitespace
@@ -25,17 +25,17 @@ repos:
     -   id: pretty-format-json
         args: [--autofix]
 -   repo: https://github.com/PyCQA/flake8
-    rev: 5.0.4
+    rev: 7.0.0
     hooks:
     -   id: flake8
         exclude: ^setup.py$
         additional_dependencies: [flake8-docstrings, flake8-bugbear, flake8-logging-format, flake8-builtins, flake8-eradicate, flake8-fixme, pep8-naming, flake8-pep3101, flake8-annotations-complexity,flake8-pyi]
 -   repo: https://github.com/PyCQA/isort
-    rev: 5.12.0
+    rev: 5.13.2
     hooks:
     -   id: isort
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.981
+    rev: v1.9.0
     hooks:
     -   id: mypy
         exclude: (setup.py|tests/.*.py|doc/.*)
@@ -43,6 +43,6 @@ repos:
         files: ^.*.pyi?$
         additional_dependencies: [lxml-stubs,types-docutils]
 -   repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.9.0
+    rev: v1.10.0
     hooks:
     -   id: rst-backticks
