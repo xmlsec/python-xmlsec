@@ -121,9 +121,16 @@ static PyObject* PyXmlSec_PyShutdown(PyObject* self) {
 
 static char PyXmlSec_GetLibXmlSecVersion__doc__[] = \
     "get_libxmlsec_version() -> tuple\n"
-    "Returns Version tuple of wrapped libxml library.";
+    "Returns Version tuple of wrapped libxmlsec library.";
 static PyObject* PyXmlSec_GetLibXmlSecVersion() {
     return Py_BuildValue("(iii)", XMLSEC_VERSION_MAJOR, XMLSEC_VERSION_MINOR, XMLSEC_VERSION_SUBMINOR);
+}
+
+static char PyXmlSec_GetLibXmlVersion__doc__[] = \
+    "get_libxml_version() -> tuple\n"
+    "Returns Version tuple of wrapped libxml library.";
+static PyObject* PyXmlSec_GetLibXmlVersion() {
+    return Py_BuildValue("(iii)", XMLSEC_LIBXML_VERSION_MAJOR, XMLSEC_LIBXML_VERSION_MINOR, XMLSEC_LIBXML_VERSION_PATCH);
 }
 
 static char PyXmlSec_PyEnableDebugOutput__doc__[] = \
@@ -398,6 +405,12 @@ static PyMethodDef PyXmlSec_MainMethods[] = {
         (PyCFunction)PyXmlSec_GetLibXmlSecVersion,
         METH_NOARGS,
         PyXmlSec_GetLibXmlSecVersion__doc__
+    },
+    {
+        "get_libxml_version",
+        (PyCFunction)PyXmlSec_GetLibXmlVersion,
+        METH_NOARGS,
+        PyXmlSec_GetLibXmlVersion__doc__
     },
     {
         "enable_debug_trace",
