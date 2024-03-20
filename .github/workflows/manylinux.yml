@@ -18,11 +18,15 @@ jobs:
     container: quay.io/pypa/${{ matrix.image }}
     steps:
       - uses: actions/checkout@v1
-      - name: Install build dependencies
+      - name: Install python build dependencies
         run: |
           # https://github.com/actions/runner/issues/2033
           chown -R $(id -u):$(id -g) $PWD
           /opt/python/${{ matrix.python-abi }}/bin/pip install --upgrade pip setuptools wheel build
+      - name: Install system build dependencies (manylinux)
+        run: |
+          yum install -y perl-core
+        if: contains(matrix.image, 'manylinux')
       - name: Set environment variables
         shell: bash
         run: |
