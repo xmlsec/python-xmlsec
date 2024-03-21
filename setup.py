@@ -108,6 +108,17 @@ def latest_xmlsec_release():
     return latest_release_from_html('https://www.aleksey.com/xmlsec/download/', re.compile('xmlsec1-(?P<version>.*).tar.gz'))
 
 
+class CrossCompileInfo:
+    def __init__(self, host, arch, compiler):
+        self.host = host
+        self.arch = arch
+        self.compiler = compiler
+
+    @property
+    def triplet(self):
+        return "{}-{}-{}".format(self.host, self.arch, self.compiler)
+
+
 class build_ext(build_ext_orig):
     def info(self, message):
         self.announce(message, level=log.INFO)
@@ -136,7 +147,9 @@ class build_ext(build_ext_orig):
             if sys.platform == 'win32':
                 self.prepare_static_build_win()
             elif 'linux' in sys.platform:
-                self.prepare_static_build_linux()
+                self.prepare_static_build(sys.platform)
+            elif 'darwin' in sys.platform:
+                self.prepare_static_build(sys.platform)
         else:
             import pkgconfig
 
@@ -267,7 +280,7 @@ class build_ext(build_ext_orig):
         includes.append(next(p / 'xmlsec' for p in includes if (p / 'xmlsec').is_dir()))
         ext.include_dirs = [str(p.absolute()) for p in includes]
 
-    def prepare_static_build_linux(self):
+    def prepare_static_build(self, build_platform):
         self.openssl_version = os.environ.get('PYXMLSEC_OPENSSL_VERSION')
         self.libiconv_version = os.environ.get('PYXMLSEC_LIBICONV_VERSION')
         self.libxml2_version = os.environ.get('PYXMLSEC_LIBXML2_VERSION')
@@ -387,16 +400,42 @@ class build_ext(build_ext_orig):
 
         prefix_arg = '--prefix={}'.format(self.prefix_dir)
 
-        cflags = ['-fPIC']
         env = os.environ.copy()
-        if 'CFLAGS' in env:
-            env['CFLAGS'].append(' '.join(cflags))
-        else:
-            env['CFLAGS'] = ' '.join(cflags)
+        cflags = []
+        if env.get('CFLAGS'):
+            cflags.append(env['CFLAGS'])
+        cflags.append('-fPIC')
+        ldflags = []
+        if env.get('LDFLAGS'):
+            ldflags.append(env['LDFLAGS'])
+
+        cross_compiling = False
+        if build_platform == 'darwin':
+            import platform
+
+            arch = self.plat_name.rsplit('-', 1)[1]
+            if arch != platform.machine() and arch in ('x86_64', 'arm64'):
+                self.info('Cross-compiling for {}'.format(arch))
+                cflags.append('-arch {}'.format(arch))
+                ldflags.append('-arch {}'.format(arch))
+                cross_compiling = CrossCompileInfo('darwin64', arch, 'cc')
+            major_version, minor_version = tuple(map(int, platform.mac_ver()[0].split('.')[:2]))
+            if major_version >= 11:
+                if 'MACOSX_DEPLOYMENT_TARGET' not in env:
+                    env['MACOSX_DEPLOYMENT_TARGET'] = "11.0"
+
+        env['CFLAGS'] = ' '.join(cflags)
+        env['LDFLAGS'] = ' '.join(ldflags)
 
         self.info('Building OpenSSL')
         openssl_dir = next(self.build_libs_dir.glob('openssl-*'))
-        subprocess.check_output(['./config', prefix_arg, 'no-shared', '-fPIC', '--libdir=lib'], cwd=str(openssl_dir), env=env)
+        openssl_config_cmd = [prefix_arg, 'no-shared', '-fPIC', '--libdir=lib']
+        if cross_compiling:
+            openssl_config_cmd.insert(0, './Configure')
+            openssl_config_cmd.append(cross_compiling.triplet)
+        else:
+            openssl_config_cmd.insert(0, './config')
+        subprocess.check_output(openssl_config_cmd, cwd=str(openssl_dir), env=env)
         subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(openssl_dir), env=env)
         subprocess.check_output(
             ['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install_sw'], cwd=str(openssl_dir), env=env
@@ -408,10 +447,22 @@ class build_ext(build_ext_orig):
         subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(zlib_dir), env=env)
         subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(zlib_dir), env=env)
 
+        host_arg = ""
+        if cross_compiling:
+            host_arg = '--host={}'.format(cross_compiling.arch)
+
         self.info('Building libiconv')
         libiconv_dir = next(self.build_libs_dir.glob('libiconv-*'))
         subprocess.check_output(
-            ['./configure', prefix_arg, '--disable-dependency-tracking', '--disable-shared'], cwd=str(libiconv_dir), env=env
+            [
+                './configure',
+                prefix_arg,
+                '--disable-dependency-tracking',
+                '--disable-shared',
+                host_arg,
+            ],
+            cwd=str(libiconv_dir),
+            env=env,
         )
         subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(libiconv_dir), env=env)
         subprocess.check_output(
@@ -430,6 +481,7 @@ class build_ext(build_ext_orig):
                 '--without-python',
                 '--with-iconv={}'.format(self.prefix_dir),
                 '--with-zlib={}'.format(self.prefix_dir),
+                host_arg,
             ],
             cwd=str(libxml2_dir),
             env=env,
@@ -450,6 +502,7 @@ class build_ext(build_ext_orig):
                 '--without-python',
                 '--without-crypto',
                 '--with-libxml-prefix={}'.format(self.prefix_dir),
+                host_arg,
             ],
             cwd=str(libxslt_dir),
             env=env,
@@ -460,10 +513,8 @@ class build_ext(build_ext_orig):
         )
 
         self.info('Building xmlsec1')
-        if 'LDFLAGS' in env:
-            env['LDFLAGS'].append(' -lpthread')
-        else:
-            env['LDFLAGS'] = '-lpthread'
+        ldflags.append('-lpthread')
+        env['LDFLAGS'] = ' '.join(ldflags)
         xmlsec1_dir = next(self.build_libs_dir.glob('xmlsec1-*'))
         subprocess.check_output(
             [
@@ -480,6 +531,7 @@ class build_ext(build_ext_orig):
                 '--with-openssl={}'.format(self.prefix_dir),
                 '--with-libxml={}'.format(self.prefix_dir),
                 '--with-libxslt={}'.format(self.prefix_dir),
+                host_arg,
             ],
             cwd=str(xmlsec1_dir),
             env=env,
@@ -517,7 +569,8 @@ class build_ext(build_ext_orig):
         ext.include_dirs.extend([str(p.absolute()) for p in (self.prefix_dir / 'include').iterdir() if p.is_dir()])
 
         ext.library_dirs = []
-        ext.libraries = ['m', 'rt']
+        if build_platform == 'linux':
+            ext.libraries = ['m', 'rt']
         extra_objects = [
             'libxmlsec1.a',
             'libxslt.a',
