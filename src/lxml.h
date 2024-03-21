@@ -29,4 +29,13 @@ PyXmlSec_LxmlElementPtr PyXmlSec_elementFactory(PyXmlSec_LxmlDocumentPtr doc, xm
 // converts o to PyObject, None object is not allowed, does not increment ref_counts
 int PyXmlSec_LxmlElementConverter(PyObject* o, PyXmlSec_LxmlElementPtr* p);
 
+// get version numbers for libxml2 both compiled and loaded
+long PyXmlSec_GetLibXmlVersionMajor();
+long PyXmlSec_GetLibXmlVersionMinor();
+long PyXmlSec_GetLibXmlVersionPatch();
+
+long PyXmlSec_GetLibXmlCompiledVersionMajor();
+long PyXmlSec_GetLibXmlCompiledVersionMinor();
+long PyXmlSec_GetLibXmlCompiledVersionPatch();
+
 #endif // __PYXMLSEC_LXML_H__
