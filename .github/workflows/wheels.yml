@@ -1,0 +1,122 @@
+name: Wheel build
+
+on:
+  release:
+    types: [created]
+  schedule:
+  #        ┌───────────── minute (0 - 59)
+  #        │  ┌───────────── hour (0 - 23)
+  #        │  │ ┌───────────── day of the month (1 - 31)
+  #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
+  #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
+  #        │  │ │ │ │
+  - cron: "42 3 * * 4"
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  sdist:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4.1.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5.0.0
+        with:
+          python-version: "3.x"
+
+      - name: Install build dependencies
+        run: |
+          pip install --upgrade pip setuptools wheel
+
+      - name: Package source dist
+        run: python setup.py sdist
+
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update -y -q
+          sudo apt-get install -y -q libxml2-dev libxslt1-dev libxmlsec1-dev libxmlsec1-openssl opensc softhsm2 libengine-pkcs11-openssl
+          pip install --upgrade -r requirements-test.txt --no-binary lxml
+          pip install dist/xmlsec-$(python setup.py --version).tar.gz
+
+      - name: Run tests
+        run: pytest -v --color=yes
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+
+  generate-wheels-matrix:
+    # Create a matrix of all architectures & versions to build.
+    # This enables the next step to run cibuildwheel in parallel.
+    # From https://iscinumpy.dev/post/cibuildwheel-2-10-0/#only-210
+    name: Generate wheels matrix
+    runs-on: ubuntu-latest
+    outputs:
+      include: ${{ steps.set-matrix.outputs.include }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cibuildwheel
+        # Nb. keep cibuildwheel version pin consistent with job below
+        run: pipx install cibuildwheel==2.16.5
+      - id: set-matrix
+        # Once we have the windows build figured out, it can be added here
+        # by updating the matrix to include windows builds as well.
+        # See example here:
+        # https://github.com/lxml/lxml/blob/3ccc7d583e325ceb0ebdf8fc295bbb7fc8cd404d/.github/workflows/wheels.yml#L95C1-L106C51
+        run: |
+          MATRIX=$(
+            {
+              cibuildwheel --print-build-identifiers --platform linux \
+              | jq -nRc '{"only": inputs, "os": "ubuntu-latest"}' \
+              && cibuildwheel --print-build-identifiers --platform macos \
+              | jq -nRc '{"only": inputs, "os": "macos-latest"}'
+            } | jq -sc
+          )
+          echo "include=$MATRIX"
+          echo "include=$MATRIX" >> $GITHUB_OUTPUT
+
+  build_wheels:
+    name: Build for ${{ matrix.only }}
+    needs: generate-wheels-matrix
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.generate-wheels-matrix.outputs.include) }}
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.16.5
+        with:
+          only: ${{ matrix.only }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/upload-artifact@v4.3.1
+        with:
+          path: ./wheelhouse/*.whl
+          name: xmlsec-wheel-${{ matrix.only }}
