@@ -437,6 +437,7 @@ class build_ext(build_ext_orig):
                 prefix_arg,
                 '--disable-shared',
                 '--disable-gost',
+                '--enable-md5',
                 '--disable-crypto-dl',
                 '--enable-static=yes',
                 '--enable-shared=no',
