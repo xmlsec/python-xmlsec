@@ -36,6 +36,7 @@ jobs:
           pip install xmlsec --only-binary=xmlsec --no-index --find-links=dist/
           echo "PYXMLSEC_LIBFILE=$(python -c 'import xmlsec; print(xmlsec.__file__)')" >> $GITHUB_ENV
         env:
+          CC: clang
           CFLAGS: "-I/usr/local/opt/libxml2/include"
           LDFLAGS: "-L/usr/local/opt/libxml2/lib"
           PKG_CONFIG_PATH: "/usr/local/opt/libxml2/lib/pkgconfig"
@@ -45,5 +46,5 @@ jobs:
       - name: Report coverage to codecov
         run: |
           /Library/Developer/CommandLineTools/usr/bin/llvm-profdata merge -sparse ${{ env.LLVM_PROFILE_FILE }} -output pyxmlsec.profdata
-          /Library/Developer/CommandLineTools/usr/bin/llvm-cov show ${{ env.PYXMLSEC_LIBFILE }} -instr-profile=pyxmlsec.profdata src > coverage.txt
+          /Library/Developer/CommandLineTools/usr/bin/llvm-cov -arch x86_64 show ${{ env.PYXMLSEC_LIBFILE }} -instr-profile=pyxmlsec.profdata src > coverage.txt
           bash <(curl -s https://codecov.io/bash) -f coverage.txt
