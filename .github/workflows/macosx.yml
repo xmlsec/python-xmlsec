@@ -19,8 +19,9 @@ jobs:
       - name: Build macosx_x86_64 wheel
         env:
           CC: clang
-          CFLAGS: "-fprofile-instr-generate -fcoverage-mapping"
-          LDFLAGS: "-fprofile-instr-generate -fcoverage-mapping"
+          CFLAGS: "-fprofile-instr-generate -fcoverage-mapping -I/usr/local/opt/libxml2/include"
+          LDFLAGS: "-fprofile-instr-generate -fcoverage-mapping -L/usr/local/opt/libxml2/lib"
+          PKG_CONFIG_PATH: "/usr/local/opt/libxml2/lib/pkgconfig"
         run: |
           python -m build
           rm -rf build/
@@ -31,9 +32,13 @@ jobs:
           echo "LLVM_PROFILE_FILE=pyxmlsec.profraw" >> $GITHUB_ENV
       - name: Install test dependencies
         run: |
-          pip install coverage --upgrade -r requirements-test.txt
+          pip install coverage --upgrade -r requirements-test.txt --no-binary lxml
           pip install xmlsec --only-binary=xmlsec --no-index --find-links=dist/
           echo "PYXMLSEC_LIBFILE=$(python -c 'import xmlsec; print(xmlsec.__file__)')" >> $GITHUB_ENV
+        env:
+          CFLAGS: "-I/usr/local/opt/libxml2/include"
+          LDFLAGS: "-L/usr/local/opt/libxml2/lib"
+          PKG_CONFIG_PATH: "/usr/local/opt/libxml2/lib/pkgconfig"
       - name: Run tests
         run: |
           coverage run -m pytest -v --color=yes
