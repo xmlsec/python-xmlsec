@@ -41,5 +41,5 @@ jobs:
       - name: Report coverage to codecov
         run: |
           /Library/Developer/CommandLineTools/usr/bin/llvm-profdata merge -sparse ${{ env.LLVM_PROFILE_FILE }} -output pyxmlsec.profdata
-          /Library/Developer/CommandLineTools/usr/bin/llvm-cov show ${{ env.PYXMLSEC_LIBFILE }} --arch=x86_64 --instr-profile=pyxmlsec.profdata src > coverage.txt
+          /Library/Developer/CommandLineTools/usr/bin/llvm-cov show ${{ env.PYXMLSEC_LIBFILE }} --arch=$(uname -m) --instr-profile=pyxmlsec.profdata src > coverage.txt
           bash <(curl -s https://codecov.io/bash) -f coverage.txt
