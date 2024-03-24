@@ -21,7 +21,7 @@ jobs:
           CC: clang
           CFLAGS: "-fprofile-instr-generate -fcoverage-mapping"
           LDFLAGS: "-fprofile-instr-generate -fcoverage-mapping"
-          PKG_CONFIG_PATH: "/usr/local/opt/libxml2/lib/pkgconfig"
+          PKG_CONFIG_PATH: "$(brew --prefix)/opt/libxml2/lib/pkgconfig"
         run: |
           python -m build
           rm -rf build/
