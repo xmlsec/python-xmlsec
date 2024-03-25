@@ -47,18 +47,6 @@ long PyXmlSec_GetLibXmlCompiledVersionPatch() {
     return XMLSEC_EXTRACT_PATCH(LIBXML_VERSION);
 }
 
-static int PyXmlSec_CheckLibXmlLibraryVersion(void) {
-    // Make sure that the version of libxml2 that we were compiled against is the same as the one
-    // that is loaded. If there is a version mismatch, we could run into segfaults.
-
-    if (PyXmlSec_GetLibXmlVersionMajor() != PyXmlSec_GetLibXmlCompiledVersionMajor() ||
-        PyXmlSec_GetLibXmlVersionMinor() != PyXmlSec_GetLibXmlCompiledVersionMinor()) {
-        return -1;
-    }
-
-    return 0;
-}
-
 static int PyXmlSec_CheckLxmlLibraryVersion(void) {
     // Make sure that the version of libxml2 lxml is using is the same as the one we are using. Because
     // we pass trees between the two libraries, we need to make sure that they are using the same version
@@ -104,11 +92,6 @@ FINALIZE:
 }
 
 int PyXmlSec_InitLxmlModule(void) {
-    if (PyXmlSec_CheckLibXmlLibraryVersion() < 0) {
-        PyXmlSec_SetLastError("xmlsec libxml2 library compiled version vs runtime version mismatch");
-        return -1;
-    }
-
     if (PyXmlSec_CheckLxmlLibraryVersion() < 0) {
         PyXmlSec_SetLastError("lxml & xmlsec libxml2 library version mismatch");
         return -1;
