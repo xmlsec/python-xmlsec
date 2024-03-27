@@ -10,6 +10,7 @@
 #include "common.h"
 #include "platform.h"
 #include "exception.h"
+#include "lxml.h"
 
 #include <xmlsec/xmlsec.h>
 #include <xmlsec/crypto.h>
@@ -127,10 +128,27 @@ static PyObject* PyXmlSec_GetLibXmlSecVersion() {
 }
 
 static char PyXmlSec_GetLibXmlVersion__doc__[] = \
-    "get_libxml_version() -> tuple\n"
-    "Returns Version tuple of wrapped libxml library.";
+    "get_libxml_version() -> tuple[int, int, int]\n"
+    "Returns version tuple of libxml2 library xmlsec is using.";
 static PyObject* PyXmlSec_GetLibXmlVersion() {
-    return Py_BuildValue("(iii)", XMLSEC_LIBXML_VERSION_MAJOR, XMLSEC_LIBXML_VERSION_MINOR, XMLSEC_LIBXML_VERSION_PATCH);
+    return Py_BuildValue(
+        "(iii)",
+        PyXmlSec_GetLibXmlVersionMajor(),
+        PyXmlSec_GetLibXmlVersionMinor(),
+        PyXmlSec_GetLibXmlVersionPatch()
+    );
+}
+
+static char PyXmlSec_GetLibXmlCompiledVersion__doc__[] = \
+    "get_libxml_compiled_version() -> tuple[int, int, int]\n"
+    "Returns version tuple of libxml2 library xmlsec was compiled with.";
+static PyObject* PyXmlSec_GetLibXmlCompiledVersion() {
+    return Py_BuildValue(
+        "(iii)",
+        PyXmlSec_GetLibXmlCompiledVersionMajor(),
+        PyXmlSec_GetLibXmlCompiledVersionMinor(),
+        PyXmlSec_GetLibXmlCompiledVersionPatch()
+    );
 }
 
 static char PyXmlSec_PyEnableDebugOutput__doc__[] = \
@@ -411,6 +429,12 @@ static PyMethodDef PyXmlSec_MainMethods[] = {
         (PyCFunction)PyXmlSec_GetLibXmlVersion,
         METH_NOARGS,
         PyXmlSec_GetLibXmlVersion__doc__
+    },
+    {
+        "get_libxml_compiled_version",
+        (PyCFunction)PyXmlSec_GetLibXmlCompiledVersion,
+        METH_NOARGS,
+        PyXmlSec_GetLibXmlCompiledVersion__doc__
     },
     {
         "enable_debug_trace",
