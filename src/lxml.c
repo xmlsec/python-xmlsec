@@ -67,12 +67,18 @@ static int PyXmlSec_CheckLxmlLibraryVersion(void) {
     if (version == NULL) {
         goto FINALIZE;
     }
-    if (!PyTuple_Check(version) || PyTuple_Size(version) != 3) {
+    if (!PyTuple_Check(version) || PyTuple_Size(version) < 2) {
         goto FINALIZE;
     }
 
     PyObject* major = PyTuple_GetItem(version, 0);
+    if (major == NULL) {
+        goto FINALIZE;
+    }
     PyObject* minor = PyTuple_GetItem(version, 1);
+    if (minor == NULL) {
+        goto FINALIZE;
+    }
 
     if (!PyLong_Check(major) || !PyLong_Check(minor)) {
         goto FINALIZE;
@@ -85,9 +91,13 @@ static int PyXmlSec_CheckLxmlLibraryVersion(void) {
     result = 0;
 
 FINALIZE:
+    // Clear any errors that may have occurred
+    PyErr_Clear();
+
     // Cleanup our references, and return the result
     Py_XDECREF(lxml);
     Py_XDECREF(version);
+
     return result;
 }
 
