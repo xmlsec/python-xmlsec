@@ -84,16 +84,7 @@ static int PyXmlSec_CheckLxmlLibraryVersion(void) {
         goto FINALIZE;
     }
 
-    long lxml_major = PyLong_AsLong(major);
-    long lxml_minor = PyLong_AsLong(minor);
-    long xmlsec_major = PyXmlSec_GetLibXmlVersionMajor();
-    long xmlsec_minor = PyXmlSec_GetLibXmlVersionMinor();
-
-    if (PyErr_Occurred()) {
-        goto FINALIZE;
-    }
-
-    if (lxml_major != xmlsec_major || lxml_minor != xmlsec_minor) {
+    if (PyLong_AsLong(major) != PyXmlSec_GetLibXmlVersionMajor() || PyLong_AsLong(minor) != PyXmlSec_GetLibXmlVersionMinor()) {
         goto FINALIZE;
     }
 
