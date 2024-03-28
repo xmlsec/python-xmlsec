@@ -91,12 +91,12 @@ static int PyXmlSec_CheckLxmlLibraryVersion(void) {
     result = 0;
 
 FINALIZE:
+    // Clear any errors that may have occurred
+    PyErr_Clear();
+
     // Cleanup our references, and return the result
     Py_XDECREF(lxml);
     Py_XDECREF(version);
-
-    // Clear any errors that may have occurred
-    PyErr_Clear();
 
     return result;
 }
