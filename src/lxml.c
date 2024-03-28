@@ -72,9 +72,11 @@ static int PyXmlSec_CheckLxmlLibraryVersion(void) {
     }
 
     PyObject* major = PyTuple_GetItem(version, 0);
+    if (major == NULL) {
+        goto FINALIZE;
+    }
     PyObject* minor = PyTuple_GetItem(version, 1);
-
-    if (PyErr_Occurred()) {
+    if (minor == NULL) {
         goto FINALIZE;
     }
 
