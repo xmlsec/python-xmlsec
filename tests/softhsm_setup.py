@@ -208,7 +208,7 @@ log.level = DEBUG
         )
         signer_cert_pem = _temp_file()
         openssl_conf = _temp_file()
-        logging.debug(f'Generating OpenSSL config for version {openssl_version}')
+        logging.debug('Generating OpenSSL config for version %s', openssl_version)
         with open(openssl_conf, 'w') as f:
             f.write(
                 '\n'.join(
@@ -314,7 +314,7 @@ log.level = DEBUG
         print('-' * 64)
         traceback.print_exc()
         print('-' * 64)
-        logging.error('PKCS11 tests disabled: unable to initialize test token: %s', ex)
+        logging.exception('PKCS11 tests disabled: unable to initialize test token')
         raise ex
 
 
