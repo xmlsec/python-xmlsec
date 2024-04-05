@@ -1,7 +1,7 @@
-"""
-Testing the PKCS#11 shim layer.
+"""Testing the PKCS#11 shim layer.
+
 Heavily inspired by from https://github.com/IdentityPython/pyXMLSecurity by leifj
-under licence "As is", see https://github.com/IdentityPython/pyXMLSecurity/blob/master/LICENSE.txt
+under license "As is", see https://github.com/IdentityPython/pyXMLSecurity/blob/master/LICENSE.txt
 """
 
 import logging
@@ -13,7 +13,7 @@ import traceback
 import unittest
 from typing import Dict, List, Optional, Tuple
 
-DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 
 def paths_for_component(component: str, default_paths: List[str]):
@@ -25,7 +25,7 @@ def find_alts(component_name, alts: List[str]) -> str:
     for a in alts:
         if os.path.exists(a):
             return a
-    raise unittest.SkipTest("Required component is missing: {}".format(component_name))
+    raise unittest.SkipTest('Required component is missing: {}'.format(component_name))
 
 
 def run_cmd(args, softhsm_conf=None) -> Tuple[bytes, bytes]:
@@ -33,7 +33,9 @@ def run_cmd(args, softhsm_conf=None) -> Tuple[bytes, bytes]:
     if softhsm_conf is not None:
         env['SOFTHSM_CONF'] = softhsm_conf
         env['SOFTHSM2_CONF'] = softhsm_conf
-    proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+    proc = subprocess.Popen(
+        args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+    )
     out, err = proc.communicate()
     if err is not None and len(err) > 0:
         logging.error(err)
@@ -45,7 +47,7 @@ def run_cmd(args, softhsm_conf=None) -> Tuple[bytes, bytes]:
             conf = f.read()
         msg = '[cmd: {cmd}] [code: {code}] [stdout: {out}] [stderr: {err}] [config: {conf}]'
         msg = msg.format(
-            cmd=" ".join(args),
+            cmd=' '.join(args),
             code=rv,
             out=out.strip(),
             err=err.strip(),
@@ -86,7 +88,9 @@ component_default_paths: Dict[str, List[str]] = {
 }
 
 component_path: Dict[str, str] = {
-    component_name: find_alts(component_name, paths_for_component(component_name, default_paths))
+    component_name: find_alts(
+        component_name, paths_for_component(component_name, default_paths)
+    )
     for component_name, default_paths in component_default_paths.items()
 }
 
@@ -94,7 +98,9 @@ softhsm_version = 1
 if component_path['SOFTHSM'].endswith('softhsm2-util'):
     softhsm_version = 2
 
-openssl_version = subprocess.check_output([component_path['OPENSSL'], 'version'])[8:11].decode()
+openssl_version = subprocess.check_output([component_path['OPENSSL'], 'version'])[
+    8:11
+].decode()
 
 p11_test_files: List[str] = []
 softhsm_conf: Optional[str] = None
@@ -113,14 +119,16 @@ def _temp_dir() -> str:
     return d
 
 
-@unittest.skipIf(component_path['P11_MODULE'] is None, "SoftHSM PKCS11 module not installed")
+@unittest.skipIf(
+    component_path['P11_MODULE'] is None, 'SoftHSM PKCS11 module not installed'
+)
 def setup() -> None:
-    logging.debug("Creating test pkcs11 token using softhsm")
+    logging.debug('Creating test pkcs11 token using softhsm')
     try:
         global softhsm_conf
         softhsm_conf = _temp_file()
-        logging.debug("Generating softhsm.conf")
-        with open(softhsm_conf, "w") as f:
+        logging.debug('Generating softhsm.conf')
+        with open(softhsm_conf, 'w') as f:
             if softhsm_version == 2:
                 softhsm_db = _temp_dir()
                 f.write(
@@ -142,7 +150,7 @@ log.level = DEBUG
                     % softhsm_db
                 )
 
-        logging.debug("Initializing the token")
+        logging.debug('Initializing the token')
         out, err = run_cmd(
             [
                 component_path['SOFTHSM'],
@@ -159,7 +167,7 @@ log.level = DEBUG
             softhsm_conf=softhsm_conf,
         )
 
-        # logging.debug("Generating 1024 bit RSA key in token")
+        # logging.debug('Generating 1024 bit RSA key in token')
         # run_cmd([component_path['PKCS11_TOOL'],
         #          '--module', component_path['P11_MODULE'],
         #          '-l',
@@ -170,7 +178,7 @@ log.level = DEBUG
         #          '--pin', 'secret1'], softhsm_conf=softhsm_conf)
 
         hash_priv_key = _temp_file()
-        logging.debug("Converting test private key to format for softhsm")
+        logging.debug('Converting test private key to format for softhsm')
         run_cmd(
             [
                 component_path['OPENSSL'],
@@ -189,7 +197,7 @@ log.level = DEBUG
             softhsm_conf=softhsm_conf,
         )
 
-        logging.debug("Importing the test key to softhsm")
+        logging.debug('Importing the test key to softhsm')
         run_cmd(
             [
                 component_path['SOFTHSM'],
@@ -207,40 +215,50 @@ log.level = DEBUG
             softhsm_conf=softhsm_conf,
         )
         run_cmd(
-            [component_path['PKCS11_TOOL'], '--module', component_path['P11_MODULE'], '-l', '--pin', 'secret1', '-O'],
+            [
+                component_path['PKCS11_TOOL'],
+                '--module',
+                component_path['P11_MODULE'],
+                '-l',
+                '--pin',
+                'secret1',
+                '-O',
+            ],
             softhsm_conf=softhsm_conf,
         )
         signer_cert_pem = _temp_file()
         openssl_conf = _temp_file()
-        logging.debug("Generating OpenSSL config for version {}".format(openssl_version))
-        with open(openssl_conf, "w") as f:
+        logging.debug(
+            'Generating OpenSSL config for version {}'.format(openssl_version)
+        )
+        with open(openssl_conf, 'w') as f:
             # Might be needed with some versions of openssl, but in more recent versions dynamic_path breaks it.
             # dynamic_path = (
-            #     "dynamic_path = %s" % component_path['P11_ENGINE']
+            #     'dynamic_path = %s' % component_path['P11_ENGINE']
             #     if openssl_version.startswith(b'1.')
-            #     else ""
+            #     else ''
             # )
             f.write(
-                "\n".join(
+                '\n'.join(
                     [
-                        "openssl_conf = openssl_def",
-                        "[openssl_def]",
-                        "engines = engine_section",
-                        "[engine_section]",
-                        "pkcs11 = pkcs11_section",
-                        "[req]",
-                        "distinguished_name = req_distinguished_name",
-                        "[req_distinguished_name]",
-                        "[pkcs11_section]",
-                        "engine_id = pkcs11",
+                        'openssl_conf = openssl_def',
+                        '[openssl_def]',
+                        'engines = engine_section',
+                        '[engine_section]',
+                        'pkcs11 = pkcs11_section',
+                        '[req]',
+                        'distinguished_name = req_distinguished_name',
+                        '[req_distinguished_name]',
+                        '[pkcs11_section]',
+                        'engine_id = pkcs11',
                         # dynamic_path,
-                        "MODULE_PATH = %s" % component_path['P11_MODULE'],
-                        "init = 0",
+                        'MODULE_PATH = %s' % component_path['P11_MODULE'],
+                        'init = 0',
                     ]
                 )
             )
 
-        with open(openssl_conf, "r") as f:
+        with open(openssl_conf, 'r') as f:
             logging.debug('-------- START DEBUG openssl_conf --------')
             logging.debug(f.readlines())
             logging.debug('-------- END DEBUG openssl_conf --------')
@@ -251,7 +269,7 @@ log.level = DEBUG
 
         signer_cert_der = _temp_file()
 
-        logging.debug("Generating self-signed certificate")
+        logging.debug('Generating self-signed certificate')
         run_cmd(
             [
                 component_path['OPENSSL'],
@@ -259,7 +277,7 @@ log.level = DEBUG
                 '-new',
                 '-x509',
                 '-subj',
-                "/CN=Test Signer",
+                '/CN=Test Signer',
                 '-engine',
                 'pkcs11',
                 '-config',
@@ -292,7 +310,7 @@ log.level = DEBUG
             softhsm_conf=softhsm_conf,
         )
 
-        logging.debug("Importing certificate into token")
+        logging.debug('Importing certificate into token')
 
         run_cmd(
             [
@@ -321,10 +339,10 @@ log.level = DEBUG
         os.environ['SOFTHSM2_CONF'] = softhsm_conf
 
     except Exception as ex:
-        print("-" * 64)
+        print('-' * 64)
         traceback.print_exc()
-        print("-" * 64)
-        logging.error("PKCS11 tests disabled: unable to initialize test token: %s" % ex)
+        print('-' * 64)
+        logging.error('PKCS11 tests disabled: unable to initialize test token: %s' % ex)
         raise ex
 
 
