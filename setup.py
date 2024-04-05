@@ -238,7 +238,7 @@ class build_ext(build_ext_orig):
         ext.include_dirs = [str(p.absolute()) for p in includes]
 
     def prepare_static_build_linux(self):
-        self.openssl_version = os.environ.get('PYXMLSEC_OPENSSL_VERSION', '1.1.1q')
+        self.openssl_version = os.environ.get('PYXMLSEC_OPENSSL_VERSION', '1.1.1t')
         self.libiconv_version = os.environ.get('PYXMLSEC_LIBICONV_VERSION')
         self.libxml2_version = os.environ.get('PYXMLSEC_LIBXML2_VERSION')
         self.libxslt_version = os.environ.get('PYXMLSEC_LIBXSLT_VERSION')
@@ -391,7 +391,6 @@ class build_ext(build_ext_orig):
                 prefix_arg,
                 '--disable-dependency-tracking',
                 '--disable-shared',
-                '--enable-rebuild-docs=no',
                 '--without-lzma',
                 '--without-python',
                 '--with-iconv={}'.format(self.prefix_dir),
