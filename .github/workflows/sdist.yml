@@ -18,8 +18,7 @@ jobs:
       - name: Install test dependencies
         run: |
           sudo apt-get install libxml2-dev libxmlsec1-dev libxmlsec1-openssl opensc softhsm2 libengine-pkcs11-openssl
-          pip install --upgrade -r requirements-test.txt
-          pip install black  # for stub generation tests
+          pip install --upgrade -r requirements-test.txt --no-binary lxml
           pip install dist/xmlsec-$(python setup.py --version).tar.gz
       - name: Run tests
         run: |
