@@ -208,7 +208,7 @@ log.level = DEBUG
         )
         signer_cert_pem = _temp_file()
         openssl_conf = _temp_file()
-        logging.debug('Generating OpenSSL config for version {}'.format(openssl_version))
+        logging.debug(f'Generating OpenSSL config for version {openssl_version}')
         with open(openssl_conf, 'w') as f:
             f.write(
                 '\n'.join(
@@ -224,7 +224,7 @@ log.level = DEBUG
                         '[pkcs11_section]',
                         'engine_id = pkcs11',
                         # dynamic_path,
-                        'MODULE_PATH = %s' % component_path['P11_MODULE'],
+                        f"MODULE_PATH = {component_path['P11_MODULE']}",
                         'init = 0',
                     ]
                 )
@@ -306,7 +306,7 @@ log.level = DEBUG
             softhsm_conf=softhsm_conf,
         )
 
-        # TODO: Should be teardowned in teardown:
+        # TODO: Should be teardowned in teardown  # noqa: T101
         os.environ['SOFTHSM_CONF'] = softhsm_conf
         os.environ['SOFTHSM2_CONF'] = softhsm_conf
 
@@ -314,7 +314,7 @@ log.level = DEBUG
         print('-' * 64)
         traceback.print_exc()
         print('-' * 64)
-        logging.error(f'PKCS11 tests disabled: unable to initialize test token: {ex}')
+        logging.error('PKCS11 tests disabled: unable to initialize test token: %s', ex)
         raise ex
 
 
