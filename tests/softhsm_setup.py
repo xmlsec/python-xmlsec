@@ -11,24 +11,23 @@ import subprocess
 import tempfile
 import traceback
 import unittest
-from typing import Dict, List, Optional, Tuple
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 
-def paths_for_component(component: str, default_paths: List[str]):
+def paths_for_component(component: str, default_paths):
     env_path = os.environ.get(component)
     return [env_path] if env_path else default_paths
 
 
-def find_alts(component_name, alts: List[str]) -> str:
+def find_alts(component_name, alts) -> str:
     for a in alts:
         if os.path.exists(a):
             return a
     raise unittest.SkipTest('Required component is missing: {}'.format(component_name))
 
 
-def run_cmd(args, softhsm_conf=None) -> Tuple[bytes, bytes]:
+def run_cmd(args, softhsm_conf=None):
     env = {}
     if softhsm_conf is not None:
         env['SOFTHSM_CONF'] = softhsm_conf
@@ -55,7 +54,7 @@ def run_cmd(args, softhsm_conf=None) -> Tuple[bytes, bytes]:
     return out, err
 
 
-component_default_paths: Dict[str, List[str]] = {
+component_default_paths = {
     'P11_MODULE': [
         '/usr/lib/softhsm/libsofthsm2.so',
         '/usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so',
@@ -85,7 +84,7 @@ component_default_paths: Dict[str, List[str]] = {
     ],
 }
 
-component_path: Dict[str, str] = {
+component_path = {
     component_name: find_alts(component_name, paths_for_component(component_name, default_paths))
     for component_name, default_paths in component_default_paths.items()
 }
@@ -96,9 +95,9 @@ if component_path['SOFTHSM'].endswith('softhsm2-util'):
 
 openssl_version = subprocess.check_output([component_path['OPENSSL'], 'version'])[8:11].decode()
 
-p11_test_files: List[str] = []
-softhsm_conf: Optional[str] = None
-softhsm_db: Optional[str] = None
+p11_test_files = []
+softhsm_conf = None
+softhsm_db = None
 
 
 def _temp_file() -> str:
