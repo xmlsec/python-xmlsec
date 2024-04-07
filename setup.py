@@ -13,7 +13,8 @@ from distutils import log
 from distutils.errors import DistutilsError
 from distutils.version import StrictVersion as Version
 from pathlib import Path
-from urllib.request import urlcleanup, urljoin, urlopen, urlretrieve
+from urllib.parse import urljoin
+from urllib.request import Request, urlcleanup, urlopen, urlretrieve
 
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext as build_ext_orig
@@ -31,31 +32,60 @@ class HrefCollector(html.parser.HTMLParser):
                     self.hrefs.append(value)
 
 
+def make_request(url, github_token=None, json_response=False):
+    headers = {'User-Agent': 'https://github.com/xmlsec/python-xmlsec'}
+    if github_token:
+        headers['authorization'] = "Bearer " + github_token
+    request = Request(url, headers=headers)
+    with contextlib.closing(urlopen(request)) as r:
+        if json_response:
+            return json.load(r)
+        else:
+            charset = r.headers.get_content_charset() or 'utf-8'
+            content = r.read().decode(charset)
+            return content
+
+
 def latest_release_from_html(url, matcher):
-    with contextlib.closing(urlopen(url)) as r:
-        charset = r.headers.get_content_charset() or 'utf-8'
-        content = r.read().decode(charset)
-        collector = HrefCollector()
-        collector.feed(content)
-        hrefs = collector.hrefs
+    content = make_request(url)
+    collector = HrefCollector()
+    collector.feed(content)
+    hrefs = collector.hrefs
 
-        def comp(text):
-            try:
-                return Version(matcher.match(text).groupdict()['version'])
-            except (AttributeError, ValueError):
-                return Version('0.0')
+    def comp(text):
+        try:
+            return Version(matcher.match(text).groupdict()['version'])
+        except (AttributeError, ValueError):
+            return Version('0.0')
 
-        latest = max(hrefs, key=comp)
-        return '{}/{}'.format(url, latest)
+    latest = max(hrefs, key=comp)
+    return '{}/{}'.format(url, latest)
 
 
 def latest_release_from_gnome_org_cache(url, lib_name):
     cache_url = '{}/cache.json'.format(url)
-    with contextlib.closing(urlopen(cache_url)) as r:
-        cache = json.load(r)
-        latest_version = cache[2][lib_name][-1]
-        latest_source = cache[1][lib_name][latest_version]['tar.xz']
-        return '{}/{}'.format(url, latest_source)
+    cache = make_request(cache_url, json_response=True)
+    latest_version = cache[2][lib_name][-1]
+    latest_source = cache[1][lib_name][latest_version]['tar.xz']
+    return '{}/{}'.format(url, latest_source)
+
+
+def latest_release_from_github_api(repo):
+    api_url = 'https://api.github.com/repos/{}/releases'.format(repo)
+
+    # if we are running in CI, pass along the GH_TOKEN, so we don't get rate limited
+    token = os.environ.get("GH_TOKEN")
+    if token:
+        log.info("Using GitHub token to avoid rate limiting")
+    api_releases = make_request(api_url, token, json_response=True)
+    releases = [r['tarball_url'] for r in api_releases if r['prerelease'] is False and r['draft'] is False]
+    if not releases:
+        raise DistutilsError('No release found for {}'.format(repo))
+    return releases[0]
+
+
+def latest_openssl_release():
+    return latest_release_from_github_api('openssl/openssl')
 
 
 def latest_zlib_release():
@@ -238,7 +268,7 @@ class build_ext(build_ext_orig):
         ext.include_dirs = [str(p.absolute()) for p in includes]
 
     def prepare_static_build_linux(self):
-        self.openssl_version = os.environ.get('PYXMLSEC_OPENSSL_VERSION', '1.1.1t')
+        self.openssl_version = os.environ.get('PYXMLSEC_OPENSSL_VERSION')
         self.libiconv_version = os.environ.get('PYXMLSEC_LIBICONV_VERSION')
         self.libxml2_version = os.environ.get('PYXMLSEC_LIBXML2_VERSION')
         self.libxslt_version = os.environ.get('PYXMLSEC_LIBXSLT_VERSION')
@@ -250,8 +280,13 @@ class build_ext(build_ext_orig):
         if openssl_tar is None:
             self.info('{:10}: {}'.format('OpenSSL', 'source tar not found, downloading ...'))
             openssl_tar = self.libs_dir / 'openssl.tar.gz'
-            self.info('{:10}: {} {}'.format('OpenSSL', 'version', self.openssl_version))
-            urlretrieve('https://www.openssl.org/source/openssl-{}.tar.gz'.format(self.openssl_version), str(openssl_tar))
+            if self.openssl_version is None:
+                url = latest_openssl_release()
+                self.info('{:10}: {}'.format('OpenSSL', 'PYXMLSEC_OPENSSL_VERSION unset, downloading latest from {}'.format(url)))
+            else:
+                url = 'https://api.github.com/repos/openssl/openssl/tarball/openssl-{}'.format(self.openssl_version)
+                self.info('{:10}: {} {}'.format('OpenSSL', 'version', self.openssl_version))
+            urlretrieve(url, str(openssl_tar))
 
         # fetch zlib
         zlib_tar = next(self.libs_dir.glob('zlib*.tar.gz'), None)
@@ -361,7 +396,7 @@ class build_ext(build_ext_orig):
 
         self.info('Building OpenSSL')
         openssl_dir = next(self.build_libs_dir.glob('openssl-*'))
-        subprocess.check_output(['./config', prefix_arg, 'no-shared', '-fPIC'], cwd=str(openssl_dir), env=env)
+        subprocess.check_output(['./config', prefix_arg, 'no-shared', '-fPIC', '--libdir=lib'], cwd=str(openssl_dir), env=env)
         subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(openssl_dir), env=env)
         subprocess.check_output(
             ['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install_sw'], cwd=str(openssl_dir), env=env
