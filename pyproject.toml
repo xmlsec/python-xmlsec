@@ -79,6 +79,9 @@ environment-pass = [
 archs = ["x86_64", "arm64"]
 before-all = "brew install perl"
 
+[tool.cibuildwheel.windows]
+archs = ["AMD64", "x86"]
+
 [[tool.cibuildwheel.overrides]]
 select = "*-manylinux*"
 before-all = "yum install -y perl-core"

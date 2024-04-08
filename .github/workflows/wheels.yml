@@ -71,17 +71,15 @@ jobs:
         # Nb. keep cibuildwheel version pin consistent with job below
         run: pipx install cibuildwheel==2.16.5
       - id: set-matrix
-        # Once we have the windows build figured out, it can be added here
-        # by updating the matrix to include windows builds as well.
-        # See example here:
-        # https://github.com/lxml/lxml/blob/3ccc7d583e325ceb0ebdf8fc295bbb7fc8cd404d/.github/workflows/wheels.yml#L95C1-L106C51
         run: |
           MATRIX=$(
             {
               cibuildwheel --print-build-identifiers --platform linux \
               | jq -nRc '{"only": inputs, "os": "ubuntu-latest"}' \
               && cibuildwheel --print-build-identifiers --platform macos \
-              | jq -nRc '{"only": inputs, "os": "macos-latest"}'
+              | jq -nRc '{"only": inputs, "os": "macos-latest"}' \
+              && cibuildwheel --print-build-identifiers --platform windows \
+              | jq -nRc '{"only": inputs, "os": "windows-2019"}'
             } | jq -sc
           )
           echo "include=$MATRIX"
