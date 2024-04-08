@@ -38,11 +38,11 @@ def make_request(url, github_token=None, json_response=False):
         headers['authorization'] = "Bearer " + github_token
     request = Request(url, headers=headers)
     with contextlib.closing(urlopen(request)) as r:
+        charset = r.headers.get_content_charset() or 'utf-8'
+        content = r.read().decode(charset)
         if json_response:
-            return json.load(r)
+            return json.loads(content)
         else:
-            charset = r.headers.get_content_charset() or 'utf-8'
-            content = r.read().decode(charset)
             return content
 
 

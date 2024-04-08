@@ -6,6 +6,7 @@ jobs:
     strategy:
       matrix:
         python: [3.5, 3.6, 3.7, 3.8, 3.9, "3.10", "3.11"]
+        static_deps: ["static", ""]
     steps:
       - uses: actions/checkout@v3
       - name: Setup Python
@@ -21,6 +22,7 @@ jobs:
           CC: clang
           CFLAGS: "-fprofile-instr-generate -fcoverage-mapping"
           LDFLAGS: "-fprofile-instr-generate -fcoverage-mapping"
+          PYXMLSEC_STATIC_DEPS: ${{ matrix.static_deps }}
         run: |
           export PKG_CONFIG_PATH="$(brew --prefix)/opt/libxml2/lib/pkgconfig"
           python -m build
@@ -43,3 +45,4 @@ jobs:
           /Library/Developer/CommandLineTools/usr/bin/llvm-profdata merge -sparse ${{ env.LLVM_PROFILE_FILE }} -output pyxmlsec.profdata
           /Library/Developer/CommandLineTools/usr/bin/llvm-cov show ${{ env.PYXMLSEC_LIBFILE }} --arch=$(uname -m) --instr-profile=pyxmlsec.profdata src > coverage.txt
           bash <(curl -s https://codecov.io/bash) -f coverage.txt
+        if: matrix.static_deps != 'static'
