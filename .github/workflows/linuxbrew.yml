@@ -3,26 +3,28 @@ on: [push, pull_request]
 jobs:
   linuxbrew:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.8", "3.9", "3.10", "3.11"]
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python }}
-      - name: Install build dependencies
+      - name: Install brew
         run: |
           sudo apt install -y build-essential procps curl file git
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          test -d ~/.linuxbrew && eval $(~/.linuxbrew/bin/brew shellenv)
-          test -r ~/.bash_profile && echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.bash_profile
-          echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.profile
+          echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
+      - name: Install build dependencies
+        run: |
           brew update
-          brew install python gcc libxml2 libxmlsec1 pkg-config
+          brew install python@${{ matrix.python }} gcc libxml2 libxmlsec1 pkg-config
+          echo "/home/linuxbrew/.linuxbrew/opt/python@${{ matrix.python }}/libexec/bin" >> $GITHUB_PATH
+      - name: Install python dependencies
+        run: |
           pip3 install --upgrade setuptools wheel build
-          ln -s $(brew --prefix)/bin/gcc-12 $(brew --prefix)/bin/gcc-5
-          ls -l $(brew --prefix)/bin/gcc*
       - name: Build linux_x86_64 wheel
         run: |
+          export CFLAGS="-I$(brew --prefix)/include"
+          export LDFLAGS="-L$(brew --prefix)/lib"
           python3 -m build
           rm -rf build/
       - name: Install test dependencies
