@@ -49,7 +49,16 @@ requires = ['setuptools>=42', 'wheel', 'setuptools_scm[toml]>=3.4', "pkgconfig>=
 [tool.cibuildwheel]
 build-verbosity = 1
 build-frontend = "build"
-skip = ["pp*", "*-musllinux_i686"]
+skip = [
+    "pp*",
+    "*-musllinux_i686",
+    # LXML doesn't publish wheels for these platforms, which makes it
+    # difficult for us to build wheels, so we exclude them.
+    "cp36-manylinux_aarch64",
+    "cp37-manylinux_aarch64",
+    "cp36-musllinux_aarch64",
+    "cp37-musllinux_aarch64",
+]
 test-command = "pytest -v --color=yes {package}/tests"
 before-test = "pip install -r requirements-test.txt"
 test-skip = "*-macosx_arm64"
