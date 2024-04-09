@@ -45,3 +45,40 @@ known_third_party = ['lxml', 'pytest', '_pytest', 'hypothesis']
 
 [build-system]
 requires = ['setuptools>=42', 'wheel', 'setuptools_scm[toml]>=3.4', "pkgconfig>=1.5.1", "lxml>=3.8, !=4.7.0"]
+
+[tool.cibuildwheel]
+build-verbosity = 1
+build-frontend = "build"
+skip = [
+    "pp*",
+    "*-musllinux_i686",
+    # LXML doesn't publish wheels for these platforms, which makes it
+    # difficult for us to build wheels, so we exclude them.
+    "cp36-manylinux_aarch64",
+    "cp37-manylinux_aarch64",
+    "cp36-musllinux_aarch64",
+    "cp37-musllinux_aarch64",
+]
+test-command = "pytest -v --color=yes {package}/tests"
+before-test = "pip install -r requirements-test.txt"
+test-skip = "*-macosx_arm64"
+
+[tool.cibuildwheel.environment]
+PYXMLSEC_STATIC_DEPS = "true"
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64", "aarch64", "i686"]
+environment-pass = [
+    "PYXMLSEC_LIBXML2_VERSION",
+    "PYXMLSEC_LIBXSLT_VERSION",
+    "PYXMLSEC_STATIC_DEPS",
+    "GH_TOKEN"
+]
+
+[tool.cibuildwheel.macos]
+archs = ["x86_64", "arm64"]
+before-all = "brew install perl"
+
+[[tool.cibuildwheel.overrides]]
+select = "*-manylinux*"
+before-all = "yum install -y perl-core"
