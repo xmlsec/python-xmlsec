@@ -213,19 +213,21 @@ class build_ext(build_ext_orig):
         super(build_ext, self).run()
 
     def prepare_static_build_win(self):
-        release_url = 'https://github.com/bgaifullin/libxml2-win-binaries/releases/download/v2018.08/'
-        if sys.maxsize > 2147483647:
-            suffix = 'win64'
-        else:
-            suffix = 'win32'
+        # release_url = 'https://github.com/bgaifullin/libxml2-win-binaries/releases/download/v2018.08/'
+        release_url = 'https://github.com/mxamin/python-xmlsec-win-binaries/releases/download/2024.04.15/'
+        # if sys.maxsize > 2147483647:
+        #     suffix = 'win64'
+        # else:
+        #     suffix = 'win32'
+        suffix = 'win64'
 
         libs = [
-            'libxml2-2.9.4.{}.zip'.format(suffix),
-            'libxslt-1.1.29.{}.zip'.format(suffix),
-            'zlib-1.2.8.{}.zip'.format(suffix),
-            'iconv-1.14.{}.zip'.format(suffix),
-            'openssl-1.0.1.{}.zip'.format(suffix),
-            'xmlsec-1.2.24.{}.zip'.format(suffix),
+            'libxml2-2.10.3.{}.zip'.format(suffix),
+            'libxslt-1.1.37.{}.zip'.format(suffix),
+            'zlib-1.2.12.{}.zip'.format(suffix),
+            'iconv-1.16-1.{}.zip'.format(suffix),
+            'openssl-3.0.8.{}.zip'.format(suffix),
+            'xmlsec-1.3.4.{}.zip'.format(suffix),
         ]
 
         for libfile in libs:
