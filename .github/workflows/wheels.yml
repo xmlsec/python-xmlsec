@@ -85,7 +85,7 @@ jobs:
               # | jq -nRc '{"only": inputs, "os": "macos-latest"}' \
               # && cibuildwheel --print-build-identifiers --platform windows \
               cibuildwheel --print-build-identifiers --platform windows \
-              | jq -nRc '{"only": inputs, "os": "windows-2022"}'
+              | jq -nRc '{"only": inputs, "os": "windows-2019"}'
             } | jq -sc
           )
           echo "include=$MATRIX"

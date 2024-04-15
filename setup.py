@@ -264,7 +264,7 @@ class build_ext(build_ext_orig):
         ext.libraries = [
             'libxmlsec_a',
             'libxmlsec-openssl_a',
-            'libeay32',
+            'libcrypto',
             'iconv_a',
             'libxslt_a',
             'libexslt_a',
