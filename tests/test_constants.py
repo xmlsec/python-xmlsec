@@ -2,7 +2,12 @@
 
 import pytest
 
-import xmlsec
+
+import dlltracer
+import sys
+
+with dlltracer.Trace(out=sys.stdout):
+    import xmlsec
 
 
 def _constants(typename):
