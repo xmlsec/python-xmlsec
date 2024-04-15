@@ -1,0 +1,33 @@
+name: opensuse-tumbleweed
+on: [push, pull_request]
+jobs:
+  tumbleweed:
+    runs-on: ubuntu-latest
+    container: opensuse/tumbleweed
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install build dependencies
+        run: |
+          zypper refresh
+          zypper update
+          # The follwoing installs "devel_basis" pattern since installing the pattern fails because of few
+          # incompatibilty issues among packages
+          zypper -n install autoconf automake binutils bison cpp cpp13 flex gawk gcc gcc13 gdbm-devel gettext-runtime gettext-tools glibc-devel info kbd kbd-legacy libapparmor1 libasan8 libatomic1 libctf-nobfd0 libctf0 libdb-4_8 libfl-devel libfl2 libgdbm6 libgdbm_compat4 libgomp1 libhwasan0 libisl23 libitm1 libkmod2 liblsan0 libltdl7 libmpc3 libmpfr6 libseccomp2 libtextstyle0 libtool libtsan2 libubsan1 libxcrypt-devel libzio1 linux-glibc-devel m4 make makeinfo ncurses-devel pam-config patch perl perl-Text-Unidecode perl-base purge-kernels-service system-user-nobody systemd systemd-default-settings systemd-default-settings-branding-openSUSE systemd-presets-branding-openSUSE systemd-presets-common-SUSE tack update-alternatives zlib-devel
+          PKGVER_NO_DOT=$(tr -d '.' <<< ${{ matrix.python-version }})
+          zypper -n install git libxmlsec1-openssl1 xmlsec1-openssl-devel python${PKGVER_NO_DOT}-devel
+          python${{ matrix.python-version }} -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip setuptools wheel
+      - name: Build linux_x86_64 wheel
+        run: |
+          .venv/bin/python setup.py bdist_wheel
+          rm -rf build/
+      - name: Install test dependencies
+        run: |
+          .venv/bin/python -m pip install --upgrade --no-binary=lxml -r requirements-test.txt
+          .venv/bin/python -m pip install xmlsec --only-binary=xmlsec --no-index --find-links=dist/
+      - name: Run tests
+        run: |
+          .venv/bin/python -m pytest -v --color=yes
