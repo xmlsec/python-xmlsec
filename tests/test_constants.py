@@ -1,13 +1,14 @@
 """Test constants from :mod:`xmlsec.constants` module."""
 
+from lxml import etree
+print(etree.LIBXML_VERSION)
+
 import pytest
 
 
-import dlltracer
 import sys
 
-with dlltracer.Trace(out=sys.stdout):
-    import xmlsec
+import xmlsec
 
 
 def _constants(typename):
