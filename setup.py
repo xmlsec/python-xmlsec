@@ -222,7 +222,7 @@ class build_ext(build_ext_orig):
         suffix = 'win64'
 
         libs = [
-            'libxml2-2.9.14.{}.zip'.format(suffix),
+            'libxml2-2.11.7.{}.zip'.format(suffix),
             'libxslt-1.1.37.{}.zip'.format(suffix),
             'zlib-1.2.12.{}.zip'.format(suffix),
             'iconv-1.16-1.{}.zip'.format(suffix),

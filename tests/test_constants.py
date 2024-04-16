@@ -1,8 +1,5 @@
 """Test constants from :mod:`xmlsec.constants` module."""
 
-from lxml import etree
-print(etree.LIBXML_VERSION)
-
 import pytest
 
 
