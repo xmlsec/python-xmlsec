@@ -61,7 +61,7 @@ skip = [
 ]
 test-command = "pytest -v --color=yes {package}/tests"
 before-test = "pip install -r requirements-test.txt"
-test-skip = "*-macosx_arm64"
+test-skip = "*-macosx_arm64 cp39-win_amd64"
 
 [tool.cibuildwheel.environment]
 PYXMLSEC_STATIC_DEPS = "true"

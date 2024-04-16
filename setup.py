@@ -129,8 +129,6 @@ class build_ext(build_ext_orig):
         self.static = os.environ.get('PYXMLSEC_STATIC_DEPS', False)
         self.size_opt = os.environ.get('PYXMLSEC_OPTIMIZE_SIZE', True)
 
-        self.debug = True
-
         if self.static or sys.platform == 'win32':
             self.info('starting static build on {}'.format(sys.platform))
             buildroot = Path('build', 'tmp')
