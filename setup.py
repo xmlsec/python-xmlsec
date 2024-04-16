@@ -282,6 +282,11 @@ class build_ext(build_ext_orig):
         includes.append(next(p / 'xmlsec' for p in includes if (p / 'xmlsec').is_dir()))
         ext.include_dirs = [str(p.absolute()) for p in includes]
 
+        libs = ', '.join(map(str, ext.library_dirs))
+        incs = ', '.join(map(str, ext.include_dirs))
+        self.info('libs: {}'.format(libs))
+        self.info('incs: {}'.format(incs))
+
     def prepare_static_build(self, build_platform):
         self.openssl_version = os.environ.get('PYXMLSEC_OPENSSL_VERSION')
         self.libiconv_version = os.environ.get('PYXMLSEC_LIBICONV_VERSION')
