@@ -60,7 +60,7 @@ skip = [
     "cp37-musllinux_aarch64",
 ]
 test-command = "pytest -v --color=yes {package}/tests"
-before-test = "pip install -r requirements-test.txt"
+before-test = "pip install -r requirements-test.txt --no-binary lxml"
 # test-skip = "*-macosx_arm64 cp39-win_amd64"
 test-skip = "*-macosx_arm64"
 
