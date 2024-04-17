@@ -215,11 +215,10 @@ class build_ext(build_ext_orig):
     def prepare_static_build_win(self):
         # release_url = 'https://github.com/bgaifullin/libxml2-win-binaries/releases/download/v2018.08/'
         release_url = 'https://github.com/mxamin/python-xmlsec-win-binaries/releases/download/2024.04.15/'
-        # if sys.maxsize > 2147483647:
-        #     suffix = 'win64'
-        # else:
-        #     suffix = 'win32'
-        suffix = 'win64'
+        if sys.maxsize > 2147483647:  # 2.0 GiB
+            suffix = 'win64'
+        else:
+            suffix = 'win32'
 
         libs = [
             'libxml2-2.11.7.{}.zip'.format(suffix),
@@ -606,6 +605,7 @@ setup(
     use_scm_version=True,
     description='Python bindings for the XML Security Library',
     long_description=long_desc,
+    long_description_content_type='text/markdown',
     ext_modules=[pyxmlsec],
     cmdclass={'build_ext': build_ext},
     python_requires='>=3.5',
