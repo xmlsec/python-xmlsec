@@ -213,8 +213,7 @@ class build_ext(build_ext_orig):
         super(build_ext, self).run()
 
     def prepare_static_build_win(self):
-        # release_url = 'https://github.com/bgaifullin/libxml2-win-binaries/releases/download/v2018.08/'
-        release_url = 'https://github.com/mxamin/python-xmlsec-win-binaries/releases/download/2024.04.15/'
+        release_url = 'https://github.com/mxamin/python-xmlsec-win-binaries/releases/download/2024.04.17/'
         if sys.maxsize > 2147483647:  # 2.0 GiB
             suffix = 'win64'
         else:
@@ -280,11 +279,6 @@ class build_ext(build_ext_orig):
         includes = [p for p in self.build_libs_dir.rglob('include') if p.is_dir()]
         includes.append(next(p / 'xmlsec' for p in includes if (p / 'xmlsec').is_dir()))
         ext.include_dirs = [str(p.absolute()) for p in includes]
-
-        libs = ', '.join(map(str, ext.library_dirs))
-        incs = ', '.join(map(str, ext.include_dirs))
-        self.info('libs: {}'.format(libs))
-        self.info('incs: {}'.format(incs))
 
     def prepare_static_build(self, build_platform):
         self.openssl_version = os.environ.get('PYXMLSEC_OPENSSL_VERSION')

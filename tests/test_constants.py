@@ -2,9 +2,6 @@
 
 import pytest
 
-
-import sys
-
 import xmlsec
 
 
