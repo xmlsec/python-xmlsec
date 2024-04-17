@@ -85,12 +85,12 @@ jobs:
               # | jq -nRc '{"only": inputs, "os": "macos-latest"}' \
               # && cibuildwheel --print-build-identifiers --platform windows \
               cibuildwheel --print-build-identifiers --platform windows \
-              | jq -nRc '{"only": inputs, "os": "windows-latest"}'
+              | jq -nRc '{"only": inputs, "os": "windows-2019"}'
             } | jq -sc
           )
           echo "include=$MATRIX"
-          # echo "include=$MATRIX" >> $GITHUB_OUTPUT
-          echo "include=[{\"only\":\"cp39-win_amd64\",\"os\":\"windows-2019\"}]" >> $GITHUB_OUTPUT
+          echo "include=$MATRIX" >> $GITHUB_OUTPUT
+          # echo "include=[{\"only\":\"cp39-win_amd64\",\"os\":\"windows-2019\"}]" >> $GITHUB_OUTPUT
 
 
   build_wheels:
