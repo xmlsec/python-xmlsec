@@ -1,0 +1,101 @@
+name: Test lxml wheel
+
+on: [push, pull_request]
+
+permissions: {}
+
+jobs:
+
+  generate-matrix:
+    # Create a matrix of all architectures & versions to build.
+    # This enables the next step to run cibuildwheel in parallel.
+    # From https://iscinumpy.dev/post/cibuildwheel-2-10-0/#only-210
+    name: Generate wheels matrix
+    runs-on: ubuntu-latest
+    outputs:
+      include: ${{ steps.set-matrix.outputs.include }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cibuildwheel
+        # Nb. keep cibuildwheel version pin consistent with job below
+        run: pipx install cibuildwheel==2.17
+      - id: set-matrix
+        run: |
+          export CIBW_BUILD="cp310*"
+          export CIBW_SKIP="*musllinux*"
+          MATRIX=$(
+            {
+              cibuildwheel --print-build-identifiers --platform linux --arch x86_64 \
+              | jq -nRc '{"only": inputs, "os": "ubuntu-latest"}' \
+              && cibuildwheel --print-build-identifiers --platform macos --arch x86_64 \
+              | jq -nRc '{"only": inputs, "os": "macos-latest"}' \
+              && cibuildwheel --print-build-identifiers --platform windows --arch AMD64 \
+              | jq -nRc '{"only": inputs, "os": "windows-2019"}'
+            } | jq -sc
+          )
+          echo "include=$MATRIX"
+          echo "include=$MATRIX" >> $GITHUB_OUTPUT
+
+  build_wheels:
+    name: Build ${{ matrix.only }}
+    needs: generate-matrix
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.generate-matrix.outputs.include) }}
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build wheel
+        uses: pypa/cibuildwheel@v2.17
+        with:
+          only: ${{ matrix.only }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}
+          path: ./wheelhouse/*.whl
+
+  test_wheel:
+    name: Test wheel (${{ matrix.os }}, lxml ${{ matrix.lxml }})
+    needs: [generate-matrix, build_wheels]
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-2019]
+        lxml: ["5.0", "5.1", "5.2"]
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Download wheel
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.os }}
+          path: ./wheelhouse
+          merge-multiple: true
+
+      - name: Install dependencies
+        run: |
+          pip install --only-binary=lxml -r requirements-test.txt lxml~=${{ matrix.lxml }}.0
+          pip install xmlsec --only-binary=xmlsec --no-index --find-links=wheelhouse/
+
+      - name: Run tests
+        run: |
+          pytest -v --color=yes
