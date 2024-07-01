@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 -   repo: https://github.com/psf/black
-    rev: 24.3.0
+    rev: 24.4.2
     hooks:
     -   id: black
         types: []
@@ -25,7 +25,7 @@ repos:
     -   id: pretty-format-json
         args: [--autofix]
 -   repo: https://github.com/PyCQA/flake8
-    rev: 7.0.0
+    rev: 7.1.0
     hooks:
     -   id: flake8
         exclude: ^setup.py$
@@ -35,7 +35,7 @@ repos:
     hooks:
     -   id: isort
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.9.0
+    rev: v1.10.1
     hooks:
     -   id: mypy
         exclude: (setup.py|tests/.*.py|doc/.*)
