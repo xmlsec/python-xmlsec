@@ -1,215 +1,22 @@
 python-xmlsec
 =============
 
-.. image:: https://img.shields.io/pypi/v/xmlsec.svg?logo=python&logoColor=white
-   :target: https://pypi.python.org/pypi/xmlsec
-.. image:: https://img.shields.io/travis/com/mehcode/python-xmlsec/master.svg?logo=travis&logoColor=white&label=Travis%20CI
-   :target: https://travis-ci.org/mehcode/python-xmlsec
-.. image:: https://img.shields.io/appveyor/ci/hoefling/xmlsec/master.svg?logo=appveyor&logoColor=white&label=AppVeyor
-   :target: https://ci.appveyor.com/project/hoefling/xmlsec
-.. image:: https://github.com/mehcode/python-xmlsec/workflows/manylinux2010/badge.svg
-   :target: https://github.com/mehcode/python-xmlsec/actions?query=workflow%3A%22manylinux2010%22
-.. image:: https://github.com/mehcode/python-xmlsec/workflows/MacOS/badge.svg
-   :target: https://github.com/mehcode/python-xmlsec/actions?query=workflow%3A%22MacOS%22
-.. image:: https://codecov.io/gh/mehcode/python-xmlsec/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/mehcode/python-xmlsec
-.. image:: https://img.shields.io/readthedocs/xmlsec/latest?logo=read-the-docs
-   :target: https://xmlsec.readthedocs.io/en/latest/?badge=latest
-   :alt: Documentation Status
-
-Python bindings for the `XML Security Library <https://www.aleksey.com/xmlsec/>`_.
-
-Documentation
-*************
-
-A documentation for ``xmlsec`` can be found at `xmlsec.readthedocs.io <https://xmlsec.readthedocs.io/>`_.
-
-Usage
-*****
-
-Check the `examples <https://xmlsec.readthedocs.io/en/latest/examples.html>`_ section in the documentation to see various examples of signing and verifying using the library.
-
-Requirements
-************
-- ``libxml2 >= 2.9.1``
-- ``libxmlsec1 >= 1.2.18``
-
-Install
-*******
-
-``xmlsec`` is available on PyPI:
-
-.. code-block:: bash
-
-   pip install xmlsec
-
-Depending on your OS, you may need to install the required native
-libraries first:
-
-Linux (Debian)
-^^^^^^^^^^^^^^
-
-.. code-block:: bash
-
-   apt-get install libxml2-dev libxmlsec1-dev libxmlsec1-openssl
-
-
-Note: There is no required version of LibXML2 for Ubuntu Precise,
-so you need to download and install it manually.
-
-.. code-block:: bash
-
-   wget http://xmlsoft.org/sources/libxml2-2.9.1.tar.gz
-   tar -xvf libxml2-2.9.1.tar.gz
-   cd libxml2-2.9.1
-   ./configure && make && make install
-
-
-Linux (CentOS)
-^^^^^^^^^^^^^^
-
-.. code-block:: bash
-
-   yum install libxml2-devel xmlsec1-devel xmlsec1-openssl-devel libtool-ltdl-devel
-
-
-Linux (Fedora)
-^^^^^^^^^^^^^^
-
-.. code-block:: bash
-
-   dnf install libxml2-devel xmlsec1-devel xmlsec1-openssl-devel libtool-ltdl-devel
-
-
-Mac
-^^^
-
-.. code-block:: bash
-
-   brew install libxml2 libxmlsec1 pkg-config
-
-
-Alpine
-^^^^^^
-
-.. code-block:: bash
-
-   apk add build-base libressl libffi-dev libressl-dev libxslt-dev libxml2-dev xmlsec-dev xmlsec
-
-
-Troubleshooting
-***************
-
-Mac
-^^^
-
-If you get any fatal errors about missing ``.h`` files, update your
-``C_INCLUDE_PATH`` environment variable to include the appropriate
-files from the ``libxml2`` and ``libxmlsec1`` libraries.
-
-
-Windows
-^^^^^^^
-
-Starting with 1.3.7, prebuilt wheels are available for Windows,
-so running ``pip install xmlsec`` should suffice. If you want
-to build from source:
-
-#. Configure build environment, see `wiki.python.org <https://wiki.python.org/moin/WindowsCompilers>`_ for more details.
-
-#. Install from source dist:
-
-   .. code-block:: bash
-
-      pip install xmlsec --no-binary=xmlsec
-
-
-Building from source
-********************
-
-#. Clone the ``xmlsec`` source code repository to your local computer.
-
-   .. code-block:: bash
-
-      git clone https://github.com/mehcode/python-xmlsec.git
-
-#. Change into the ``python-xmlsec`` root directory.
-
-   .. code-block:: bash
-
-      cd /path/to/xmlsec
-
-
-#. Install the project and all its dependencies using ``pip``.
-
-   .. code-block:: bash
-
-      pip install .
-
-
-Contributing
-************
-
-Setting up your environment
+Gisce tests (Ubuntu 20, 22 and latest / python 2.7 and 3.11)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-#. Follow steps 1 and 2 of the `manual installation instructions <#building-from-source>`_.
+.. image:: https://github.com/gisce/python-xmlsec/actions/workflows/install_test.yml/badge.svg?logo=python&logoColor=white
+   :target: https://github.com/gisce/python-xmlsec/actions/workflows/install_test.yml
 
 
-#. Initialize a virtual environment to develop in.
-   This is done so as to ensure every contributor is working with
-   close-to-identicial versions of packages.
+Installation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   .. code-block:: bash
-
-      mkvirtualenv xmlsec
-
-   The ``mkvirtualenv`` command is available from ``virtualenvwrapper`` package which can be installed by following `link <http://virtualenvwrapper.readthedocs.org/en/latest/install.html#basic-installation>`_.
-
-#. Activate the created virtual environment:
+#. Install ``xmlsec`` patched version.
 
    .. code-block:: bash
 
-      workon xmlsec
+      pip install git+https://github.com/gisce/python-xmlsec.git
 
-#. Install ``xmlsec`` in development mode with testing enabled.
-   This will download all dependencies required for running the unit tests.
-
-   .. code-block:: bash
-
-      pip install -r requirements-test.txt
-      pip install -e "."
-
-
-Running the test suite
-^^^^^^^^^^^^^^^^^^^^^^
-
-#. `Set up your environment <#setting-up-your-environment>`_.
-
-#. Run the unit tests.
-
-   .. code-block:: bash
-
-      pytest tests
-
-#. Tests configuration
-
-   Env variable ``PYXMLSEC_TEST_ITERATIONS`` specifies number of
-   test iterations to detect memory leaks.
-
-Reporting an issue
-^^^^^^^^^^^^^^^^^^
-
-Please attach the output of following information:
-
-* version of ``xmlsec``
-* version of ``libxmlsec1``
-* version of ``libxml2``
-* output from the command
-
-  .. code-block:: bash
-
-     pkg-config --cflags xmlsec1
 
 License
 *******
