@@ -35,7 +35,8 @@ jobs:
           echo "LLVM_PROFILE_FILE=pyxmlsec.profraw" >> $GITHUB_ENV
       - name: Install test dependencies
         run: |
-          pip install coverage --upgrade -r requirements-test.txt
+          export PKG_CONFIG_PATH="$(brew --prefix)/opt/libxml2/lib/pkgconfig"
+          pip install coverage --upgrade --no-binary=lxml -r requirements-test.txt
           pip install xmlsec --only-binary=xmlsec --no-index --find-links=dist/
           echo "PYXMLSEC_LIBFILE=$(python -c 'import xmlsec; print(xmlsec.__file__)')" >> $GITHUB_ENV
       - name: Run tests
