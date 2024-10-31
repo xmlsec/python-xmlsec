@@ -3,12 +3,15 @@ on: [push, pull_request]
 jobs:
   sdist:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python 3.11
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python }}
       - name: Install build dependencies
         run: |
           pip install --upgrade pip setuptools wheel
