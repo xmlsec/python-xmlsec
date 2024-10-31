@@ -31,6 +31,6 @@ jobs:
         run: |
           python3 -m venv test_venv
           source test_venv/bin/activate
-          pip3 install --upgrade -r requirements-test.txt
+          pip3 install --upgrade --no-binary=lxml -r requirements-test.txt
           pip3 install xmlsec --only-binary=xmlsec --no-index --find-links=dist/
           pytest -v --color=yes
