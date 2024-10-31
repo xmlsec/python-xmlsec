@@ -99,6 +99,10 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.generate-wheels-matrix.outputs.include) }}
 
+    env:
+      PYXMLSEC_LIBXML2_VERSION: 2.12.9
+      PYXMLSEC_LIBXSLT_VERSION: 1.1.42
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
