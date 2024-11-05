@@ -93,6 +93,12 @@ Mac
 
    brew install libxml2 libxmlsec1 pkg-config
 
+or
+
+.. code-block:: bash
+
+   port install libxml2 xmlsec pkgconfig
+
 
 Alpine
 ^^^^^^
