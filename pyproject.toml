@@ -58,6 +58,9 @@ skip = [
     "cp37-manylinux_aarch64",
     "cp36-musllinux_aarch64",
     "cp37-musllinux_aarch64",
+    "cp36-macosx*",
+    "cp37-macosx*",
+    "cp38-macosx*",
 ]
 test-command = "pytest -v --color=yes {package}/tests"
 before-test = "pip install -r requirements-test.txt"
