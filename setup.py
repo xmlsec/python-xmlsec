@@ -599,7 +599,7 @@ setup(
     use_scm_version=True,
     description='Python bindings for the XML Security Library',
     long_description=long_desc,
-    long_description_content_type='text/markdown',
+    long_description_content_type='text/x-rst',
     ext_modules=[pyxmlsec],
     cmdclass={'build_ext': build_ext},
     python_requires='>=3.5',
