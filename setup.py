@@ -523,6 +523,7 @@ class build_ext(build_ext_orig):
                 '--disable-shared',
                 '--disable-gost',
                 '--enable-md5',
+                '--enable-ripemd160',
                 '--disable-crypto-dl',
                 '--enable-static=yes',
                 '--enable-shared=no',
