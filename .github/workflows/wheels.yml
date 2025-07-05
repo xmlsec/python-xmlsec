@@ -100,8 +100,8 @@ jobs:
         include: ${{ fromJson(needs.generate-wheels-matrix.outputs.include) }}
 
     env:
-      PYXMLSEC_LIBXML2_VERSION: 2.13.5
-      PYXMLSEC_LIBXSLT_VERSION: 1.1.42
+      PYXMLSEC_LIBXML2_VERSION: 2.14.4
+      PYXMLSEC_LIBXSLT_VERSION: 1.1.43
 
     steps:
       - name: Check out the repo
