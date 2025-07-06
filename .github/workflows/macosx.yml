@@ -26,6 +26,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           export PKG_CONFIG_PATH="$(brew --prefix)/opt/libxml2/lib/pkgconfig"
+          export PYXMLSEC_LIBXML2_VERSION="$(pkg-config --modversion libxml-2.0)"
           python -m build
           rm -rf build/
       - name: Set environment variables
