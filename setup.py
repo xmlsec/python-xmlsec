@@ -463,9 +463,7 @@ class build_ext(build_ext_orig):
             env=env,
         )
         subprocess.check_call(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(libiconv_dir), env=env)
-        subprocess.check_call(
-            ['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(libiconv_dir), env=env
-        )
+        subprocess.check_call(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(libiconv_dir), env=env)
 
         self.info('Building LibXML2')
         libxml2_dir = next(self.build_libs_dir.glob('libxml2-*'))
@@ -485,9 +483,7 @@ class build_ext(build_ext_orig):
             env=env,
         )
         subprocess.check_call(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(libxml2_dir), env=env)
-        subprocess.check_call(
-            ['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(libxml2_dir), env=env
-        )
+        subprocess.check_call(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(libxml2_dir), env=env)
 
         self.info('Building libxslt')
         libxslt_dir = next(self.build_libs_dir.glob('libxslt-*'))
@@ -506,9 +502,7 @@ class build_ext(build_ext_orig):
             env=env,
         )
         subprocess.check_call(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(libxslt_dir), env=env)
-        subprocess.check_call(
-            ['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(libxslt_dir), env=env
-        )
+        subprocess.check_call(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(libxslt_dir), env=env)
 
         self.info('Building xmlsec1')
         ldflags.append('-lpthread')
@@ -541,9 +535,7 @@ class build_ext(build_ext_orig):
             cwd=str(xmlsec1_dir),
             env=env,
         )
-        subprocess.check_call(
-            ['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(xmlsec1_dir), env=env
-        )
+        subprocess.check_call(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(xmlsec1_dir), env=env)
 
         ext = self.ext_map['xmlsec']
         ext.define_macros = [
