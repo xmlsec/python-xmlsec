@@ -19,7 +19,11 @@ permissions: {}
 
 jobs:
   sdist:
-    runs-on: ubuntu-latest
+    # Avoid Ubuntu 24.04 in sdist workflows, because it contains libxmlsec1-dev
+    # v1.2.39, which has a bug that causes tests/test_pkcs11.py to fail.
+    # (It thinks the softhsm engine has a public key instead of a private key.)
+    # libxmlsec1 <=1.2.33 or >=1.2.42 works. TODO: Try 26.04 when available.
+    runs-on: ubuntu-22.04
 
     permissions:
       contents: write
@@ -100,8 +104,8 @@ jobs:
         include: ${{ fromJson(needs.generate-wheels-matrix.outputs.include) }}
 
     env:
-      PYXMLSEC_LIBXML2_VERSION: 2.13.5
-      PYXMLSEC_LIBXSLT_VERSION: 1.1.42
+      PYXMLSEC_LIBXML2_VERSION: 2.14.4
+      PYXMLSEC_LIBXSLT_VERSION: 1.1.43
 
     steps:
       - name: Check out the repo

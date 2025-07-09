@@ -54,12 +54,10 @@ skip = [
     "*-musllinux_i686",
     # LXML doesn't publish wheels for these platforms, which makes it
     # difficult for us to build wheels, so we exclude them.
-    "cp36-manylinux_aarch64",
-    "cp37-manylinux_aarch64",
-    "cp36-musllinux_aarch64",
-    "cp37-musllinux_aarch64",
-    "cp36-macosx*",
-    "cp37-macosx*",
+    "cp36-*",
+    "cp37-*",
+    "cp38-manylinux_aarch64",
+    "cp38-musllinux_aarch64",
     "cp38-macosx*",
 ]
 test-command = "pytest -v --color=yes {package}/tests"

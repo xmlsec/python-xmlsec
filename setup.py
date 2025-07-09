@@ -70,22 +70,18 @@ def latest_release_from_gnome_org_cache(url, lib_name):
     return '{}/{}'.format(url, latest_source)
 
 
-def latest_release_from_github_api(repo):
-    api_url = 'https://api.github.com/repos/{}/releases'.format(repo)
+def latest_release_json_from_github_api(repo):
+    api_url = 'https://api.github.com/repos/{}/releases/latest'.format(repo)
 
     # if we are running in CI, pass along the GH_TOKEN, so we don't get rate limited
     token = os.environ.get("GH_TOKEN")
     if token:
         log.info("Using GitHub token to avoid rate limiting")
-    api_releases = make_request(api_url, token, json_response=True)
-    releases = [r['tarball_url'] for r in api_releases if r['prerelease'] is False and r['draft'] is False]
-    if not releases:
-        raise DistutilsError('No release found for {}'.format(repo))
-    return releases[0]
+    return make_request(api_url, token, json_response=True)
 
 
 def latest_openssl_release():
-    return latest_release_from_github_api('openssl/openssl')
+    return latest_release_json_from_github_api('openssl/openssl')['tarball_url']
 
 
 def latest_zlib_release():
@@ -105,7 +101,9 @@ def latest_libxslt_release():
 
 
 def latest_xmlsec_release():
-    return latest_release_from_html('https://www.aleksey.com/xmlsec/download/', re.compile('xmlsec1-(?P<version>.*).tar.gz'))
+    assets = latest_release_json_from_github_api('lsh123/xmlsec')['assets']
+    (tar_gz,) = [asset for asset in assets if asset['name'].endswith('.tar.gz')]
+    return tar_gz['browser_download_url']
 
 
 class CrossCompileInfo:
@@ -381,7 +379,7 @@ class build_ext(build_ext_orig):
                 url = latest_xmlsec_release()
                 self.info('{:10}: {}'.format('xmlsec1', 'PYXMLSEC_XMLSEC1_VERSION unset, downloading latest from {}'.format(url)))
             else:
-                url = 'https://www.aleksey.com/xmlsec/download/xmlsec1-{}.tar.gz'.format(self.xmlsec1_version)
+                url = 'https://github.com/lsh123/xmlsec/releases/download/{v}/xmlsec1-{v}.tar.gz'.format(v=self.xmlsec1_version)
                 self.info(
                     '{:10}: {}'.format(
                         'xmlsec1', 'PYXMLSEC_XMLSEC1_VERSION={}, downloading from {}'.format(self.xmlsec1_version, url)
@@ -435,43 +433,41 @@ class build_ext(build_ext_orig):
             openssl_config_cmd.append(cross_compiling.triplet)
         else:
             openssl_config_cmd.insert(0, './config')
-        subprocess.check_output(openssl_config_cmd, cwd=str(openssl_dir), env=env)
-        subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(openssl_dir), env=env)
-        subprocess.check_output(
+        subprocess.check_call(openssl_config_cmd, cwd=str(openssl_dir), env=env)
+        subprocess.check_call(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(openssl_dir), env=env)
+        subprocess.check_call(
             ['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install_sw'], cwd=str(openssl_dir), env=env
         )
 
         self.info('Building zlib')
         zlib_dir = next(self.build_libs_dir.glob('zlib-*'))
-        subprocess.check_output(['./configure', prefix_arg], cwd=str(zlib_dir), env=env)
-        subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(zlib_dir), env=env)
-        subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(zlib_dir), env=env)
+        subprocess.check_call(['./configure', prefix_arg], cwd=str(zlib_dir), env=env)
+        subprocess.check_call(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(zlib_dir), env=env)
+        subprocess.check_call(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(zlib_dir), env=env)
 
-        host_arg = ""
+        host_arg = []
         if cross_compiling:
-            host_arg = '--host={}'.format(cross_compiling.arch)
+            host_arg = ['--host={}'.format(cross_compiling.arch)]
 
         self.info('Building libiconv')
         libiconv_dir = next(self.build_libs_dir.glob('libiconv-*'))
-        subprocess.check_output(
+        subprocess.check_call(
             [
                 './configure',
                 prefix_arg,
                 '--disable-dependency-tracking',
                 '--disable-shared',
-                host_arg,
+                *host_arg,
             ],
             cwd=str(libiconv_dir),
             env=env,
         )
-        subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(libiconv_dir), env=env)
-        subprocess.check_output(
-            ['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(libiconv_dir), env=env
-        )
+        subprocess.check_call(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(libiconv_dir), env=env)
+        subprocess.check_call(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(libiconv_dir), env=env)
 
         self.info('Building LibXML2')
         libxml2_dir = next(self.build_libs_dir.glob('libxml2-*'))
-        subprocess.check_output(
+        subprocess.check_call(
             [
                 './configure',
                 prefix_arg,
@@ -481,19 +477,17 @@ class build_ext(build_ext_orig):
                 '--without-python',
                 '--with-iconv={}'.format(self.prefix_dir),
                 '--with-zlib={}'.format(self.prefix_dir),
-                host_arg,
+                *host_arg,
             ],
             cwd=str(libxml2_dir),
             env=env,
         )
-        subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(libxml2_dir), env=env)
-        subprocess.check_output(
-            ['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(libxml2_dir), env=env
-        )
+        subprocess.check_call(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(libxml2_dir), env=env)
+        subprocess.check_call(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(libxml2_dir), env=env)
 
         self.info('Building libxslt')
         libxslt_dir = next(self.build_libs_dir.glob('libxslt-*'))
-        subprocess.check_output(
+        subprocess.check_call(
             [
                 './configure',
                 prefix_arg,
@@ -502,27 +496,26 @@ class build_ext(build_ext_orig):
                 '--without-python',
                 '--without-crypto',
                 '--with-libxml-prefix={}'.format(self.prefix_dir),
-                host_arg,
+                *host_arg,
             ],
             cwd=str(libxslt_dir),
             env=env,
         )
-        subprocess.check_output(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(libxslt_dir), env=env)
-        subprocess.check_output(
-            ['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(libxslt_dir), env=env
-        )
+        subprocess.check_call(['make', '-j{}'.format(multiprocessing.cpu_count() + 1)], cwd=str(libxslt_dir), env=env)
+        subprocess.check_call(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(libxslt_dir), env=env)
 
         self.info('Building xmlsec1')
         ldflags.append('-lpthread')
         env['LDFLAGS'] = ' '.join(ldflags)
         xmlsec1_dir = next(self.build_libs_dir.glob('xmlsec1-*'))
-        subprocess.check_output(
+        subprocess.check_call(
             [
                 './configure',
                 prefix_arg,
                 '--disable-shared',
                 '--disable-gost',
                 '--enable-md5',
+                '--enable-ripemd160',
                 '--disable-crypto-dl',
                 '--enable-static=yes',
                 '--enable-shared=no',
@@ -531,20 +524,18 @@ class build_ext(build_ext_orig):
                 '--with-openssl={}'.format(self.prefix_dir),
                 '--with-libxml={}'.format(self.prefix_dir),
                 '--with-libxslt={}'.format(self.prefix_dir),
-                host_arg,
+                *host_arg,
             ],
             cwd=str(xmlsec1_dir),
             env=env,
         )
-        subprocess.check_output(
+        subprocess.check_call(
             ['make', '-j{}'.format(multiprocessing.cpu_count() + 1)]
             + ['-I{}'.format(str(self.prefix_dir / 'include')), '-I{}'.format(str(self.prefix_dir / 'include' / 'libxml'))],
             cwd=str(xmlsec1_dir),
             env=env,
         )
-        subprocess.check_output(
-            ['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(xmlsec1_dir), env=env
-        )
+        subprocess.check_call(['make', '-j{}'.format(multiprocessing.cpu_count() + 1), 'install'], cwd=str(xmlsec1_dir), env=env)
 
         ext = self.ext_map['xmlsec']
         ext.define_macros = [
