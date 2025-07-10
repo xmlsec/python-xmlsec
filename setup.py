@@ -4,6 +4,7 @@ import io
 import json
 import multiprocessing
 import os
+import platform
 import re
 import subprocess
 import sys
@@ -211,19 +212,21 @@ class build_ext(build_ext_orig):
         super(build_ext, self).run()
 
     def prepare_static_build_win(self):
-        release_url = 'https://github.com/mxamin/python-xmlsec-win-binaries/releases/download/2024.04.17/'
-        if sys.maxsize > 2147483647:  # 2.0 GiB
+        release_url = 'https://github.com/mxamin/python-xmlsec-win-binaries/releases/download/2025.07.10/'
+        if platform.machine() == 'ARM64':
+            suffix = 'win-arm64'
+        elif sys.maxsize > 2**32:  # 2.0 GiB
             suffix = 'win64'
         else:
             suffix = 'win32'
 
         libs = [
-            'libxml2-2.11.7.{}.zip'.format(suffix),
-            'libxslt-1.1.37.{}.zip'.format(suffix),
-            'zlib-1.2.12.{}.zip'.format(suffix),
-            'iconv-1.16-1.{}.zip'.format(suffix),
-            'openssl-3.0.8.{}.zip'.format(suffix),
-            'xmlsec-1.3.4.{}.zip'.format(suffix),
+            'libxml2-2.11.9-3.{}.zip'.format(suffix),
+            'libxslt-1.1.39.{}.zip'.format(suffix),
+            'zlib-1.3.1.{}.zip'.format(suffix),
+            'iconv-1.18-1.{}.zip'.format(suffix),
+            'openssl-3.0.16.pl1.{}.zip'.format(suffix),
+            'xmlsec-1.3.7.{}.zip'.format(suffix),
         ]
 
         for libfile in libs:
