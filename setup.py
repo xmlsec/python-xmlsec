@@ -212,10 +212,10 @@ class build_ext(build_ext_orig):
         super(build_ext, self).run()
 
     def prepare_static_build_win(self):
-        release_url = 'https://github.com/mxamin/python-xmlsec-win-binaries/releases/download/2024.04.17/'
+        release_url = 'https://github.com/mxamin/python-xmlsec-win-binaries/releases/download/2025.07.10/'
         if platform.machine() == 'ARM64':
             suffix = 'win-arm64'
-        elif sys.maxsize > 2**32:
+        elif sys.maxsize > 2**32:  # 2.0 GiB
             suffix = 'win64'
         else:
             suffix = 'win32'
