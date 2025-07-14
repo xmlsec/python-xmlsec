@@ -1,21 +1,11 @@
 # python-xmlsec
 
 [![image](https://img.shields.io/pypi/v/xmlsec.svg?logo=python&logoColor=white)](https://pypi.python.org/pypi/xmlsec)
-
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/xmlsec/python-xmlsec/master.svg)](https://results.pre-commit.ci/latest/github/xmlsec/python-xmlsec/master)
-
-[![image](https://img.shields.io/appveyor/ci/hoefling/xmlsec/master.svg?logo=appveyor&logoColor=white&label=AppVeyor)](https://ci.appveyor.com/project/hoefling/xmlsec)
-
-[![image](https://github.com/mehcode/python-xmlsec/actions/workflows/manylinux.yml/badge.svg)](https://github.com/mehcode/python-xmlsec/actions/workflows/manylinux.yml)
-
-[![image](https://github.com/mehcode/python-xmlsec/actions/workflows/macosx.yml/badge.svg)](https://github.com/mehcode/python-xmlsec/actions/workflows/macosx.yml)
-
-[![image](https://github.com/mehcode/python-xmlsec/actions/workflows/linuxbrew.yml/badge.svg)](https://github.com/mehcode/python-xmlsec/actions/workflows/linuxbrew.yml)
-
-[![image](https://github.com/mehcode/python-xmlsec/actions/workflows/opensuse-tumbleweed.yml/badge.svg)](https://github.com/mehcode/python-xmlsec/actions/workflows/opensuse-tumbleweed.yml)
-
+[![image](https://github.com/xmlsec/python-xmlsec/actions/workflows/manylinux.yml/badge.svg)](https://github.com/xmlsec/python-xmlsec/actions/workflows/manylinux.yml)
+[![image](https://github.com/xmlsec/python-xmlsec/actions/workflows/macosx.yml/badge.svg)](https://github.com/xmlsec/python-xmlsec/actions/workflows/macosx.yml)
+[![image](https://github.com/xmlsec/python-xmlsec/actions/workflows/linuxbrew.yml/badge.svg)](https://github.com/xmlsec/python-xmlsec/actions/workflows/linuxbrew.yml)
 [![image](https://codecov.io/gh/xmlsec/python-xmlsec/branch/master/graph/badge.svg)](https://codecov.io/gh/xmlsec/python-xmlsec)
-
 [![Documentation Status](https://img.shields.io/readthedocs/xmlsec/latest?logo=read-the-docs)](https://xmlsec.readthedocs.io/en/latest/?badge=latest)
 
 Python bindings for the [XML Security
@@ -35,8 +25,8 @@ verifying using the library.
 
 ## Requirements
 
--   `libxml2 >= 2.9.1`
--   `libxmlsec1 >= 1.2.33`
+- `libxml2 >= 2.9.1`
+- `libxmlsec1 >= 1.2.33`
 
 ## Install
 
@@ -109,11 +99,11 @@ Starting with 1.3.7, prebuilt wheels are available for Windows, so
 running `pip install xmlsec` should suffice. If you want to build from
 source:
 
-1.  Configure build environment, see
-    [wiki.python.org](https://wiki.python.org/moin/WindowsCompilers) for
-    more details.
+1. Configure build environment, see
+   [wiki.python.org](https://wiki.python.org/moin/WindowsCompilers) for
+   more details.
 
-2.  Install from source dist:
+2. Install from source dist:
 
     ``` bash
     pip install xmlsec --no-binary=xmlsec
@@ -121,87 +111,84 @@ source:
 
 ## Building from source
 
-1.  Clone the `xmlsec` source code repository to your local computer.
+1. Clone the `xmlsec` source code repository to your local computer.
 
     ``` bash
     git clone https://github.com/xmlsec/python-xmlsec.git
     ```
 
-2.  Change into the `python-xmlsec` root directory.
+2. Change into the `python-xmlsec` root directory.
 
     ``` bash
     cd /path/to/xmlsec
     ```
 
-3.  Install the project and all its dependencies using `pip`.
+3. Install the project and all its dependencies using `pip`.
 
-    ``` bash
-    pip install .
-    ```
+   ``` bash
+   pip install .
+   ```
 
 ## Contributing
 
 ### Setting up your environment
 
-1.  Follow steps 1 and 2 of the [manual installation
-    instructions](#building-from-source).
+1. Follow steps 1 and 2 of the [manual installation
+   instructions](#building-from-source).
 
-2.  Initialize a virtual environment to develop in. This is done so as
-    to ensure every contributor is working with close-to-identicial
-    versions of packages.
+2. Initialize a virtual environment to develop in. This is done so as
+   to ensure every contributor is working with close-to-identicial
+   versions of packages.
 
-    ``` bash
-    mkvirtualenv xmlsec
-    ```
+   ``` bash
+   mkvirtualenv xmlsec
+   ```
 
-    The `mkvirtualenv` command is available from `virtualenvwrapper`
-    package which can be installed by following
-    [link](http://virtualenvwrapper.readthedocs.org/en/latest/install.html#basic-installation).
+   The `mkvirtualenv` command is available from `virtualenvwrapper`
+   package which can be installed by following
+   [link](http://virtualenvwrapper.readthedocs.org/en/latest/install.html#basic-installation).
 
-3.  Activate the created virtual environment:
+3. Activate the created virtual environment:
 
-    ``` bash
-    workon xmlsec
-    ```
+   ``` bash
+   workon xmlsec
+   ```
 
-4.  Install `xmlsec` in development mode with testing enabled. This will
-    download all dependencies required for running the unit tests.
+4. Install `xmlsec` in development mode with testing enabled. This will
+   download all dependencies required for running the unit tests.
 
-    ``` bash
-    pip install -r requirements-test.txt
-    pip install -e "."
-    ```
+   ``` bash
+   pip install -r requirements-test.txt
+   pip install -e "."
+   ```
 
 ### Running the test suite
 
-1.  [Set up your environment](#setting-up-your-environment).
+1. [Set up your environment](#setting-up-your-environment).
 
-2.  Run the unit tests.
+2. Run the unit tests.
 
-    ``` bash
-    pytest tests
-    ```
+   ``` bash
+   pytest tests
+   ```
 
-3.  Tests configuration
+3. Tests configuration
 
-    Env variable `PYXMLSEC_TEST_ITERATIONS` specifies number of test
-    iterations to detect memory leaks.
+   Env variable `PYXMLSEC_TEST_ITERATIONS` specifies number of test
+   iterations to detect memory leaks.
 
 ### Reporting an issue
 
 Please attach the output of following information:
 
--   version of `xmlsec`
+- version of `xmlsec`
+- version of `libxmlsec1`
+- version of `libxml2`
+- output from the command
 
--   version of `libxmlsec1`
-
--   version of `libxml2`
-
--   output from the command
-
-    ``` bash
-    pkg-config --cflags xmlsec1
-    ```
+  ``` bash
+  pkg-config --cflags xmlsec1
+  ```
 
 ## License
 
