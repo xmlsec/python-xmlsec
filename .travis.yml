@@ -1,5 +1,9 @@
 dist: focal
 language: python
+travis:
+  auto_cancel:
+    push: true
+    pull_request: true
 
 notifications:
   email: false
