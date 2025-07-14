@@ -2,7 +2,7 @@ name: macOS
 on: [push, pull_request]
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref_name != 'master' }}
 jobs:
   macosx:
     runs-on: macos-latest
