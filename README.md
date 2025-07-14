@@ -13,7 +13,7 @@ Library](https://www.aleksey.com/xmlsec/).
 
 ## Documentation
 
-A documentation for `xmlsec` can be found at
+Documentation for `xmlsec` can be found at
 [xmlsec.readthedocs.io](https://xmlsec.readthedocs.io/).
 
 ## Usage
@@ -137,7 +137,7 @@ source:
    instructions](#building-from-source).
 
 2. Initialize a virtual environment to develop in. This is done so as
-   to ensure every contributor is working with close-to-identicial
+   to ensure every contributor is working with close-to-identical
    versions of packages.
 
    ``` bash
@@ -193,6 +193,6 @@ Please attach the output of following information:
 ## License
 
 Unless otherwise noted, all files contained within this project are
-licensed under the MIT opensource license. See the included `LICENSE`
+licensed under the MIT open source license. See the included `LICENSE`
 file or visit [opensource.org](http://opensource.org/licenses/MIT) for
 more information.
