@@ -1,11 +1,14 @@
 name: manylinux
 on: [push, pull_request]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   manylinux:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-abi: [cp38-cp38, cp39-cp39, cp310-cp310, cp311-cp311, cp312-cp312, cp313-cp313]
+        python-abi: [cp39-cp39, cp310-cp310, cp311-cp311, cp312-cp312, cp313-cp313]
         image:
           - manylinux2014_x86_64
           - manylinux_2_28_x86_64

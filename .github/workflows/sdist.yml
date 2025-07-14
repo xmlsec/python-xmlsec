@@ -1,5 +1,8 @@
 name: sdist
 on: [push, pull_request]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   sdist:
     # Avoid Ubuntu 24.04 in sdist workflows, because it contains libxmlsec1-dev

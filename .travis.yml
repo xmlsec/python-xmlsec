@@ -1,51 +1,52 @@
-dist: trusty
-sudo: false
+dist: focal
 language: python
+travis:
+  auto_cancel:
+    push: true
+    pull_request: true
+
 notifications:
   email: false
-matrix:
-  include:
-  - python: 3.5
-  - python: 3.6
-  - python: 3.7
-    dist: xenial
-    sudo: required
-  - python: 3.8
-    dist: xenial
-    sudo: required
-  - python: 3.9
-    dist: xenial
-    sudo: required
-  - python: 3.11
-    dist: xenial
-    sudo: required
+
+python:
+  - "3.9"
+  - "3.10"
+  - "3.11"
+  - "3.12"
+  - "3.13"
+
 env:
   global:
-  - CFLAGS=-coverage
-  - LDFLAGS=-coverage -lgcov
-  - PYXMLSEC_TEST_ITERATIONS=50
+    - CFLAGS=-coverage
+    - LDFLAGS=-coverage -lgcov
+    - PYXMLSEC_TEST_ITERATIONS=50
 
 addons:
   apt:
     packages:
-    - libssl-dev
-    - libxmlsec1
-    - libxmlsec1-dev
-    - libxmlsec1-openssl
-    - libxslt1-dev
-    - pkg-config
-    - lcov
+      - libssl-dev
+      - libxmlsec1
+      - libxmlsec1-dev
+      - libxmlsec1-openssl
+      - libxslt1-dev
+      - pkg-config
+      - lcov
+
 install:
-- travis_retry pip install --upgrade pip setuptools wheel
-- travis_retry pip install coverage -r requirements-test.txt --upgrade --force-reinstall
-- python setup.py bdist_wheel
-- pip install xmlsec --only-binary=xmlsec --no-index --find-links=dist/
-script: coverage run -m pytest -v tests --color=yes
+  - travis_retry pip install --upgrade pip setuptools wheel
+  - travis_retry pip install coverage -r requirements-test.txt --upgrade --force-reinstall
+  - python setup.py bdist_wheel
+  - pip install xmlsec --only-binary=xmlsec --no-index --find-links=dist/
+
+script:
+  - coverage run -m pytest -v tests --color=yes
+
 after_success:
-- lcov --capture --no-external --directory . --output-file coverage.info
-- lcov --list coverage.info
-- bash <(curl -s https://codecov.io/bash) -f coverage.info
+  - lcov --capture --no-external --directory . --output-file coverage.info
+  - lcov --list coverage.info
+  - bash <(curl -s https://codecov.io/bash) -f coverage.info
+
 before_deploy:
-- travis_retry pip install Sphinx -r doc/source/requirements.txt
-- git apply --verbose --no-index --unsafe-paths --directory=$(python -c "import site; print(site.getsitepackages()[0])") doc/source/sphinx-pr-6916.diff
-- sphinx-build -EWanb html doc/source build/sphinx
+  - travis_retry pip install Sphinx -r doc/source/requirements.txt
+  - git apply --verbose --no-index --unsafe-paths --directory=$(python -c "import site; print(site.getsitepackages()[0])") doc/source/sphinx-pr-6916.diff
+  - sphinx-build -EWanb html doc/source build/sphinx
