@@ -47,10 +47,17 @@ known_third_party = ['lxml', 'pytest', '_pytest', 'hypothesis']
 requires = ['setuptools>=42', 'wheel', 'setuptools_scm[toml]>=3.4', "pkgconfig>=1.5.1", "lxml>=3.8, !=4.7.0"]
 
 [tool.cibuildwheel]
+build = [
+    "cp39-*",
+    "cp310-*",
+    "cp311-*",
+    "cp312-*",
+    "cp313-*"
+]
 build-verbosity = 1
 build-frontend = "build"
 skip = [
-    "pp*",
+    "pp*",  # Skips PyPy builds (pp38-*, pp39-*, etc.)
 ]
 test-command = "pytest -v --color=yes {package}/tests"
 before-test = "pip install -r requirements-test.txt"
