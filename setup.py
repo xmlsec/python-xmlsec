@@ -35,7 +35,7 @@ class HrefCollector(html.parser.HTMLParser):
 def make_request(url, github_token=None, json_response=False):
     headers = {'User-Agent': 'https://github.com/xmlsec/python-xmlsec'}
     if github_token:
-        headers['authorization'] = "Bearer " + github_token
+        headers['authorization'] = 'Bearer ' + github_token
     request = Request(url, headers=headers)
     with contextlib.closing(urlopen(request)) as r:
         charset = r.headers.get_content_charset() or 'utf-8'
@@ -74,9 +74,9 @@ def latest_release_json_from_github_api(repo):
     api_url = f'https://api.github.com/repos/{repo}/releases/latest'
 
     # if we are running in CI, pass along the GH_TOKEN, so we don't get rate limited
-    token = os.environ.get("GH_TOKEN")
+    token = os.environ.get('GH_TOKEN')
     if token:
-        log.info("Using GitHub token to avoid rate limiting")
+        log.info('Using GitHub token to avoid rate limiting')
     return make_request(api_url, token, json_response=True)
 
 
@@ -114,7 +114,7 @@ class CrossCompileInfo:
 
     @property
     def triplet(self):
-        return f"{self.host}-{self.arch}-{self.compiler}"
+        return f'{self.host}-{self.arch}-{self.compiler}'
 
 
 class build_ext(build_ext_orig):
@@ -309,9 +309,7 @@ class build_ext(build_ext_orig):
                 self.info('{:10}: {}'.format('zlib', f'PYXMLSEC_ZLIB_VERSION unset, downloading latest from {url}'))
             else:
                 url = f'https://zlib.net/fossils/zlib-{self.zlib_version}.tar.gz'
-                self.info(
-                    '{:10}: {}'.format('zlib', f'PYXMLSEC_ZLIB_VERSION={self.zlib_version}, downloading from {url}')
-                )
+                self.info('{:10}: {}'.format('zlib', f'PYXMLSEC_ZLIB_VERSION={self.zlib_version}, downloading from {url}'))
             urlretrieve(url, str(zlib_tar))
 
         # fetch libiconv
@@ -325,9 +323,7 @@ class build_ext(build_ext_orig):
             else:
                 url = f'https://ftp.gnu.org/pub/gnu/libiconv/libiconv-{self.libiconv_version}.tar.gz'
                 self.info(
-                    '{:10}: {}'.format(
-                        'zlib', f'PYXMLSEC_LIBICONV_VERSION={self.libiconv_version}, downloading from {url}'
-                    )
+                    '{:10}: {}'.format('zlib', f'PYXMLSEC_LIBICONV_VERSION={self.libiconv_version}, downloading from {url}')
                 )
             urlretrieve(url, str(libiconv_tar))
 
@@ -342,9 +338,7 @@ class build_ext(build_ext_orig):
                 version_prefix, _ = self.libxml2_version.rsplit('.', 1)
                 url = f'https://download.gnome.org/sources/libxml2/{version_prefix}/libxml2-{self.libxml2_version}.tar.xz'
                 self.info(
-                    '{:10}: {}'.format(
-                        'libxml2', f'PYXMLSEC_LIBXML2_VERSION={self.libxml2_version}, downloading from {url}'
-                    )
+                    '{:10}: {}'.format('libxml2', f'PYXMLSEC_LIBXML2_VERSION={self.libxml2_version}, downloading from {url}')
                 )
             libxml2_tar = self.libs_dir / 'libxml2.tar.xz'
             urlretrieve(url, str(libxml2_tar))
@@ -360,9 +354,7 @@ class build_ext(build_ext_orig):
                 version_prefix, _ = self.libxslt_version.rsplit('.', 1)
                 url = f'https://download.gnome.org/sources/libxslt/{version_prefix}/libxslt-{self.libxslt_version}.tar.xz'
                 self.info(
-                    '{:10}: {}'.format(
-                        'libxslt', f'PYXMLSEC_LIBXSLT_VERSION={self.libxslt_version}, downloading from {url}'
-                    )
+                    '{:10}: {}'.format('libxslt', f'PYXMLSEC_LIBXSLT_VERSION={self.libxslt_version}, downloading from {url}')
                 )
             libxslt_tar = self.libs_dir / 'libxslt.tar.gz'
             urlretrieve(url, str(libxslt_tar))
@@ -377,9 +369,7 @@ class build_ext(build_ext_orig):
             else:
                 url = f'https://github.com/lsh123/xmlsec/releases/download/{self.xmlsec1_version}/xmlsec1-{self.xmlsec1_version}.tar.gz'
                 self.info(
-                    '{:10}: {}'.format(
-                        'xmlsec1', f'PYXMLSEC_XMLSEC1_VERSION={self.xmlsec1_version}, downloading from {url}'
-                    )
+                    '{:10}: {}'.format('xmlsec1', f'PYXMLSEC_XMLSEC1_VERSION={self.xmlsec1_version}, downloading from {url}')
                 )
             xmlsec1_tar = self.libs_dir / 'xmlsec1.tar.gz'
             urlretrieve(url, str(xmlsec1_tar))
@@ -415,7 +405,7 @@ class build_ext(build_ext_orig):
                 cross_compiling = CrossCompileInfo('darwin64', arch, 'cc')
             major_version, _ = tuple(map(int, platform.mac_ver()[0].split('.')[:2]))
             if major_version >= 11 and 'MACOSX_DEPLOYMENT_TARGET' not in env:
-                    env['MACOSX_DEPLOYMENT_TARGET'] = "11.0"
+                env['MACOSX_DEPLOYMENT_TARGET'] = '11.0'
 
         env['CFLAGS'] = ' '.join(cflags)
         env['LDFLAGS'] = ' '.join(ldflags)
@@ -430,9 +420,7 @@ class build_ext(build_ext_orig):
             openssl_config_cmd.insert(0, './config')
         subprocess.check_call(openssl_config_cmd, cwd=str(openssl_dir), env=env)
         subprocess.check_call(['make', f'-j{multiprocessing.cpu_count() + 1}'], cwd=str(openssl_dir), env=env)
-        subprocess.check_call(
-            ['make', f'-j{multiprocessing.cpu_count() + 1}', 'install_sw'], cwd=str(openssl_dir), env=env
-        )
+        subprocess.check_call(['make', f'-j{multiprocessing.cpu_count() + 1}', 'install_sw'], cwd=str(openssl_dir), env=env)
 
         self.info('Building zlib')
         zlib_dir = next(self.build_libs_dir.glob('zlib-*'))
@@ -594,7 +582,7 @@ setup(
     python_requires='>=3.9',
     setup_requires=setup_reqs,
     install_requires=['lxml>=3.8'],
-    author="Bulat Gaifullin",
+    author='Bulat Gaifullin',
     author_email='support@mehcode.com',
     maintainer='Oleg Hoefling',
     maintainer_email='oleg.hoefling@gmail.com',

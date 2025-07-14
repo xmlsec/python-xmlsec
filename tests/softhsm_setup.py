@@ -223,7 +223,7 @@ log.level = DEBUG
                         '[pkcs11_section]',
                         'engine_id = pkcs11',
                         # dynamic_path,
-                        "MODULE_PATH = {}".format(component_path['P11_MODULE']),
+                        'MODULE_PATH = {}'.format(component_path['P11_MODULE']),
                         'init = 0',
                     ]
                 )

@@ -25,11 +25,11 @@ class TestMemoryLeaks(unittest.TestCase):
 
     iterations = test_iterations
 
-    data_dir = os.path.join(os.path.dirname(__file__), "data")
+    data_dir = os.path.join(os.path.dirname(__file__), 'data')
 
     def setUp(self):
         gc.disable()
-        self.addTypeEqualityFunc(etype, "assertXmlEqual")
+        self.addTypeEqualityFunc(etype, 'assertXmlEqual')
         xmlsec.enable_debug_trace(1)
 
     def run(self, result=None):
@@ -58,13 +58,13 @@ class TestMemoryLeaks(unittest.TestCase):
         if m_hits > int(self.iterations * 0.8):
             result.buffer = False
             try:
-                raise AssertionError("memory leak detected")
+                raise AssertionError('memory leak detected')
             except AssertionError:
                 result.addError(self, sys.exc_info())
         if o_hits > int(self.iterations * 0.8):
             result.buffer = False
             try:
-                raise AssertionError("unreferenced objects detected")
+                raise AssertionError('unreferenced objects detected')
             except AssertionError:
                 result.addError(self, sys.exc_info())
 
@@ -74,7 +74,7 @@ class TestMemoryLeaks(unittest.TestCase):
 
     def load(self, name):
         """Load resource by name."""
-        with open(self.path(name), "rb") as stream:
+        with open(self.path(name), 'rb') as stream:
             return stream.read()
 
     def load_xml(self, name, xpath=None):

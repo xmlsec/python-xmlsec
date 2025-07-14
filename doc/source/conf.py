@@ -63,10 +63,10 @@ autodoc_member_order = 'groupwise'
 autodoc_docstring_signature = True
 
 
-rst_prolog = '''
+rst_prolog = """
 .. role:: xml(code)
    :language: xml
-'''
+"""
 
 # LXML crossref'ing stuff:
 # LXML doesn't have an intersphinx docs,
