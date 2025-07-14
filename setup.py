@@ -584,7 +584,7 @@ pyxmlsec = Extension('xmlsec', sources=sources)
 setup_reqs = ['setuptools_scm[toml]>=3.4', 'pkgconfig>=1.5.1', 'lxml>=3.8']
 
 
-with io.open('README.rst', encoding='utf-8') as f:
+with io.open('README.md', encoding='utf-8') as f:
     long_desc = f.read()
 
 
