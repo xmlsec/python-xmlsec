@@ -1,10 +1,5 @@
 import sys
-from typing import NamedTuple
-
-if sys.version_info >= (3, 8):
-    from typing import Final
-else:
-    from typing_extensions import Final
+from typing import Final, NamedTuple
 
 class __KeyData(NamedTuple):  # __KeyData type
     href: str

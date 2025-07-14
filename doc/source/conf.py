@@ -19,12 +19,12 @@ templates_path = ['_templates']
 source_suffix = '.rst'
 master_doc = 'index'
 
-project = u'python-xmlsec'
-copyright = u'2020, Oleg Hoefling <oleg.hoefling@gmail.com>'  # noqa: A001
-author = u'Bulat Gaifullin <gaifullinbf@gmail.com>'
+project = 'python-xmlsec'
+copyright = '2020, Oleg Hoefling <oleg.hoefling@gmail.com>'
+author = 'Bulat Gaifullin <gaifullinbf@gmail.com>'
 release = importlib.metadata.version('xmlsec')
 parsed: Version = parse(release)
-version = '{}.{}'.format(parsed.major, parsed.minor)
+version = f'{parsed.major}.{parsed.minor}'
 
 exclude_patterns: list[str] = []
 pygments_style = 'sphinx'
@@ -39,19 +39,19 @@ latex_documents = [
     (
         master_doc,
         'python-xmlsec.tex',
-        u'python-xmlsec Documentation',
-        u'Bulat Gaifullin \\textless{}gaifullinbf@gmail.com\\textgreater{}',
+        'python-xmlsec Documentation',
+        'Bulat Gaifullin \\textless{}gaifullinbf@gmail.com\\textgreater{}',
         'manual',
     )
 ]
 
-man_pages = [(master_doc, 'python-xmlsec', u'python-xmlsec Documentation', [author], 1)]
+man_pages = [(master_doc, 'python-xmlsec', 'python-xmlsec Documentation', [author], 1)]
 
 texinfo_documents = [
     (
         master_doc,
         'python-xmlsec',
-        u'python-xmlsec Documentation',
+        'python-xmlsec Documentation',
         author,
         'python-xmlsec',
         'One line description of project.',
@@ -63,10 +63,10 @@ autodoc_member_order = 'groupwise'
 autodoc_docstring_signature = True
 
 
-rst_prolog = '''
+rst_prolog = """
 .. role:: xml(code)
    :language: xml
-'''
+"""
 
 # LXML crossref'ing stuff:
 # LXML doesn't have an intersphinx docs,
@@ -75,8 +75,7 @@ lxml_element_cls_doc_uri = 'https://lxml.de/api/lxml.etree._Element-class.html'
 
 
 def lxml_element_doc_reference(app: Sphinx, env: BuildEnvironment, node: pending_xref, contnode: Text) -> reference:
-    """
-    Handle a missing reference only if it is a ``lxml.etree._Element`` ref.
+    """Handle a missing reference only if it is a ``lxml.etree._Element`` ref.
 
     We handle only :class:`lxml.etree._Element` and :class:`~lxml.etree._Element` nodes.
     """
@@ -85,7 +84,7 @@ def lxml_element_doc_reference(app: Sphinx, env: BuildEnvironment, node: pending
         and node.get('reftarget', None) == 'lxml.etree._Element'
         and contnode.astext() in ('lxml.etree._Element', '_Element')
     ):
-        reftitle = '(in lxml v{})'.format(lxml.__version__)  # type: ignore[attr-defined]
+        reftitle = f'(in lxml v{lxml.__version__})'  # type: ignore[attr-defined]
         newnode = reference('', '', internal=False, refuri=lxml_element_cls_doc_uri, reftitle=reftitle)
         newnode.append(contnode)
         return newnode

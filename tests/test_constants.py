@@ -21,22 +21,22 @@ def _constants(typename):
 @pytest.mark.parametrize('transform', _constants('__Transform'), ids=repr)
 def test_transform_str(transform):
     """Test string representation of ``xmlsec.constants.__Transform``."""
-    assert str(transform) == '{}, {}'.format(transform.name, transform.href)
+    assert str(transform) == f'{transform.name}, {transform.href}'
 
 
 @pytest.mark.parametrize('transform', _constants('__Transform'), ids=repr)
 def test_transform_repr(transform):
     """Test raw string representation of ``xmlsec.constants.__Transform``."""
-    assert repr(transform) == '__Transform({!r}, {!r}, {})'.format(transform.name, transform.href, transform.usage)
+    assert repr(transform) == f'__Transform({transform.name!r}, {transform.href!r}, {transform.usage})'
 
 
 @pytest.mark.parametrize('keydata', _constants('__KeyData'), ids=repr)
 def test_keydata_str(keydata):
     """Test string representation of ``xmlsec.constants.__KeyData``."""
-    assert str(keydata) == '{}, {}'.format(keydata.name, keydata.href)
+    assert str(keydata) == f'{keydata.name}, {keydata.href}'
 
 
 @pytest.mark.parametrize('keydata', _constants('__KeyData'), ids=repr)
 def test_keydata_repr(keydata):
     """Test raw string representation of ``xmlsec.constants.__KeyData``."""
-    assert repr(keydata) == '__KeyData({!r}, {!r})'.format(keydata.name, keydata.href)
+    assert repr(keydata) == f'__KeyData({keydata.name!r}, {keydata.href!r})'

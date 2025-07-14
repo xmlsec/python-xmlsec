@@ -1,3 +1,6 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4", "pkgconfig>=1.5.1", "lxml>=3.8, !=4.7.0"]
+
 [tool.mypy]
 files = ['src']
 ignore_missing_imports = false
@@ -19,32 +22,71 @@ warn_no_return = true
 no_implicit_reexport = true
 show_error_codes = true
 
-[tool.black]
-line_length = 130
-skip-string-normalization = true
-target_version = ['py39']
-include = '\.pyi?$'
-exclude = '''
+[tool.ruff]
+# Maximum line length, same as your original Black + Flake8 config
+line-length = 130
 
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.mypy_cache
-    | \.tox
-    | build
-    | dist
-  )/
-)
-'''
+# Target Python version (used for autofixes and style rules)
+target-version = "py39"
 
-[tool.isort]
-profile = 'black'
-known_first_party = ['xmlsec']
-known_third_party = ['lxml', 'pytest', '_pytest', 'hypothesis']
+# Directories and files to exclude from linting and formatting
+exclude = [
+  ".venv*",         # virtual environments
+  ".git",           # git directory
+  "build",          # build output
+  "dist",           # distribution packages
+  "libs",           # vendor libraries
+  ".eggs",          # setuptools egg folders
+  ".direnv*",       # direnv environments
+  "*_pb2.pyi"       # protobuf-generated type stubs
+]
 
-[build-system]
-requires = ['setuptools>=42', 'wheel', 'setuptools_scm[toml]>=3.4', "pkgconfig>=1.5.1", "lxml>=3.8, !=4.7.0"]
+[tool.ruff.lint]
+# Enable rule categories:
+# E = pycodestyle (style issues, like indentation, whitespace, etc.)
+# F = pyflakes (unused imports, undefined names)
+# I = isort (import sorting)
+# B = flake8-bugbear (common bugs & anti-patterns)
+# UP = pyupgrade (auto-upgrade syntax for newer Python)
+# SIM = flake8-simplify (simplifiable code patterns)
+# RUF = Ruff-native rules (extra, performance-optimized checks)
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+# TODO: Add more rule categories as needed, e.g.:
+# D = pydocstyle (docstring format/style issues)
+
+[tool.ruff.lint.per-file-ignores]
+"*.pyi" = [
+  # Ignore formatting and import errors in stub files
+  "E301", # expected 1 blank line, found 0
+  "E302", # expected 2 blank lines, found 1
+  "E305", # expected 2 blank lines after class or function
+  "E501", # line too long
+  "E701", # multiple statements on one line
+  "F401", # unused import
+  "F811", # redefinition of unused name
+  "F822"  # undefined name in `__all__`
+]
+"doc/source/conf.py" = [
+  "D1"    # missing docstring in public module/class/function
+]
+"doc/source/examples/*.py" = [
+  "D1",   # allow missing docstrings in examples
+  "E501"  # allow long lines in code examples
+]
+"tests/*.py" = [
+  "D1"    # allow missing docstrings in test files
+]
+
+[tool.ruff.format]
+# Always use single quotes (e.g., 'text' instead of "text")
+quote-style = "single"
+
+# Format code with or without trailing commas
+# true = prefer trailing commas where valid
+skip-magic-trailing-comma = false
+
+# Enforce Unix-style line endings (LF)
+line-ending = "lf"
 
 [tool.cibuildwheel]
 build = [

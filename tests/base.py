@@ -25,16 +25,16 @@ class TestMemoryLeaks(unittest.TestCase):
 
     iterations = test_iterations
 
-    data_dir = os.path.join(os.path.dirname(__file__), "data")
+    data_dir = os.path.join(os.path.dirname(__file__), 'data')
 
     def setUp(self):
         gc.disable()
-        self.addTypeEqualityFunc(etype, "assertXmlEqual")
+        self.addTypeEqualityFunc(etype, 'assertXmlEqual')
         xmlsec.enable_debug_trace(1)
 
     def run(self, result=None):
         # run first time
-        super(TestMemoryLeaks, self).run(result=result)
+        super().run(result=result)
         if self.iterations == 0:
             return
 
@@ -43,7 +43,7 @@ class TestMemoryLeaks(unittest.TestCase):
         m_hits = 0
         o_hits = 0
         for _ in range(self.iterations):
-            super(TestMemoryLeaks, self).run(result=result)
+            super().run(result=result)
             m_usage_n = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
             if m_usage_n > m_usage:
                 m_usage = m_usage_n
@@ -58,13 +58,13 @@ class TestMemoryLeaks(unittest.TestCase):
         if m_hits > int(self.iterations * 0.8):
             result.buffer = False
             try:
-                raise AssertionError("memory leak detected")
+                raise AssertionError('memory leak detected')
             except AssertionError:
                 result.addError(self, sys.exc_info())
         if o_hits > int(self.iterations * 0.8):
             result.buffer = False
             try:
-                raise AssertionError("unreferenced objects detected")
+                raise AssertionError('unreferenced objects detected')
             except AssertionError:
                 result.addError(self, sys.exc_info())
 
@@ -74,7 +74,7 @@ class TestMemoryLeaks(unittest.TestCase):
 
     def load(self, name):
         """Load resource by name."""
-        with open(self.path(name), "rb") as stream:
+        with open(self.path(name), 'rb') as stream:
             return stream.read()
 
     def load_xml(self, name, xpath=None):
@@ -88,28 +88,26 @@ class TestMemoryLeaks(unittest.TestCase):
     def dump(self, root):
         print(etree.tostring(root))
 
-    def assertXmlEqual(self, first, second, msg=None):  # noqa: N802
+    def assertXmlEqual(self, first, second, msg=None):
         """Check equality of etree.roots."""
         msg = msg or ''
         if first.tag != second.tag:
-            self.fail('Tags do not match: {} and {}. {}'.format(first.tag, second.tag, msg))
+            self.fail(f'Tags do not match: {first.tag} and {second.tag}. {msg}')
         for name, value in first.attrib.items():
             if second.attrib.get(name) != value:
-                self.fail('Attributes do not match: {}={!r}, {}={!r}. {}'.format(name, value, name, second.attrib.get(name), msg))
-        for name in second.attrib.keys():
+                self.fail(f'Attributes do not match: {name}={value!r}, {name}={second.attrib.get(name)!r}. {msg}')
+        for name in second.attrib:
             if name not in first.attrib:
-                self.fail('x2 has an attribute x1 is missing: {}. {}'.format(name, msg))
+                self.fail(f'x2 has an attribute x1 is missing: {name}. {msg}')
         if not _xml_text_compare(first.text, second.text):
-            self.fail('text: {!r} != {!r}. {}'.format(first.text, second.text, msg))
+            self.fail(f'text: {first.text!r} != {second.text!r}. {msg}')
         if not _xml_text_compare(first.tail, second.tail):
-            self.fail('tail: {!r} != {!r}. {}'.format(first.tail, second.tail, msg))
+            self.fail(f'tail: {first.tail!r} != {second.tail!r}. {msg}')
         cl1 = sorted(first.getchildren(), key=lambda x: x.tag)
         cl2 = sorted(second.getchildren(), key=lambda x: x.tag)
         if len(cl1) != len(cl2):
-            self.fail('children length differs, {} != {}. {}'.format(len(cl1), len(cl2), msg))
-        i = 0
+            self.fail(f'children length differs, {len(cl1)} != {len(cl2)}. {msg}')
         for c1, c2 in zip(cl1, cl2):
-            i += 1
             self.assertXmlEqual(c1, c2)
 
 

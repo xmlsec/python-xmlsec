@@ -1,48 +1,42 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
--   repo: https://github.com/psf/black
-    rev: 25.1.0
-    hooks:
-    -   id: black
-        types: []
-        files: ^.*.pyi?$
-        exclude: ^doc/
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-    -   id: no-commit-to-branch
-    -   id: trailing-whitespace
-    -   id: end-of-file-fixer
-    -   id: check-yaml
-    -   id: check-added-large-files
-    -   id: check-ast
-    -   id: check-merge-conflict
-    -   id: check-json
-    -   id: detect-private-key
-        exclude: ^.*/rsakey.pem$
-    -   id: mixed-line-ending
-    -   id: pretty-format-json
-        args: [--autofix]
--   repo: https://github.com/PyCQA/flake8
-    rev: 7.3.0
-    hooks:
-    -   id: flake8
-        exclude: ^setup.py$
-        additional_dependencies: [flake8-docstrings, flake8-bugbear, flake8-logging-format, flake8-builtins, flake8-eradicate, flake8-fixme, pep8-naming, flake8-pep3101, flake8-annotations-complexity,flake8-pyi]
--   repo: https://github.com/PyCQA/isort
-    rev: 6.0.1
-    hooks:
-    -   id: isort
--   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.16.1
-    hooks:
-    -   id: mypy
-        exclude: (setup.py|tests/.*.py|doc/.*)
-        types: []
-        files: ^.*.pyi?$
-        additional_dependencies: [lxml-stubs,types-docutils]
--   repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.10.0
-    hooks:
-    -   id: rst-backticks
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.12.3
+  hooks:
+    - id: ruff
+      args: ["--fix"]
+      types: [python]
+    - id: ruff-format
+      types: [python]
+
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v5.0.0
+  hooks:
+    - id: no-commit-to-branch
+    - id: trailing-whitespace
+    - id: end-of-file-fixer
+    - id: check-yaml
+    - id: check-added-large-files
+    - id: check-ast
+    - id: check-merge-conflict
+    - id: check-json
+    - id: detect-private-key
+      exclude: ^.*/rsakey.pem$
+    - id: mixed-line-ending
+    - id: pretty-format-json
+      args: [--autofix]
+
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v1.16.1
+  hooks:
+    - id: mypy
+      exclude: (setup.py|tests/.*.py|doc/.*)
+      types: []
+      files: ^.*.pyi?$
+      additional_dependencies: [lxml-stubs, types-docutils]
+
+- repo: https://github.com/pre-commit/pygrep-hooks
+  rev: v1.10.0
+  hooks:
+    - id: rst-backticks

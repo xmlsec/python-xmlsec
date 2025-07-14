@@ -10,7 +10,7 @@ from xmlsec import constants as consts
 class TestBase64LineSize(base.TestMemoryLeaks):
     def tearDown(self):
         xmlsec.base64_default_line_size(64)
-        super(TestBase64LineSize, self).tearDown()
+        super().tearDown()
 
     def test_get_base64_default_line_size(self):
         self.assertEqual(xmlsec.base64_default_line_size(), 64)
@@ -43,12 +43,12 @@ class TestCallbacks(base.TestMemoryLeaks):
         xmlsec.cleanup_callbacks()
 
     def _sign_doc(self):
-        root = self.load_xml("doc.xml")
+        root = self.load_xml('doc.xml')
         sign = xmlsec.template.create(root, c14n_method=consts.TransformExclC14N, sign_method=consts.TransformRsaSha1)
-        xmlsec.template.add_reference(sign, consts.TransformSha1, uri="cid:123456")
+        xmlsec.template.add_reference(sign, consts.TransformSha1, uri='cid:123456')
 
         ctx = xmlsec.SignatureContext()
-        ctx.key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)
+        ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
         ctx.sign(sign)
         return sign
 
@@ -78,7 +78,7 @@ class TestCallbacks(base.TestMemoryLeaks):
     def _find(self, elem, *tags):
         try:
             return elem.xpath(
-                './' + '/'.join('xmldsig:{}'.format(tag) for tag in tags),
+                './' + '/'.join(f'xmldsig:{tag}' for tag in tags),
                 namespaces={
                     'xmldsig': 'http://www.w3.org/2000/09/xmldsig#',
                 },
@@ -125,7 +125,7 @@ class TestCallbacks(base.TestMemoryLeaks):
         self._verify_external_data_signature()
         self.assertEqual(bad_match_calls, 0)
 
-    @skipIf(sys.platform == "win32", "unclear behaviour on windows")
+    @skipIf(sys.platform == 'win32', 'unclear behaviour on windows')
     def test_failed_sign_because_default_callbacks(self):
         mismatch_calls = 0
 

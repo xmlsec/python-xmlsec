@@ -40,8 +40,7 @@ class __TransformNoHref(NamedTuple):  # __Transform type
 
 
 def gen_constants_stub():
-    """
-    Generate contents of the file:`xmlsec/constants.pyi`.
+    """Generate contents of the file:`xmlsec/constants.pyi`.
 
     Simply load all constants at runtime,
     generate appropriate type hint for each constant type.
@@ -53,7 +52,7 @@ def gen_constants_stub():
         type_name = type(obj).__name__
         if type_name in ('__KeyData', '__Transform') and obj.href is None:
             type_name += 'NoHref'
-        return '{name}: Final[{type_name}]'.format(name=name, type_name=type_name)
+        return f'{name}: Final[{type_name}]'
 
     names = list(sorted(name for name in dir(xmlsec.constants) if not name.startswith('__')))
     lines = [process_constant(name) for name in names]
@@ -61,8 +60,7 @@ def gen_constants_stub():
 
 
 def test_xmlsec_constants_stub(request):
-    """
-    Generate the stub file for :mod:`xmlsec.constants` from existing code.
+    """Generate the stub file for :mod:`xmlsec.constants` from existing code.
 
     Compare it against the existing stub :file:`xmlsec/constants.pyi`.
     """
