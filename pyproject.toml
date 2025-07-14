@@ -29,17 +29,6 @@ line-length = 130
 # Target Python version (used for autofixes and style rules)
 target-version = "py39"
 
-# Enable rule categories:
-# E = pycodestyle (style issues, like indentation, whitespace, etc.)
-# F = pyflakes (unused imports, undefined names)
-# D = pydocstyle (docstring format/style issues)
-# I = isort (import sorting)
-# B = flake8-bugbear (common bugs & anti-patterns)
-# UP = pyupgrade (auto-upgrade syntax for newer Python)
-# SIM = flake8-simplify (simplifiable code patterns)
-# RUF = Ruff-native rules (extra, performance-optimized checks)
-select = ["E", "F", "D", "I", "B", "UP", "SIM", "RUF"]
-
 # Directories and files to exclude from linting and formatting
 exclude = [
   ".venv*",         # virtual environments
@@ -52,8 +41,20 @@ exclude = [
   "*_pb2.pyi"       # protobuf-generated type stubs
 ]
 
-# File-specific rule ignores (equivalent to flake8's `per-file-ignores`)
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint]
+# Enable rule categories:
+# E = pycodestyle (style issues, like indentation, whitespace, etc.)
+# F = pyflakes (unused imports, undefined names)
+# I = isort (import sorting)
+# B = flake8-bugbear (common bugs & anti-patterns)
+# UP = pyupgrade (auto-upgrade syntax for newer Python)
+# SIM = flake8-simplify (simplifiable code patterns)
+# RUF = Ruff-native rules (extra, performance-optimized checks)
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+# TODO: Add more rule categories as needed, e.g.:
+# D = pydocstyle (docstring format/style issues)
+
+[tool.ruff.lint.per-file-ignores]
 "*.pyi" = [
   # Ignore formatting and import errors in stub files
   "E301", # expected 1 blank line, found 0
@@ -62,6 +63,7 @@ exclude = [
   "E501", # line too long
   "E701", # multiple statements on one line
   "F401", # unused import
+  "F811", # redefinition of unused name
   "F822"  # undefined name in `__all__`
 ]
 "doc/source/conf.py" = [

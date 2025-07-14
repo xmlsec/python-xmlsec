@@ -252,7 +252,7 @@ class TestSignContext(base.TestMemoryLeaks):
         self.check_verify(5)
 
     def check_verify(self, i):
-        root = self.load_xml("sign{}-out.xml".format(i))
+        root = self.load_xml(f"sign{i}-out.xml")
         xmlsec.tree.add_ids(root, ["ID"])
         sign = xmlsec.tree.find_node(root, consts.NodeSignature)
         self.assertIsNotNone(sign)

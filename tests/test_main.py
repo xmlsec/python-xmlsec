@@ -10,7 +10,7 @@ from xmlsec import constants as consts
 class TestBase64LineSize(base.TestMemoryLeaks):
     def tearDown(self):
         xmlsec.base64_default_line_size(64)
-        super(TestBase64LineSize, self).tearDown()
+        super().tearDown()
 
     def test_get_base64_default_line_size(self):
         self.assertEqual(xmlsec.base64_default_line_size(), 64)
@@ -78,7 +78,7 @@ class TestCallbacks(base.TestMemoryLeaks):
     def _find(self, elem, *tags):
         try:
             return elem.xpath(
-                './' + '/'.join('xmldsig:{}'.format(tag) for tag in tags),
+                './' + '/'.join(f'xmldsig:{tag}' for tag in tags),
                 namespaces={
                     'xmldsig': 'http://www.w3.org/2000/09/xmldsig#',
                 },

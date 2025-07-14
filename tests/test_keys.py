@@ -29,10 +29,9 @@ class TestKeys(base.TestMemoryLeaks):
             xmlsec.Key.from_file(1, format="")
 
     def test_key_from_invalid_file(self):
-        with self.assertRaisesRegex(xmlsec.Error, '.*cannot read key.*'):
-            with tempfile.NamedTemporaryFile() as tmpfile:
-                tmpfile.write(b'foo')
-                xmlsec.Key.from_file(tmpfile.name, format=consts.KeyDataFormatPem)
+        with self.assertRaisesRegex(xmlsec.Error, '.*cannot read key.*'), tempfile.NamedTemporaryFile() as tmpfile:
+            tmpfile.write(b'foo')
+            xmlsec.Key.from_file(tmpfile.name, format=consts.KeyDataFormatPem)
 
     def test_key_from_fileobj(self):
         with open(self.path("rsakey.pem"), "rb") as fobj:
@@ -66,10 +65,9 @@ class TestKeys(base.TestMemoryLeaks):
             xmlsec.Key.from_binary_file(klass="", filename=1)
 
     def test_from_invalid_binary_file(self):
-        with self.assertRaisesRegex(xmlsec.Error, '.*cannot read key.*'):
-            with tempfile.NamedTemporaryFile() as tmpfile:
-                tmpfile.write(b'foo')
-                xmlsec.Key.from_binary_file(klass=consts.KeyDataDes, filename=tmpfile.name)
+        with self.assertRaisesRegex(xmlsec.Error, '.*cannot read key.*'), tempfile.NamedTemporaryFile() as tmpfile:
+            tmpfile.write(b'foo')
+            xmlsec.Key.from_binary_file(klass=consts.KeyDataDes, filename=tmpfile.name)
 
     def test_from_binary_data(self):
         key = xmlsec.Key.from_binary_data(klass=consts.KeyDataDes, data=self.load("deskey.bin"))
@@ -97,10 +95,9 @@ class TestKeys(base.TestMemoryLeaks):
     def test_load_cert_from_invalid_file(self):
         key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)
         self.assertIsNotNone(key)
-        with self.assertRaisesRegex(xmlsec.Error, '.*cannot load cert.*'):
-            with tempfile.NamedTemporaryFile() as tmpfile:
-                tmpfile.write(b'foo')
-                key.load_cert_from_file(tmpfile.name, format=consts.KeyDataFormatPem)
+        with self.assertRaisesRegex(xmlsec.Error, '.*cannot load cert.*'), tempfile.NamedTemporaryFile() as tmpfile:
+            tmpfile.write(b'foo')
+            key.load_cert_from_file(tmpfile.name, format=consts.KeyDataFormatPem)
 
     def test_load_cert_from_fileobj(self):
         key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)
@@ -146,7 +143,7 @@ class TestKeys(base.TestMemoryLeaks):
     def test_get_name_invalid_key(self):
         key = xmlsec.Key()
         with self.assertRaisesRegex(ValueError, 'key is not ready'):
-            key.name
+            key.name  # noqa: B018
 
     def test_del_name(self):
         key = xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem)
@@ -190,10 +187,9 @@ class TestKeysManager(base.TestMemoryLeaks):
     def test_load_cert_with_bad_args(self):
         mngr = xmlsec.KeysManager()
         mngr.add_key(xmlsec.Key.from_file(self.path("rsakey.pem"), format=consts.KeyDataFormatPem))
-        with self.assertRaisesRegex(xmlsec.Error, '.*cannot load cert.*'):
-            with tempfile.NamedTemporaryFile() as tmpfile:
-                tmpfile.write(b'foo')
-                mngr.load_cert(tmpfile.name, format=consts.KeyDataFormatPem, type=consts.KeyDataTypeTrusted)
+        with self.assertRaisesRegex(xmlsec.Error, '.*cannot load cert.*'), tempfile.NamedTemporaryFile() as tmpfile:
+            tmpfile.write(b'foo')
+            mngr.load_cert(tmpfile.name, format=consts.KeyDataFormatPem, type=consts.KeyDataTypeTrusted)
 
     def test_load_invalid_cert(self):
         mngr = xmlsec.KeysManager()
