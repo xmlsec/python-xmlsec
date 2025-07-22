@@ -189,8 +189,16 @@ class build_ext(build_ext_orig):
                     '-fno-strict-aliasing',
                     '-Wno-error=declaration-after-statement',
                     '-Werror=implicit-function-declaration',
+                    '-fvisibility=hidden',
+                    '-fno-common',
                 ]
             )
+            if sys.platform == 'linux':
+                ext.extra_link_args.extend(
+                    [
+                        '-Wl,-Bsymbolic',
+                    ]
+                )
 
         if self.debug:
             ext.define_macros.append(('PYXMLSEC_ENABLE_DEBUG', '1'))
