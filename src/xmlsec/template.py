@@ -1,9 +1,11 @@
-from lxml.etree import _Element
-from xmlsec.constants import __Transform as Transform
 import ctypes
 
+from lxml.etree import _Element
+
+from xmlsec.constants import __Transform as Transform
+
 # Load the shared library (assuming it's named `libxmlsec.so` or similar)
-libxmlsec = ctypes.CDLL("../template.c")
+libxmlsec = ctypes.CDLL('../template.c')
 
 # Define the Python wrapper for the C function
 libxmlsec.PyXmlSec_TemplateAddEncryptedKey.argtypes = [
@@ -11,9 +13,10 @@ libxmlsec.PyXmlSec_TemplateAddEncryptedKey.argtypes = [
     ctypes.POINTER(Transform),
     ctypes.c_char_p,  # id
     ctypes.c_char_p,  # type
-    ctypes.c_char_p   # recipient
+    ctypes.c_char_p,  # recipient
 ]
 libxmlsec.PyXmlSec_TemplateAddEncryptedKey.restype = ctypes.POINTER(_Element)
+
 
 def add_encrypted_key(
     node: _Element, method: Transform, id: str | None = None, type: str | None = None, recipient: str | None = None
@@ -37,6 +40,6 @@ def add_encrypted_key(
     result = libxmlsec.PyXmlSec_TemplateAddEncryptedKey(node, method, c_id, c_type, c_recipient)
 
     if not result:
-        raise RuntimeError("Failed to add encrypted key")
+        raise RuntimeError('Failed to add encrypted key')
 
     return result
