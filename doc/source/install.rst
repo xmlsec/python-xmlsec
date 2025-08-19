@@ -59,7 +59,7 @@ Alpine
 
 .. code-block:: bash
 
-   apk add build-base libressl libffi-dev libressl-dev libxslt-dev libxml2-dev xmlsec-dev xmlsec
+   apk add build-base openssl libffi-dev openssl-dev libxslt-dev libxml2-dev xmlsec-dev xmlsec
 
 
 Troubleshooting
