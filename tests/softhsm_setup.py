@@ -140,7 +140,7 @@ log.level = DEBUG
                 )
 
         logging.debug('Initializing the token')
-        out, err = run_cmd(
+        _, _ = run_cmd(
             [
                 component_path['SOFTHSM'],
                 '--slot',
