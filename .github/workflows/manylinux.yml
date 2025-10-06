@@ -32,7 +32,7 @@ jobs:
       - name: Build linux_x86_64 wheel
         env:
           PYXMLSEC_STATIC_DEPS: true
-          PYXMLSEC_LIBXML2_VERSION: 2.14.6  # Lock it to libxml2 2.14.6 until the issue with 2.15.x is resolved; e.g. https://github.com/lsh123/xmlsec/issues/948
+          PYXMLSEC_LIBXML2_VERSION: 2.14.6  # Lock it to libxml2 2.14.6 to match it with lxml
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           /opt/python/${{ matrix.python-abi }}/bin/python -m build

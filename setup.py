@@ -14,7 +14,7 @@ from distutils.errors import DistutilsError
 from distutils.version import StrictVersion as Version
 from pathlib import Path
 from urllib.parse import urljoin
-from urllib.request import Request, urlcleanup, urlopen, urlretrieve
+from urllib.request import Request, urlcleanup, urlopen
 
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext as build_ext_orig
@@ -104,6 +104,16 @@ def latest_xmlsec_release():
     assets = latest_release_json_from_github_api('lsh123/xmlsec')['assets']
     (tar_gz,) = [asset for asset in assets if asset['name'].endswith('.tar.gz')]
     return tar_gz['browser_download_url']
+
+
+def download_lib(url, filename):
+    req = Request(url, headers={'User-Agent': 'python-xmlsec build'})
+    with urlopen(req) as r, open(filename, 'wb') as f:
+        while True:
+            chunk = r.read(8192)
+            if not chunk:
+                break
+            f.write(chunk)
 
 
 class CrossCompileInfo:
@@ -234,7 +244,7 @@ class build_ext(build_ext_orig):
             else:
                 self.info(f'Retrieving "{url}" to "{destfile}"')
                 urlcleanup()  # work around FTP bug 27973 in Py2.7.12+
-                urlretrieve(url, str(destfile))
+                download_lib(url, str(destfile))
 
         for p in self.libs_dir.glob('*.zip'):
             with zipfile.ZipFile(str(p)) as f:
@@ -297,7 +307,7 @@ class build_ext(build_ext_orig):
             else:
                 url = f'https://api.github.com/repos/openssl/openssl/tarball/openssl-{self.openssl_version}'
                 self.info('{:10}: {} {}'.format('OpenSSL', 'version', self.openssl_version))
-            urlretrieve(url, str(openssl_tar))
+            download_lib(url, str(openssl_tar))
 
         # fetch zlib
         zlib_tar = next(self.libs_dir.glob('zlib*.tar.gz'), None)
@@ -310,7 +320,7 @@ class build_ext(build_ext_orig):
             else:
                 url = f'https://zlib.net/fossils/zlib-{self.zlib_version}.tar.gz'
                 self.info('{:10}: {}'.format('zlib', f'PYXMLSEC_ZLIB_VERSION={self.zlib_version}, downloading from {url}'))
-            urlretrieve(url, str(zlib_tar))
+            download_lib(url, str(zlib_tar))
 
         # fetch libiconv
         libiconv_tar = next(self.libs_dir.glob('libiconv*.tar.gz'), None)
@@ -319,13 +329,13 @@ class build_ext(build_ext_orig):
             libiconv_tar = self.libs_dir / 'libiconv.tar.gz'
             if self.libiconv_version is None:
                 url = latest_libiconv_release()
-                self.info('{:10}: {}'.format('zlib', f'PYXMLSEC_LIBICONV_VERSION unset, downloading latest from {url}'))
+                self.info('{:10}: {}'.format('libiconv', f'PYXMLSEC_LIBICONV_VERSION unset, downloading latest from {url}'))
             else:
                 url = f'https://ftp.gnu.org/pub/gnu/libiconv/libiconv-{self.libiconv_version}.tar.gz'
                 self.info(
-                    '{:10}: {}'.format('zlib', f'PYXMLSEC_LIBICONV_VERSION={self.libiconv_version}, downloading from {url}')
+                    '{:10}: {}'.format('libiconv', f'PYXMLSEC_LIBICONV_VERSION={self.libiconv_version}, downloading from {url}')
                 )
-            urlretrieve(url, str(libiconv_tar))
+            download_lib(url, str(libiconv_tar))
 
         # fetch libxml2
         libxml2_tar = next(self.libs_dir.glob('libxml2*.tar.xz'), None)
@@ -341,7 +351,7 @@ class build_ext(build_ext_orig):
                     '{:10}: {}'.format('libxml2', f'PYXMLSEC_LIBXML2_VERSION={self.libxml2_version}, downloading from {url}')
                 )
             libxml2_tar = self.libs_dir / 'libxml2.tar.xz'
-            urlretrieve(url, str(libxml2_tar))
+            download_lib(url, str(libxml2_tar))
 
         # fetch libxslt
         libxslt_tar = next(self.libs_dir.glob('libxslt*.tar.gz'), None)
@@ -357,7 +367,7 @@ class build_ext(build_ext_orig):
                     '{:10}: {}'.format('libxslt', f'PYXMLSEC_LIBXSLT_VERSION={self.libxslt_version}, downloading from {url}')
                 )
             libxslt_tar = self.libs_dir / 'libxslt.tar.gz'
-            urlretrieve(url, str(libxslt_tar))
+            download_lib(url, str(libxslt_tar))
 
         # fetch xmlsec1
         xmlsec1_tar = next(self.libs_dir.glob('xmlsec1*.tar.gz'), None)
@@ -372,7 +382,7 @@ class build_ext(build_ext_orig):
                     '{:10}: {}'.format('xmlsec1', f'PYXMLSEC_XMLSEC1_VERSION={self.xmlsec1_version}, downloading from {url}')
                 )
             xmlsec1_tar = self.libs_dir / 'xmlsec1.tar.gz'
-            urlretrieve(url, str(xmlsec1_tar))
+            download_lib(url, str(xmlsec1_tar))
 
         for file in (openssl_tar, zlib_tar, libiconv_tar, libxml2_tar, libxslt_tar, xmlsec1_tar):
             self.info(f'Unpacking {file.name}')
