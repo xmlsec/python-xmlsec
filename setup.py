@@ -106,6 +106,16 @@ def latest_xmlsec_release():
     return tar_gz['browser_download_url']
 
 
+def urlretrieve2(url, filename):
+    req = Request(url, headers={'User-Agent': 'python-xmlsec build'})
+    with urlopen(req) as r, open(filename, 'wb') as f:
+        while True:
+            chunk = r.read(8192)
+            if not chunk:
+                break
+            f.write(chunk)
+
+
 class CrossCompileInfo:
     def __init__(self, host, arch, compiler):
         self.host = host
@@ -319,13 +329,13 @@ class build_ext(build_ext_orig):
             libiconv_tar = self.libs_dir / 'libiconv.tar.gz'
             if self.libiconv_version is None:
                 url = latest_libiconv_release()
-                self.info('{:10}: {}'.format('zlib', f'PYXMLSEC_LIBICONV_VERSION unset, downloading latest from {url}'))
+                self.info('{:10}: {}'.format('libiconv', f'PYXMLSEC_LIBICONV_VERSION unset, downloading latest from {url}'))
             else:
                 url = f'https://ftp.gnu.org/pub/gnu/libiconv/libiconv-{self.libiconv_version}.tar.gz'
                 self.info(
-                    '{:10}: {}'.format('zlib', f'PYXMLSEC_LIBICONV_VERSION={self.libiconv_version}, downloading from {url}')
+                    '{:10}: {}'.format('libiconv', f'PYXMLSEC_LIBICONV_VERSION={self.libiconv_version}, downloading from {url}')
                 )
-            urlretrieve(url, str(libiconv_tar))
+            urlretrieve2(url, str(libiconv_tar))
 
         # fetch libxml2
         libxml2_tar = next(self.libs_dir.glob('libxml2*.tar.xz'), None)
