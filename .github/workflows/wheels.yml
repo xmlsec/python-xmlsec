@@ -77,7 +77,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install cibuildwheel
         # Nb. keep cibuildwheel version pin consistent with job below
-        run: pipx install cibuildwheel==2.21.3
+        run: pipx install cibuildwheel==3.1.4
       - id: set-matrix
         # Once we have the windows build figured out, it can be added here
         # by updating the matrix to include windows builds as well.
@@ -126,7 +126,7 @@ jobs:
           platforms: all
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.21.3
+        uses: pypa/cibuildwheel@v3.1.4
         with:
           only: ${{ matrix.only }}
         env:

@@ -404,9 +404,8 @@ class build_ext(build_ext_orig):
             ldflags.append(env['LDFLAGS'])
 
         cross_compiling = False
+        import platform
         if build_platform == 'darwin':
-            import platform
-
             arch = self.plat_name.rsplit('-', 1)[1]
             if arch != platform.machine() and arch in ('x86_64', 'arm64'):
                 self.info(f'Cross-compiling for {arch}')
@@ -423,6 +422,19 @@ class build_ext(build_ext_orig):
         self.info('Building OpenSSL')
         openssl_dir = next(self.build_libs_dir.glob('openssl-*'))
         openssl_config_cmd = [prefix_arg, 'no-shared', '-fPIC', '--libdir=lib']
+        if platform.machine() == "riscv64":
+            # add `no-asm` flag for openssl while build for riscv64
+
+            # on openssl 3.5.2, When building for riscv64, ASM code is used by default. 
+            # However, this version of the assembly code will report during the build:
+
+            # relocation truncated to fit: R_RISCV_JAL against symbol `AES_set_encrypt_key' defined in .text section in /project/build/tmp/prefix/lib/libcrypto.a(libcrypto-lib-aes-riscv64.o)
+            
+            # This [line](https://github.com/openssl/openssl/blob/0893a62353583343eb712adef6debdfbe597c227/crypto/aes/asm/aes-riscv64.pl#L1069) of code cannot be completed normally because the jump address of the static link library used by xmlsec is too large.
+            # may be we can consider filing a related issue with OpenSSL later. 
+            # However, for now, for convenience, we can simply disable ASM for riscv64. 
+            # This will result in some performance degradation, but this is acceptable.
+            openssl_config_cmd.append('no-asm')
         if cross_compiling:
             openssl_config_cmd.insert(0, './Configure')
             openssl_config_cmd.append(cross_compiling.triplet)
