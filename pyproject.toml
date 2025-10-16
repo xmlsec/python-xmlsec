@@ -100,7 +100,7 @@ build-verbosity = 1
 build-frontend = "build"
 skip = [
     "pp*",  # Skips PyPy builds (pp38-*, pp39-*, etc.)
-    "*musllinux_riscv64"
+    "*musllinux_riscv64"  # maturin and ruff currently don’t support the musl + riscv64 target
 ]
 test-command = "pytest -v --color=yes {package}/tests"
 before-test = "pip install -r requirements-test.txt"
