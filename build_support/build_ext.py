@@ -83,4 +83,4 @@ class build_ext(build_ext_orig):
         super().run()
 
 
-__all__ = ('build_ext', 'CrossCompileInfo')
+__all__ = ('CrossCompileInfo', 'build_ext')

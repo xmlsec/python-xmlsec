@@ -2,7 +2,6 @@ import contextlib
 import json
 from urllib.request import Request, urlopen
 
-
 DEFAULT_USER_AGENT = 'https://github.com/xmlsec/python-xmlsec'
 DOWNLOAD_USER_AGENT = 'python-xmlsec build'
 

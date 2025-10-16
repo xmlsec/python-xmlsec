@@ -417,9 +417,7 @@ class StaticBuildHelper:
         ]
 
         self.ext.include_dirs.append(str(self.prefix_dir / 'include'))
-        self.ext.include_dirs.extend(
-            [str(path.absolute()) for path in (self.prefix_dir / 'include').iterdir() if path.is_dir()]
-        )
+        self.ext.include_dirs.extend([str(path.absolute()) for path in (self.prefix_dir / 'include').iterdir() if path.is_dir()])
 
         self.ext.library_dirs = []
         if build_platform == 'linux':
@@ -437,4 +435,4 @@ class StaticBuildHelper:
         self.ext.extra_objects = [str(self.prefix_dir / 'lib' / obj) for obj in extra_objects]
 
 
-__all__ = ('StaticBuildHelper', 'CrossCompileInfo')
+__all__ = ('CrossCompileInfo', 'StaticBuildHelper')
