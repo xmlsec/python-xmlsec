@@ -60,7 +60,7 @@ def latest_zlib_release():
 
 
 def latest_libiconv_release():
-    return latest_release_from_html('https://ftp.gnu.org/pub/gnu/libiconv', re.compile('libiconv-(?P<version>.*).tar.gz'))
+    return latest_release_from_html('https://ftpmirror.gnu.org/libiconv', re.compile('libiconv-(?P<version>.*).tar.gz'))
 
 
 def latest_libxml2_release():

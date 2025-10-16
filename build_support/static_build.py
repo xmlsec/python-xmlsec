@@ -182,7 +182,7 @@ class StaticBuildHelper:
                 version=self.builder.libiconv_version,
                 env_label='PYXMLSEC_LIBICONV_VERSION',
                 default_url=latest_libiconv_release,
-                version_url=lambda v: f'https://ftp.gnu.org/pub/gnu/libiconv/libiconv-{v}.tar.gz',
+                version_url=lambda v: f'https://ftpmirror.gnu.org/libiconv/libiconv-{v}.tar.gz',
             ),
             self._ensure_source(
                 name='libxml2',
