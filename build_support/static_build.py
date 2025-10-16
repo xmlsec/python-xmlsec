@@ -195,8 +195,8 @@ class StaticBuildHelper:
             ),
             self._ensure_source(
                 name='libxslt',
-                glob='libxslt*.tar.gz',
-                filename='libxslt.tar.gz',
+                glob='libxslt*.tar.xz',
+                filename='libxslt.tar.xz',
                 version=self.builder.libxslt_version,
                 env_label='PYXMLSEC_LIBXSLT_VERSION',
                 default_url=latest_libxslt_release,
