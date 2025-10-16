@@ -31,7 +31,7 @@ repos:
   rev: v1.18.2
   hooks:
     - id: mypy
-      exclude: (setup.py|tests/.*.py|doc/.*)
+      exclude: (setup.py|tests|build_support/.*.py|doc/.*)
       types: []
       files: ^.*.pyi?$
       additional_dependencies: [lxml-stubs, types-docutils]
