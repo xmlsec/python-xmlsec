@@ -148,12 +148,12 @@ class StaticBuildHelper:
 
     def _capture_version_overrides(self):
         builder = self.builder
-        builder.openssl_version = os.environ.get('PYXMLSEC_OPENSSL_VERSION')
-        builder.libiconv_version = os.environ.get('PYXMLSEC_LIBICONV_VERSION')
-        builder.libxml2_version = os.environ.get('PYXMLSEC_LIBXML2_VERSION')
-        builder.libxslt_version = os.environ.get('PYXMLSEC_LIBXSLT_VERSION')
-        builder.zlib_version = os.environ.get('PYXMLSEC_ZLIB_VERSION')
-        builder.xmlsec1_version = os.environ.get('PYXMLSEC_XMLSEC1_VERSION')
+        builder.openssl_version = os.environ.get('PYXMLSEC_OPENSSL_VERSION', '3.6.0')
+        builder.libiconv_version = os.environ.get('PYXMLSEC_LIBICONV_VERSION', '1.18')
+        builder.libxml2_version = os.environ.get('PYXMLSEC_LIBXML2_VERSION', '2.14.6')
+        builder.libxslt_version = os.environ.get('PYXMLSEC_LIBXSLT_VERSION', '1.1.43')
+        builder.zlib_version = os.environ.get('PYXMLSEC_ZLIB_VERSION', '1.3.1')
+        builder.xmlsec1_version = os.environ.get('PYXMLSEC_XMLSEC1_VERSION', '1.3.8')
 
     def _ensure_source_archives(self):
         return [
