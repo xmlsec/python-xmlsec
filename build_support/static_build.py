@@ -288,6 +288,21 @@ class StaticBuildHelper:
         self.info('Building OpenSSL')
         openssl_dir = next(self.build_libs_dir.glob('openssl-*'))
         openssl_config_cmd = [prefix_arg, 'no-shared', '-fPIC', '--libdir=lib']
+        if platform.machine() == 'riscv64':
+            # openssl(riscv64): disable ASM to avoid R_RISCV_JAL relocation failure on 3.5.2
+            # OpenSSL 3.5.2 enables RISC-V64 AES assembly by default. When we statically
+            # link libcrypto alongside xmlsec, the AES asm path triggers a link-time error:
+            #   relocation truncated to fit: R_RISCV_JAL against symbol `AES_set_encrypt_key'
+            #   in .../libcrypto.a(libcrypto-lib-aes-riscv64.o)
+            # This appears to stem from a long-range jump emitted by the AES asm generator
+            # (see aes-riscv64.pl around L1069), which can exceed the JAL reach when objects
+            # end up far apart in the final static link.
+            # As a pragmatic workaround, disable ASM on riscv64 (pass `no-asm`) so the
+            # portable C implementation is used. This unblocks the build at the cost of
+            # some crypto performance on riscv64 only.
+            # Refs:
+            # - https://github.com/openssl/openssl/blob/0893a62/crypto/aes/asm/aes-riscv64.pl#L1069
+            openssl_config_cmd.append('no-asm')
         if cross_compile:
             openssl_config_cmd.insert(0, './Configure')
             openssl_config_cmd.append(cross_compile.triplet)
