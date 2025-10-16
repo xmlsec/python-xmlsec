@@ -429,14 +429,9 @@ class build_ext(build_ext_orig):
             # on openssl 3.5.2, When building for riscv64, ASM code is used by default.
             # However, this version of the assembly code will report during the build:
 
-            # relocation truncated to fit: \
-            # R_RISCV_JAL against symbol `AES_set_encrypt_key' defined in .text section \
-            # in /project/build/tmp/prefix/lib/libcrypto.a(libcrypto-lib-aes-riscv64.o)
+            # relocation truncated to fit: R_RISCV_JAL against symbol `AES_set_encrypt_key' defined in .text section in /project/build/tmp/prefix/lib/libcrypto.a(libcrypto-lib-aes-riscv64.o) # noqa: E501
 
-            # This [line] \
-            # (https://github.com/openssl/openssl/blob/0893a62353583343eb712adef6debdfbe597c227/crypto/aes/asm/aes-riscv64.pl#L1069)
-            # of code cannot be completed normally \
-            # because the jump address of the static link library used by xmlsec is too large.
+            # This [line] (https://github.com/openssl/openssl/blob/0893a62353583343eb712adef6debdfbe597c227/crypto/aes/asm/aes-riscv64.pl#L1069) of code cannot be completed normally because the jump address of the static link library used by xmlsec is too large. # noqa: E501
             # may be we can consider filing a related issue with OpenSSL later.
             # However, for now, for convenience, we can simply disable ASM for riscv64.
             # This will result in some performance degradation, but this is acceptable.
