@@ -1,4 +1,4 @@
-lxml>=3.8
+lxml==6.0.2
 importlib_metadata;python_version < '3.8'
 packaging
 Sphinx>=3

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4", "pkgconfig>=1.5.1", "lxml>=3.8, !=4.7.0"]
+requires = ["setuptools==80.9.0", "wheel", "setuptools_scm[toml]>=3.4", "pkgconfig>=1.5.1", "lxml==6.0.2"]
 
 [tool.mypy]
 files = ['src']
@@ -100,6 +100,7 @@ build-verbosity = 1
 build-frontend = "build"
 skip = [
     "pp*",  # Skips PyPy builds (pp38-*, pp39-*, etc.)
+    "*musllinux_riscv64"  # maturin and ruff currently don’t support the musl + riscv64 target
 ]
 test-command = "pytest -v --color=yes {package}/tests"
 before-test = "pip install -r requirements-test.txt"
@@ -109,7 +110,7 @@ test-skip = "*-macosx_arm64"
 PYXMLSEC_STATIC_DEPS = "true"
 
 [tool.cibuildwheel.linux]
-archs = ["x86_64", "aarch64"]
+archs = ["x86_64", "aarch64", "riscv64"]
 environment-pass = [
     "PYXMLSEC_LIBXML2_VERSION",
     "PYXMLSEC_LIBXSLT_VERSION",
