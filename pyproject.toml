@@ -118,8 +118,6 @@ environment-pass = [
     "GH_TOKEN"
 ]
 
-[tool.setuptools_scm]
-
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
 before-all = "brew install perl"
