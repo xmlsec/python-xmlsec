@@ -404,7 +404,6 @@ class build_ext(build_ext_orig):
             ldflags.append(env['LDFLAGS'])
 
         cross_compiling = False
-        import platform
 
         if build_platform == 'darwin':
             arch = self.plat_name.rsplit('-', 1)[1]
