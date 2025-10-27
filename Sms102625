@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<!-- File Created By Silence -->
+<smses count="12972">
+ <sms protocol="0" address="+15557639101" date="1606237355859" type="1" subject="null" body="I can&apos;t fri but I can Thur I don&apos;t need assistance picking it up and can come by tonight and pay if that works" toa="null" sc_toa="null" service_center="null" read="1" status="-1" locked="0" />
+ <sms protocol="0" address="+15557639101" date="1606237237747" type="2" subject="null" body="Hi Tracy. The boiler is all disconnected and ready to be lifted from it&apos;s pad. Can you come in Friday some time to load it up? I have to leave on Saturday and will be away for a week, and will also be tied up all day on Thanksgiving.&#10;&#10;Please let me know if that will work out for you.&#10;&#10;Thanks!" toa="null" sc_toa="null" service_center="null" read="1" status="-1" locked="0" />
+ <sms protocol="0" address="+15557639101" date="1606077873112" type="1" subject="null" body="Yes all good thx I think I can hook every thing up now that I&apos;ve looked at it hope all is well. With y&apos;all also" toa="null" sc_toa="null" service_center="null" read="1" status="-1" locked="0" />
+ 
+                                     . . . . . . .
+ 
+  <sms protocol="0" address="5556637843" date="1689601387150" type="1" subject="null" body="We are on our way to get gas and head out" toa="null" sc_toa="null" service_center="null" read="1" status="-1" locked="0" />
+</smses>
