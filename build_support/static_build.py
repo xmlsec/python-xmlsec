@@ -153,7 +153,7 @@ class StaticBuildHelper:
         builder.libxml2_version = os.environ.get('PYXMLSEC_LIBXML2_VERSION', '2.14.6')
         builder.libxslt_version = os.environ.get('PYXMLSEC_LIBXSLT_VERSION', '1.1.43')
         builder.zlib_version = os.environ.get('PYXMLSEC_ZLIB_VERSION', '1.3.1')
-        builder.xmlsec1_version = os.environ.get('PYXMLSEC_XMLSEC1_VERSION', '1.3.8')
+        builder.xmlsec1_version = os.environ.get('PYXMLSEC_XMLSEC1_VERSION', '1.3.9')
 
     def _ensure_source_archives(self):
         return [
