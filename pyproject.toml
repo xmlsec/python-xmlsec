@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools==80.9.0", "wheel", "setuptools_scm>=8", "pkgconfig>=1.5.1", "lxml>=3.8"]
+requires = ["setuptools", "wheel", "setuptools_scm>=8", "pkgconfig>=1.5.1", "lxml>=3.8"]
 
 [project]
 name = "xmlsec"
@@ -150,6 +150,7 @@ build = [
     "cp314-*"
 ]
 build-verbosity = 1
+environment = {PYXMLSEC_STATIC_DEPS="true"}
 build-frontend = "build"
 skip = [
     "pp*",  # Skips PyPy builds (pp38-*, pp39-*, etc.)
@@ -157,10 +158,7 @@ skip = [
 ]
 test-command = "pytest -v --color=yes {package}/tests"
 before-test = "pip install -r requirements-test.txt"
-test-skip = "*-macosx_arm64"
-
-[tool.cibuildwheel.environment]
-PYXMLSEC_STATIC_DEPS = "true"
+# test-skip = "*-macosx_arm64"
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64", "riscv64"]
@@ -171,7 +169,6 @@ environment-pass = [
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
-before-all = "brew install perl"
 
 [tool.cibuildwheel.windows]
 archs = ["AMD64"]
