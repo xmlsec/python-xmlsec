@@ -4,7 +4,6 @@ from setuptools import Extension, setup
 
 from build_support.build_ext import build_ext
 
-
 src_root = Path(__file__).parent / 'src'
 sources = [str(path.relative_to(Path(__file__).parent)) for path in src_root.rglob('*.c')]
 pyxmlsec = Extension('xmlsec', sources=sources)
