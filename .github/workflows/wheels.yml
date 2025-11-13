@@ -33,12 +33,12 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@v5.0.0
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5.0.0
+        uses: actions/setup-python@v6.0.0
         with:
           python-version: "3.x"
 
@@ -60,7 +60,7 @@ jobs:
         run: pytest -v --color=yes
 
       - name: Upload sdist
-        uses: actions/upload-artifact@v4.3.1
+        uses: actions/upload-artifact@v5.0.0
         with:
           name: sdist
           path: dist/*.tar.gz
@@ -74,7 +74,7 @@ jobs:
     outputs:
       include: ${{ steps.set-matrix.outputs.include }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5.0.0
       - name: Install cibuildwheel
         # N.B. Keep cibuildwheel version pin consistent with "build_wheels" job below.
         run: pipx install cibuildwheel==3.3
@@ -108,24 +108,24 @@ jobs:
 
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5.0.0
         with:
           fetch-depth: 0
 
       - name: Set up QEMU
         if: runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v3.7.0
         with:
           platforms: all
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.3
+        uses: pypa/cibuildwheel@v3.3.0
         with:
           only: ${{ matrix.only }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/upload-artifact@v4.3.1
+      - uses: actions/upload-artifact@v5.0.0
         with:
           path: ./wheelhouse/*.whl
           name: xmlsec-wheel-${{ matrix.only }}
