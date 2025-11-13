@@ -113,8 +113,6 @@ PYXMLSEC_STATIC_DEPS = "true"
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64", "riscv64"]
 environment-pass = [
-    "PYXMLSEC_LIBXML2_VERSION",
-    "PYXMLSEC_LIBXSLT_VERSION",
     "PYXMLSEC_STATIC_DEPS",
     "GH_TOKEN"
 ]

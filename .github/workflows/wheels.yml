@@ -65,29 +65,26 @@ jobs:
           name: sdist
           path: dist/*.tar.gz
 
-  generate-wheels-matrix:
+  generate_wheels_matrix:
     # Create a matrix of all architectures & versions to build.
     # This enables the next step to run cibuildwheel in parallel.
     # From https://iscinumpy.dev/post/cibuildwheel-2-10-0/#only-210
     name: Generate wheels matrix
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       include: ${{ steps.set-matrix.outputs.include }}
     steps:
       - uses: actions/checkout@v4
       - name: Install cibuildwheel
-        # Nb. keep cibuildwheel version pin consistent with job below
-        run: pipx install cibuildwheel==3.1.4
+        # N.B. Keep cibuildwheel version pin consistent with "build_wheels" job below.
+        run: pipx install cibuildwheel==3.3
       - id: set-matrix
-        # Once we have the windows build figured out, it can be added here
-        # by updating the matrix to include windows builds as well.
-        # See example here:
-        # https://github.com/lxml/lxml/blob/3ccc7d583e325ceb0ebdf8fc295bbb7fc8cd404d/.github/workflows/wheels.yml#L95C1-L106C51
         run: |
           MATRIX=$(
             {
               cibuildwheel --print-build-identifiers --platform linux \
-              | jq -nRc '{"only": inputs, "os": "ubuntu-latest"}' \
+              | jq -nRc '{"only": inputs, "os": "ubuntu-22.04"}' \
+              | sed -e '/aarch64/s|ubuntu-22.04|ubuntu-22.04-arm|' \
               && cibuildwheel --print-build-identifiers --platform macos \
               | jq -nRc '{"only": inputs, "os": "macos-latest"}' \
               && cibuildwheel --print-build-identifiers --platform windows \
@@ -101,17 +98,13 @@ jobs:
 
   build_wheels:
     name: Build for ${{ matrix.only }}
-    needs: generate-wheels-matrix
+    needs: generate_wheels_matrix
     runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJson(needs.generate-wheels-matrix.outputs.include) }}
-
-    env:
-      PYXMLSEC_LIBXML2_VERSION: 2.14.6
-      PYXMLSEC_LIBXSLT_VERSION: 1.1.43
+        include: ${{ fromJson(needs.generate_wheels_matrix.outputs.include) }}
 
     steps:
       - name: Check out the repo
@@ -126,7 +119,7 @@ jobs:
           platforms: all
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.1.4
+        uses: pypa/cibuildwheel@v3.3
         with:
           only: ${{ matrix.only }}
         env:
