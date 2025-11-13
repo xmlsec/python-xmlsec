@@ -1,6 +1,56 @@
 [build-system]
-requires = ["setuptools==80.9.0", "wheel", "setuptools_scm[toml]>=3.4", "pkgconfig>=1.5.1", "lxml==6.0.2"]
+requires = ["setuptools==80.9.0", "wheel", "setuptools_scm>=8", "pkgconfig>=1.5.1", "lxml>=3.8"]
 
+[project]
+name = "xmlsec"
+dynamic = ["version"]
+description = "Python bindings for the XML Security Library"
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.9"
+dependencies = ["lxml>=3.8"]
+keywords = ["xmlsec"]
+authors = [
+  {name = "Bulat Gaifullin", email = "support@mehcode.com"}
+]
+maintainers = [
+  {name = "Oleg Hoefling", email = "oleg.hoefling@gmail.com"},
+  {name = "Amin Solhizadeh", email = "amin.solhizadeh@gmail.com"}
+]
+license = "MIT"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "Operating System :: OS Independent",
+  "Programming Language :: C",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Text Processing :: Markup :: XML",
+  "Typing :: Typed"
+]
+
+[project.urls]
+Documentation = "https://xmlsec.readthedocs.io"
+Source = "https://github.com/xmlsec/python-xmlsec"
+Changelog = "https://github.com/xmlsec/python-xmlsec/releases"
+
+# setuptools
+[tool.setuptools]
+zip-safe = false
+packages = ["xmlsec"]
+package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+xmlsec = ["py.typed", "*.pyi"]
+
+[tool.setuptools_scm]
+
+# mypy
 [tool.mypy]
 files = ['src']
 ignore_missing_imports = false
@@ -22,6 +72,7 @@ warn_no_return = true
 no_implicit_reexport = true
 show_error_codes = true
 
+# ruff
 [tool.ruff]
 # Maximum line length, same as your original Black + Flake8 config
 line-length = 130
@@ -88,6 +139,7 @@ skip-magic-trailing-comma = false
 # Enforce Unix-style line endings (LF)
 line-ending = "lf"
 
+# cibuildwheel
 [tool.cibuildwheel]
 build = [
     # "cp39-*",
