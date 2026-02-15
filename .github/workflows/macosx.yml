@@ -3,23 +3,47 @@ on: [push, pull_request]
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref_name != 'master' }}
+
 jobs:
+  cache_libs:
+    uses: ./.github/workflows/cache_libs.yml
+    secrets: inherit
+
   macosx:
+    needs: cache_libs
     runs-on: macos-latest
+
+    env:
+      LIBXML2_VERSION: ${{ needs.cache_libs.outputs.LIBXML2_VERSION }}
+      LIBXSLT_VERSION: ${{ needs.cache_libs.outputs.LIBXSLT_VERSION }}
+
     strategy:
       matrix:
         python: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
         static_deps: ["static", ""]
+
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v5.0.0
+
+      - name: Cache [libs]
+        id: cache-libs
+        uses: actions/cache/restore@v4.3.0
+        with:
+          path: |
+            libs/*.xz
+            libs/*.gz
+            libs/*.zip
+          key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}
+
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
+
       - name: Install build dependencies
         run: |
           pip install --upgrade pip setuptools wheel build
           brew install libxml2 libxmlsec1 pkg-config
+
       - name: Build macosx_x86_64 wheel
         env:
           CC: clang
@@ -29,26 +53,38 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           export PKG_CONFIG_PATH="$(brew --prefix)/opt/libxml2/lib/pkgconfig"
-          export PYXMLSEC_LIBXML2_VERSION="$(pkg-config --modversion libxml-2.0)"
+          export PYXMLSEC_LIBS_DIR="$PWD/libs"
           python -m build
           rm -rf build/
+
       - name: Set environment variables
         shell: bash
         run: |
           echo "PKGVER=$(python setup.py --version)" >> $GITHUB_ENV
           echo "LLVM_PROFILE_FILE=pyxmlsec.profraw" >> $GITHUB_ENV
-      - name: Install test dependencies
+
+      - name: Install test dependencies (static only)
+        if: matrix.static_deps == 'static'
+        run: |
+          pip install coverage --upgrade -r requirements-test.txt
+          pip install xmlsec --only-binary=xmlsec --no-index --find-links=dist/
+
+
+      - name: Install test dependencies (non-static only)
+        if: matrix.static_deps != 'static'
         run: |
           export PKG_CONFIG_PATH="$(brew --prefix)/opt/libxml2/lib/pkgconfig"
           pip install coverage --upgrade --no-binary=lxml -r requirements-test.txt
           pip install xmlsec --only-binary=xmlsec --no-index --find-links=dist/
           echo "PYXMLSEC_LIBFILE=$(python -c 'import xmlsec; print(xmlsec.__file__)')" >> $GITHUB_ENV
+
       - name: Run tests
         run: |
           coverage run -m pytest -v --color=yes
+
       - name: Report coverage to codecov
+        if: matrix.static_deps != 'static'
         run: |
           /Library/Developer/CommandLineTools/usr/bin/llvm-profdata merge -sparse ${{ env.LLVM_PROFILE_FILE }} -output pyxmlsec.profdata
           /Library/Developer/CommandLineTools/usr/bin/llvm-cov show ${{ env.PYXMLSEC_LIBFILE }} --arch=$(uname -m) --instr-profile=pyxmlsec.profdata src > coverage.txt
           bash <(curl -s https://codecov.io/bash) -f coverage.txt
-        if: matrix.static_deps != 'static'
