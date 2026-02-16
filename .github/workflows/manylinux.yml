@@ -3,9 +3,20 @@ on: [push, pull_request]
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref_name != 'master' }}
+
 jobs:
+  cache_libs:
+    uses: ./.github/workflows/cache_libs.yml
+    secrets: inherit
+
   manylinux:
+    needs: cache_libs
     runs-on: ubuntu-latest
+
+    env:
+      LIBXML2_VERSION: ${{ needs.cache_libs.outputs.LIBXML2_VERSION }}
+      LIBXSLT_VERSION: ${{ needs.cache_libs.outputs.LIBXSLT_VERSION }}
+
     strategy:
       matrix:
         python-abi: [cp39-cp39, cp310-cp310, cp311-cp311, cp312-cp312, cp313-cp313, cp314-cp314]
@@ -13,40 +24,39 @@ jobs:
           - manylinux2014_x86_64
           - manylinux_2_28_x86_64
           - musllinux_1_2_x86_64
-    container: quay.io/pypa/${{ matrix.image }}
+
     steps:
-      - uses: actions/checkout@v1
-      - name: Install python build dependencies
-        run: |
-          # https://github.com/actions/runner/issues/2033
-          chown -R $(id -u):$(id -g) $PWD
-          /opt/python/${{ matrix.python-abi }}/bin/pip install --upgrade pip setuptools wheel build
-      - name: Install system build dependencies (manylinux)
-        run: |
-          yum install -y perl-core
-        if: contains(matrix.image, 'manylinux')
-      - name: Set environment variables
-        shell: bash
-        run: |
-          echo "PKGVER=$(/opt/python/${{ matrix.python-abi }}/bin/python setup.py --version)" >> $GITHUB_ENV
-      - name: Build linux_x86_64 wheel
+      - uses: actions/checkout@v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Cache [libs]
+        uses: actions/cache/restore@v4.3.0
+        with:
+          path: |
+            libs/*.xz
+            libs/*.gz
+            libs/*.zip
+          key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}
+
+      # Keep this job on the host runner so JS-based actions (for example actions/cache)
+      # can run, then execute build/test inside the target manylinux/musllinux container.
+      - name: Build and test in container
         env:
           PYXMLSEC_STATIC_DEPS: true
-          PYXMLSEC_LIBXML2_VERSION: 2.14.6  # Lock it to libxml2 2.14.6 to match it with lxml
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PY_ABI: ${{ matrix.python-abi }}
+          MANYLINUX_IMAGE: ${{ matrix.image }}
         run: |
-          /opt/python/${{ matrix.python-abi }}/bin/python -m build
-      - name: Label manylinux wheel
-        run: |
-          ls -la dist/
-          auditwheel show dist/xmlsec-${{ env.PKGVER }}-${{ matrix.python-abi }}-linux_x86_64.whl
-          auditwheel repair dist/xmlsec-${{ env.PKGVER }}-${{ matrix.python-abi }}-linux_x86_64.whl
-          ls -la wheelhouse/
-          auditwheel show wheelhouse/xmlsec-${{ env.PKGVER }}-${{ matrix.python-abi }}-*${{ matrix.image }}*.whl
-      - name: Install test dependencies
-        run: |
-          /opt/python/${{ matrix.python-abi }}/bin/pip install --upgrade -r requirements-test.txt
-          /opt/python/${{ matrix.python-abi }}/bin/pip install xmlsec --only-binary=xmlsec --no-index --find-links=wheelhouse/
-      - name: Run tests
-        run: |
-          /opt/python/${{ matrix.python-abi }}/bin/pytest -v --color=yes
+          set -euxo pipefail
+          docker run --rm \
+            -v "$PWD:$PWD" \
+            -w "$PWD" \
+            -e GH_TOKEN \
+            -e PYXMLSEC_STATIC_DEPS \
+            -e PY_ABI \
+            -e MANYLINUX_IMAGE \
+            -e HOST_UID="$(id -u)" \
+            -e HOST_GID="$(id -g)" \
+            "quay.io/pypa/${MANYLINUX_IMAGE}" \
+            sh .github/scripts/manylinux_build_and_test.sh

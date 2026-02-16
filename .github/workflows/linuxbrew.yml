@@ -3,27 +3,34 @@ on: [push, pull_request]
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref_name != 'master' }}
+
 jobs:
   linuxbrew:
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         python: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+
     env:
       # For some unknown reason, linuxbrew tries to use "gcc-11" by default, which doesn't exist.
       CC: gcc
+
     steps:
       - uses: actions/checkout@v3
+
       - name: Install brew
         run: |
           sudo apt install -y build-essential procps curl file git
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
+
       - name: Install build dependencies
         run: |
           brew update
           brew install python@${{ matrix.python }} gcc libxml2 libxmlsec1 pkg-config
           echo "/home/linuxbrew/.linuxbrew/opt/python@${{ matrix.python }}/libexec/bin" >> $GITHUB_PATH
+
       - name: Build wheel
         run: |
           python3 -m venv build_venv
@@ -33,6 +40,7 @@ jobs:
           export LDFLAGS="-L$(brew --prefix)/lib"
           python3 -m build
           rm -rf build/
+
       - name: Run tests
         run: |
           python3 -m venv test_venv

@@ -9,15 +9,18 @@ from .static_build import CrossCompileInfo, StaticBuildHelper
 
 
 class build_ext(build_ext_orig):
-    def info(self, message):
-        self.announce(message, level=log.INFO)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
-    def run(self):
-        ext = self.ext_map['xmlsec']
         self.debug = os.environ.get('PYXMLSEC_ENABLE_DEBUG', False)
         self.static = os.environ.get('PYXMLSEC_STATIC_DEPS', False)
         self.size_opt = os.environ.get('PYXMLSEC_OPTIMIZE_SIZE', True)
 
+    def info(self, message) -> None:
+        self.announce(message, level=log.INFO)
+
+    def run(self) -> None:
+        ext = self.ext_map['xmlsec']
         if self.static or sys.platform == 'win32':
             helper = StaticBuildHelper(self)
             helper.prepare(sys.platform)
