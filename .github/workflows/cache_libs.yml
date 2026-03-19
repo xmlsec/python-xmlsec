@@ -20,7 +20,7 @@ on:
         required: false
         type: string
       XMLSEC1_VERSION:
-        default: "1.3.9"
+        default: "1.3.10-rc1"
         required: false
         type: string
       ZLIB_VERSION:
