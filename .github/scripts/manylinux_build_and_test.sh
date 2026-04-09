@@ -9,6 +9,15 @@ export PYTHONPATH="$PWD${PYTHONPATH:+:${PYTHONPATH}}"
 # Ensure dependency archives are read from the restored workspace cache even in isolated builds.
 export PYXMLSEC_LIBS_DIR="$PWD/libs"
 
+# Step: Allow Git access to the mounted workspace for SCM version discovery
+echo "== [container] Step: Configure Git safe.directory =="
+if command -v git >/dev/null 2>&1; then
+  if [ -n "${PWD:-}" ]; then
+    git config --global --add safe.directory "$PWD"
+    echo "GIT_SAFE_DIRECTORY=$PWD"
+  fi
+fi
+
 # Step: Install system build dependencies (manylinux only)
 echo "== [container] Step: Install system build dependencies (manylinux only) =="
 case "$MANYLINUX_IMAGE" in
