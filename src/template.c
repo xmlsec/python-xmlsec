@@ -34,7 +34,7 @@ static char PyXmlSec_TemplateCreate__doc__[] = \
     ":return: the pointer to newly created :xml:`<dsig:Signature/>` node\n"
     ":rtype: :class:`lxml.etree._Element`";
 static PyObject* PyXmlSec_TemplateCreate(PyObject* self, PyObject *args, PyObject *kwargs) {
-    static char *kwlist[] = { "node", "c14n_method", "sign_method", "id", "ns", "name", NULL};
+    static char *kwlist[] = { "node", "c14n_method", "sign_method", "id", "ns", NULL};
 
     PyXmlSec_LxmlElementPtr node = NULL;
     PyXmlSec_Transform* c14n = NULL;
