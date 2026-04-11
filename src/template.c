@@ -44,8 +44,8 @@ static PyObject* PyXmlSec_TemplateCreate(PyObject* self, PyObject *args, PyObjec
     xmlNodePtr res;
 
     PYXMLSEC_DEBUG("template create - start");
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O!O!|zzz:create", kwlist,
-        PyXmlSec_LxmlElementConverter, &node, PyXmlSec_TransformType, &c14n, PyXmlSec_TransformType, &sign, &id, &ns, &id))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O!O!|zz:create", kwlist,
+        PyXmlSec_LxmlElementConverter, &node, PyXmlSec_TransformType, &c14n, PyXmlSec_TransformType, &sign, &id, &ns))
     {
         goto ON_FAIL;
     }
