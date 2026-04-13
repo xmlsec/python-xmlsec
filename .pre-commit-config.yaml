@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.14.4
+  rev: v0.15.10
   hooks:
     - id: ruff
       args: ["--fix"]
@@ -28,7 +28,7 @@ repos:
       args: [--autofix]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.18.2
+  rev: v1.20.1
   hooks:
     - id: mypy
       exclude: (setup.py|tests|build_support/.*.py|doc/.*)
