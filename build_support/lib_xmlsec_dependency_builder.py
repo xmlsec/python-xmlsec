@@ -49,7 +49,7 @@ class LibXmlsecDependencyBuilder:
         'libxml2_version': '2.14.6',  # Make sure it matches with lxml
         'libxslt_version': '1.1.43',
         'openssl_version': '3.6.0',
-        'xmlsec1_version': '1.3.10',
+        'xmlsec1_version': '1.3.11-rc1',
         'zlib_version': '1.3.1',
     }
     WINDOWS_DEFAULT_LIB_VERSIONS: ClassVar[dict[str, str]] = {
