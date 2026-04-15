@@ -110,8 +110,12 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
+      LIBICONV_VERSION: ${{ contains(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBICONV_VERSION || needs.cache_libs.outputs.LIBICONV_VERSION }}
       LIBXML2_VERSION: ${{ contains(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBXML2_VERSION || needs.cache_libs.outputs.LIBXML2_VERSION }}
       LIBXSLT_VERSION: ${{ contains(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_LIBXSLT_VERSION || needs.cache_libs.outputs.LIBXSLT_VERSION }}
+      OPENSSL_VERSION: ${{ contains(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_OPENSSL_VERSION || needs.cache_libs.outputs.OPENSSL_VERSION }}
+      XMLSEC1_VERSION: ${{ contains(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_XMLSEC1_VERSION || needs.cache_libs.outputs.XMLSEC1_VERSION }}
+      ZLIB_VERSION: ${{ contains(matrix.os, 'windows-') && needs.cache_libs.outputs.WIN_ZLIB_VERSION || needs.cache_libs.outputs.ZLIB_VERSION }}
 
     strategy:
       fail-fast: false
@@ -131,7 +135,8 @@ jobs:
             libs/*.xz
             libs/*.gz
             libs/*.zip
-          key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}
+          key: >-
+            libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBICONV_VERSION }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.OPENSSL_VERSION }}-${{ env.XMLSEC1_VERSION }}-${{ env.ZLIB_VERSION }}
 
       - name: Set up QEMU
         if: runner.os == 'Linux'

@@ -14,8 +14,12 @@ jobs:
     runs-on: macos-latest
 
     env:
+      LIBICONV_VERSION: ${{ needs.cache_libs.outputs.LIBICONV_VERSION }}
       LIBXML2_VERSION: ${{ needs.cache_libs.outputs.LIBXML2_VERSION }}
       LIBXSLT_VERSION: ${{ needs.cache_libs.outputs.LIBXSLT_VERSION }}
+      OPENSSL_VERSION: ${{ needs.cache_libs.outputs.OPENSSL_VERSION }}
+      XMLSEC1_VERSION: ${{ needs.cache_libs.outputs.XMLSEC1_VERSION }}
+      ZLIB_VERSION: ${{ needs.cache_libs.outputs.ZLIB_VERSION }}
 
     strategy:
       matrix:
@@ -33,7 +37,8 @@ jobs:
             libs/*.xz
             libs/*.gz
             libs/*.zip
-          key: libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}
+          key: >-
+            libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBICONV_VERSION }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.OPENSSL_VERSION }}-${{ env.XMLSEC1_VERSION }}-${{ env.ZLIB_VERSION }}
 
       - uses: actions/setup-python@v4
         with:
