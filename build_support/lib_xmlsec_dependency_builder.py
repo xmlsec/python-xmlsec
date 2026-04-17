@@ -36,7 +36,9 @@ class CrossCompileInfo:
 
 class LibXmlsecDependencyBuilder:
     # WINDOWS_LIBS_DOWNLOAD_RELEASE_URL = 'https://github.com/mxamin/python-xmlsec-win-binaries/releases/download/2025.07.10/'
-    WINDOWS_LIBS_DOWNLOAD_RELEASE_URL = 'https://github.com/mxamin/python-xmlsec-win-binaries/releases/download/untagged-b4bcfc66f72f113f6039/'
+    WINDOWS_LIBS_DOWNLOAD_RELEASE_URL = (
+        'https://github.com/mxamin/python-xmlsec-win-binaries/releases/download/untagged-b4bcfc66f72f113f6039/'
+    )
     LIB_VERSION_ENV_VARS: ClassVar[dict[str, str]] = {
         'libiconv_version': 'PYXMLSEC_LIBICONV_VERSION',
         'libxml2_version': 'PYXMLSEC_LIBXML2_VERSION',
