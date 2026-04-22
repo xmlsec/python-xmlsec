@@ -28,16 +28,23 @@ jobs:
       - name: Install build dependencies
         run: |
           brew update
-          brew install python@${{ matrix.python }} gcc libxml2 libxmlsec1 pkg-config
+          brew install python@${{ matrix.python }} gcc libxml2 libxslt libxmlsec1 pkg-config
           echo "/home/linuxbrew/.linuxbrew/opt/python@${{ matrix.python }}/libexec/bin" >> $GITHUB_PATH
+
+      - name: Configure Homebrew XML toolchain
+        run: |
+          echo "PKG_CONFIG_PATH=$(brew --prefix libxml2)/lib/pkgconfig:$(brew --prefix libxslt)/lib/pkgconfig" >> $GITHUB_ENV
+          echo "CPPFLAGS=-I$(brew --prefix libxml2)/include -I$(brew --prefix libxslt)/include" >> $GITHUB_ENV
+          echo "CFLAGS=-I$(brew --prefix libxml2)/include -I$(brew --prefix libxslt)/include" >> $GITHUB_ENV
+          echo "LDFLAGS=-L$(brew --prefix libxml2)/lib -L$(brew --prefix libxslt)/lib" >> $GITHUB_ENV
+          echo "$(brew --prefix libxml2)/bin" >> $GITHUB_PATH
+          echo "$(brew --prefix libxslt)/bin" >> $GITHUB_PATH
 
       - name: Build wheel
         run: |
           python3 -m venv build_venv
           source build_venv/bin/activate
           pip3 install --upgrade setuptools wheel build
-          export CFLAGS="-I$(brew --prefix)/include"
-          export LDFLAGS="-L$(brew --prefix)/lib"
           python3 -m build
           rm -rf build/
 
