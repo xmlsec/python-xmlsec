@@ -54,45 +54,6 @@ jobs:
         run: |
           python3 -m venv test_venv
           source test_venv/bin/activate
-          pip3 install --upgrade --no-binary=lxml "lxml==6.0.4"
-          pip3 install --upgrade -r requirements-test.txt
+          pip3 install --upgrade --no-binary=lxml -r requirements-test.txt
           pip3 install xmlsec --only-binary=xmlsec --no-index --find-links=dist/
-          echo "PATH=$PATH"
-          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
-          echo "CPPFLAGS=$CPPFLAGS"
-          echo "CFLAGS=$CFLAGS"
-          echo "LDFLAGS=$LDFLAGS"
-          echo "LIBRARY_PATH=$LIBRARY_PATH"
-          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-          brew list --versions libxml2 libxslt libxmlsec1 openssl@3 pkg-config python@${{ matrix.python }}
-          xml2-config --version || true
-          xslt-config --version || true
-          xmlsec1 --version || true
-          pkg-config --modversion libxml-2.0 libxslt xmlsec1
-          pkg-config --modversion openssl || true
-          python3 - <<'PY'
-          import lxml.etree
-          print('lxml.LIBXML_VERSION', lxml.etree.LIBXML_VERSION)
-          print('lxml.LIBXML_COMPILED_VERSION', lxml.etree.LIBXML_COMPILED_VERSION)
-          print('lxml.LIBXSLT_VERSION', lxml.etree.LIBXSLT_VERSION)
-          print('lxml.LIBXSLT_COMPILED_VERSION', lxml.etree.LIBXSLT_COMPILED_VERSION)
-          print('lxml.etree.__file__', lxml.etree.__file__)
-          PY
-          ldd "$(python3 - <<'PY'
-          import lxml.etree
-          print(lxml.etree.__file__)
-          PY
-          )"
-          python3 - <<'PY'
-          import xmlsec
-          print('xmlsec.__file__', xmlsec.__file__)
-          print('xmlsec.get_libxml_version()', xmlsec.get_libxml_version())
-          print('xmlsec.get_libxml_compiled_version()', xmlsec.get_libxml_compiled_version())
-          print('xmlsec.get_libxmlsec_version()', xmlsec.get_libxmlsec_version())
-          PY
-          ldd "$(python3 - <<'PY'
-          import xmlsec
-          print(xmlsec.__file__)
-          PY
-          )"
           pytest -v --color=yes
