@@ -54,7 +54,8 @@ jobs:
         run: |
           python3 -m venv test_venv
           source test_venv/bin/activate
-          pip3 install --upgrade --no-binary=lxml -r requirements-test.txt
+          pip3 install --upgrade --no-binary=lxml "lxml==6.0.4"
+          pip3 install --upgrade -r requirements-test.txt
           pip3 install xmlsec --only-binary=xmlsec --no-index --find-links=dist/
           echo "PATH=$PATH"
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
