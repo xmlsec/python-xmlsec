@@ -33,10 +33,12 @@ jobs:
 
       - name: Configure Homebrew XML toolchain
         run: |
-          echo "PKG_CONFIG_PATH=$(brew --prefix libxml2)/lib/pkgconfig:$(brew --prefix libxslt)/lib/pkgconfig" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$(brew --prefix libxml2)/lib/pkgconfig:$(brew --prefix libxslt)/lib/pkgconfig:$(brew --prefix libxmlsec1)/lib/pkgconfig:$(brew --prefix openssl@3)/lib/pkgconfig" >> $GITHUB_ENV
           echo "CPPFLAGS=-I$(brew --prefix libxml2)/include -I$(brew --prefix libxslt)/include" >> $GITHUB_ENV
           echo "CFLAGS=-I$(brew --prefix libxml2)/include -I$(brew --prefix libxslt)/include" >> $GITHUB_ENV
           echo "LDFLAGS=-L$(brew --prefix libxml2)/lib -L$(brew --prefix libxslt)/lib" >> $GITHUB_ENV
+          echo "LIBRARY_PATH=$(brew --prefix libxml2)/lib:$(brew --prefix libxslt)/lib:$(brew --prefix libxmlsec1)/lib:$(brew --prefix openssl@3)/lib" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$(brew --prefix libxml2)/lib:$(brew --prefix libxslt)/lib:$(brew --prefix libxmlsec1)/lib:$(brew --prefix openssl@3)/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> $GITHUB_ENV
           echo "$(brew --prefix libxml2)/bin" >> $GITHUB_PATH
           echo "$(brew --prefix libxslt)/bin" >> $GITHUB_PATH
 
@@ -59,6 +61,8 @@ jobs:
           echo "CPPFLAGS=$CPPFLAGS"
           echo "CFLAGS=$CFLAGS"
           echo "LDFLAGS=$LDFLAGS"
+          echo "LIBRARY_PATH=$LIBRARY_PATH"
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
           brew list --versions libxml2 libxslt libxmlsec1 openssl@3 pkg-config python@${{ matrix.python }}
           xml2-config --version || true
           xslt-config --version || true
