@@ -72,15 +72,10 @@ jobs:
           pkg-config --modversion openssl || true
           python3 - <<'PY'
           import lxml.etree
-          import xmlsec
           print('lxml.LIBXML_VERSION', lxml.etree.LIBXML_VERSION)
           print('lxml.LIBXML_COMPILED_VERSION', lxml.etree.LIBXML_COMPILED_VERSION)
           print('lxml.LIBXSLT_VERSION', lxml.etree.LIBXSLT_VERSION)
           print('lxml.LIBXSLT_COMPILED_VERSION', lxml.etree.LIBXSLT_COMPILED_VERSION)
-          print('xmlsec.__file__', xmlsec.__file__)
-          print('xmlsec.get_libxml_version()', xmlsec.get_libxml_version())
-          print('xmlsec.get_libxml_compiled_version()', xmlsec.get_libxml_compiled_version())
-          print('xmlsec.get_libxmlsec_version()', xmlsec.get_libxmlsec_version())
           print('lxml.etree.__file__', lxml.etree.__file__)
           PY
           ldd "$(python3 - <<'PY'
@@ -88,6 +83,13 @@ jobs:
           print(lxml.etree.__file__)
           PY
           )"
+          python3 - <<'PY'
+          import xmlsec
+          print('xmlsec.__file__', xmlsec.__file__)
+          print('xmlsec.get_libxml_version()', xmlsec.get_libxml_version())
+          print('xmlsec.get_libxml_compiled_version()', xmlsec.get_libxml_compiled_version())
+          print('xmlsec.get_libxmlsec_version()', xmlsec.get_libxmlsec_version())
+          PY
           ldd "$(python3 - <<'PY'
           import xmlsec
           print(xmlsec.__file__)
