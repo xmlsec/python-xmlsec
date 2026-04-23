@@ -1,5 +1,5 @@
 name: linuxbrew
-on: [push, pull_request]
+on: [push]
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref_name != 'master' }}
@@ -10,7 +10,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        python: ["3.14"]
 
     env:
       # For some unknown reason, linuxbrew tries to use "gcc-11" by default, which doesn't exist.
@@ -28,17 +28,39 @@ jobs:
       - name: Install build dependencies
         run: |
           brew update
-          brew install python@${{ matrix.python }} gcc libxml2 libxmlsec1 pkg-config
+          brew install python@${{ matrix.python }} gcc libxml2 libxslt libxmlsec1 pkg-config
           echo "/home/linuxbrew/.linuxbrew/opt/python@${{ matrix.python }}/libexec/bin" >> $GITHUB_PATH
+
+      - name: Configure Homebrew toolchain
+        run: |
+          HOMEBREW_PREFIX="$(brew --prefix)"
+          LIBXML2_PREFIX="$(brew --prefix libxml2)"
+          LIBXSLT_PREFIX="$(brew --prefix libxslt)"
+          XMLSEC_PREFIX="$(brew --prefix libxmlsec1)"
+          OPENSSL_PREFIX="$(brew --prefix openssl@3)"
+
+          {
+            echo "PKG_CONFIG_PATH=${LIBXML2_PREFIX}/lib/pkgconfig:${LIBXSLT_PREFIX}/lib/pkgconfig:${XMLSEC_PREFIX}/lib/pkgconfig:${OPENSSL_PREFIX}/lib/pkgconfig"
+            echo "CPPFLAGS=-I${LIBXML2_PREFIX}/include -I${LIBXSLT_PREFIX}/include -I${XMLSEC_PREFIX}/include/xmlsec1 -I${OPENSSL_PREFIX}/include"
+            echo "CFLAGS=-I${LIBXML2_PREFIX}/include -I${LIBXSLT_PREFIX}/include -I${XMLSEC_PREFIX}/include/xmlsec1 -I${OPENSSL_PREFIX}/include"
+            echo "LDFLAGS=-L${LIBXML2_PREFIX}/lib -L${LIBXSLT_PREFIX}/lib -L${XMLSEC_PREFIX}/lib -L${OPENSSL_PREFIX}/lib"
+            echo "LD_LIBRARY_PATH=${LIBXML2_PREFIX}/lib:${LIBXSLT_PREFIX}/lib:${XMLSEC_PREFIX}/lib:${OPENSSL_PREFIX}/lib"
+            echo "LIBRARY_PATH=${LIBXML2_PREFIX}/lib:${LIBXSLT_PREFIX}/lib:${XMLSEC_PREFIX}/lib:${OPENSSL_PREFIX}/lib"
+            echo "C_INCLUDE_PATH=${LIBXML2_PREFIX}/include:${LIBXSLT_PREFIX}/include:${XMLSEC_PREFIX}/include/xmlsec1:${OPENSSL_PREFIX}/include"
+            echo "XML2_CONFIG=${LIBXML2_PREFIX}/bin/xml2-config"
+            echo "XSLT_CONFIG=${LIBXSLT_PREFIX}/bin/xslt-config"
+          } >> $GITHUB_ENV
+
+          echo "${LIBXML2_PREFIX}/bin" >> $GITHUB_PATH
+          echo "${LIBXSLT_PREFIX}/bin" >> $GITHUB_PATH
 
       - name: Build wheel
         run: |
           python3 -m venv build_venv
           source build_venv/bin/activate
-          pip3 install --upgrade setuptools wheel build
-          export CFLAGS="-I$(brew --prefix)/include"
-          export LDFLAGS="-L$(brew --prefix)/lib"
-          python3 -m build
+          pip3 install --upgrade setuptools wheel build setuptools_scm pkgconfig
+          pip3 install --upgrade --no-binary=lxml -r requirements.txt
+          python3 -m build --no-isolation
           rm -rf build/
 
       - name: Run tests

@@ -22,6 +22,7 @@
 #define _PYXMLSEC_FREE_XMLSEC 1
 #define _PYXMLSEC_FREE_CRYPTOLIB 2
 #define _PYXMLSEC_FREE_ALL 3
+#define _PYXMLSEC_FREE_ALL_BUT_CRYPTOLIB 4
 
 static int free_mode = _PYXMLSEC_FREE_NONE;
 
@@ -44,6 +45,7 @@ static void PyXmlSec_Free(int what) {
     PYXMLSEC_DEBUGF("free resources %d", what);
     switch (what) {
     case _PYXMLSEC_FREE_ALL:
+        xmlSecCryptoShutdown();
         xmlSecCryptoAppShutdown();
     case _PYXMLSEC_FREE_CRYPTOLIB:
 #ifndef XMLSEC_NO_CRYPTO_DYNAMIC_LOADING
@@ -51,6 +53,12 @@ static void PyXmlSec_Free(int what) {
 #endif
     case _PYXMLSEC_FREE_XMLSEC:
         xmlSecShutdown();
+        break;
+    case _PYXMLSEC_FREE_ALL_BUT_CRYPTOLIB:
+        xmlSecCryptoShutdown();
+        xmlSecCryptoAppShutdown();
+        xmlSecShutdown();
+        break;
     }
     free_mode = _PYXMLSEC_FREE_NONE;
 }
@@ -94,7 +102,10 @@ static int PyXmlSec_Init(void) {
     // We thus reinstall our callback now.
     PyXmlSec_InstallErrorCallback();
 
-    free_mode = _PYXMLSEC_FREE_ALL;
+    // Keep the dynamically loaded crypto backend resident for the lifetime of
+    // the process. Python-level constants cache xmlsec transform/keydata ids,
+    // and unloading the backend invalidates those pointers after shutdown/init.
+    free_mode = _PYXMLSEC_FREE_ALL_BUT_CRYPTOLIB;
     return 0;
 }
 
@@ -113,8 +124,8 @@ static PyObject* PyXmlSec_PyInit(PyObject *self) {
 static char PyXmlSec_PyShutdown__doc__[] = \
     "shutdown() -> None\n"
     "Shutdowns the library and cleanup any leftover resources.\n\n"
-    "This is called automatically upon interpreter termination and\n"
-    "should not need to be called explicitly.";
+    "This is not called automatically upon interpreter termination because\n"
+    "xmlsec-owned objects may still be finalized during Python shutdown.";
 static PyObject* PyXmlSec_PyShutdown(PyObject* self) {
     PyXmlSec_Free(free_mode);
     Py_RETURN_NONE;
@@ -487,11 +498,6 @@ int PyXmlSec_EncModule_Init(PyObject* package);
 // templates management
 int PyXmlSec_TemplateModule_Init(PyObject* package);
 
-static int PyXmlSec_PyClear(PyObject *self) {
-    PyXmlSec_Free(free_mode);
-    return 0;
-}
-
 static PyModuleDef PyXmlSecModule = {
     PyModuleDef_HEAD_INIT,
     STRINGIFY(MODULE_NAME), /* name of module */
@@ -501,7 +507,7 @@ static PyModuleDef PyXmlSecModule = {
     PyXmlSec_MainMethods,   /* m_methods */
     NULL,                   /* m_slots */
     NULL,                   /* m_traverse */
-    PyXmlSec_PyClear,       /* m_clear */
+    NULL,                   /* m_clear */
     NULL,                   /* m_free */
 };
 
