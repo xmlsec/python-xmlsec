@@ -1,7 +1,7 @@
-from pathlib import Path
 import subprocess
 import sys
 import unittest
+from pathlib import Path
 
 import xmlsec
 from tests import base
