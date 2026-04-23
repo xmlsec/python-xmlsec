@@ -20,7 +20,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 project = 'python-xmlsec'
-copyright = '2020, Oleg Hoefling <oleg.hoefling@gmail.com>'
+copyright = '2026, Amin Solhizadeh <amin.solhizadeh@gmail.com>'
 author = 'Bulat Gaifullin <gaifullinbf@gmail.com>'
 release = importlib.metadata.version('xmlsec')
 parsed: Version = parse(release)
