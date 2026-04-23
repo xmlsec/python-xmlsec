@@ -22,6 +22,7 @@
 #define _PYXMLSEC_FREE_XMLSEC 1
 #define _PYXMLSEC_FREE_CRYPTOLIB 2
 #define _PYXMLSEC_FREE_ALL 3
+#define _PYXMLSEC_FREE_ALL_BUT_CRYPTOLIB 4
 
 static int free_mode = _PYXMLSEC_FREE_NONE;
 
@@ -52,6 +53,12 @@ static void PyXmlSec_Free(int what) {
 #endif
     case _PYXMLSEC_FREE_XMLSEC:
         xmlSecShutdown();
+        break;
+    case _PYXMLSEC_FREE_ALL_BUT_CRYPTOLIB:
+        xmlSecCryptoShutdown();
+        xmlSecCryptoAppShutdown();
+        xmlSecShutdown();
+        break;
     }
     free_mode = _PYXMLSEC_FREE_NONE;
 }
@@ -95,7 +102,10 @@ static int PyXmlSec_Init(void) {
     // We thus reinstall our callback now.
     PyXmlSec_InstallErrorCallback();
 
-    free_mode = _PYXMLSEC_FREE_ALL;
+    // Keep the dynamically loaded crypto backend resident for the lifetime of
+    // the process. Python-level constants cache xmlsec transform/keydata ids,
+    // and unloading the backend invalidates those pointers after shutdown/init.
+    free_mode = _PYXMLSEC_FREE_ALL_BUT_CRYPTOLIB;
     return 0;
 }
 
