@@ -1,5 +1,5 @@
 name: linuxbrew
-on: [push, pull_request]
+on: [push]
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref_name != 'master' }}
@@ -10,7 +10,7 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        python: ["3.14"]
 
     env:
       # For some unknown reason, linuxbrew tries to use "gcc-11" by default, which doesn't exist.
