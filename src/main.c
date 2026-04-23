@@ -114,8 +114,8 @@ static PyObject* PyXmlSec_PyInit(PyObject *self) {
 static char PyXmlSec_PyShutdown__doc__[] = \
     "shutdown() -> None\n"
     "Shutdowns the library and cleanup any leftover resources.\n\n"
-    "This is called automatically upon interpreter termination and\n"
-    "should not need to be called explicitly.";
+    "This is not called automatically upon interpreter termination because\n"
+    "xmlsec-owned objects may still be finalized during Python shutdown.";
 static PyObject* PyXmlSec_PyShutdown(PyObject* self) {
     PyXmlSec_Free(free_mode);
     Py_RETURN_NONE;
@@ -488,11 +488,6 @@ int PyXmlSec_EncModule_Init(PyObject* package);
 // templates management
 int PyXmlSec_TemplateModule_Init(PyObject* package);
 
-static int PyXmlSec_PyClear(PyObject *self) {
-    PyXmlSec_Free(free_mode);
-    return 0;
-}
-
 static PyModuleDef PyXmlSecModule = {
     PyModuleDef_HEAD_INIT,
     STRINGIFY(MODULE_NAME), /* name of module */
@@ -502,7 +497,7 @@ static PyModuleDef PyXmlSecModule = {
     PyXmlSec_MainMethods,   /* m_methods */
     NULL,                   /* m_slots */
     NULL,                   /* m_traverse */
-    PyXmlSec_PyClear,       /* m_clear */
+    NULL,                   /* m_clear */
     NULL,                   /* m_free */
 };
 
