@@ -44,6 +44,7 @@ static void PyXmlSec_Free(int what) {
     PYXMLSEC_DEBUGF("free resources %d", what);
     switch (what) {
     case _PYXMLSEC_FREE_ALL:
+        xmlSecCryptoShutdown();
         xmlSecCryptoAppShutdown();
     case _PYXMLSEC_FREE_CRYPTOLIB:
 #ifndef XMLSEC_NO_CRYPTO_DYNAMIC_LOADING
