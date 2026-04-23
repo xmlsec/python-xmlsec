@@ -605,7 +605,7 @@ ON_FAIL:
 
 static char PyXmlSec_TemplateCreateEncryptedData__doc__[] = \
     "encrypted_data_create(node, method, id = None, type = None, mime_type = None, encoding = None, ns = None) -> lxml.etree._Element\n"
-    "Creates new :xml:`<{ns}:EncryptedData />` node for encryption template.\n\n"
+    "Creates new ``<{ns}:EncryptedData />`` node for encryption template.\n\n"
     ":param node: the pointer to signature node\n"
     ":type node: :class:`lxml.etree._Element`\n"
     ":param method: the encryption method\n"
@@ -662,7 +662,7 @@ ON_FAIL:
 
 static char PyXmlSec_TemplateEncryptedDataEnsureKeyInfo__doc__[] = \
     "encrypted_data_ensure_key_info(node, id = None, ns = None) -> lxml.etree._Element\n"
-    "Adds :xml:`<{ns}:KeyInfo/>` to the :xml:`<enc:EncryptedData/>` node of ``node``.\n\n"
+    "Adds ``<{ns}:KeyInfo/>`` to the :xml:`<enc:EncryptedData/>` node of ``node``.\n\n"
     ":param node: the pointer to :xml:`<enc:EncryptedData/>` node\n"
     ":type node: :class:`lxml.etree._Element`\n"
     ":param id: the ``\"Id\"`` attribute (optional)\n"
