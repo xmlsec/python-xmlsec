@@ -1,6 +1,7 @@
 import multiprocessing
 import os
 import platform
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -138,6 +139,7 @@ class LibXmlsecDependencyBuilder:
         if download_only:
             return
 
+        self._reset_directory(self.build_libs_dir)
         for package in self.libs_dir.glob('*.zip'):
             with zipfile.ZipFile(str(package)) as archive:
                 archive.extractall(path=str(self.build_libs_dir))
@@ -156,8 +158,7 @@ class LibXmlsecDependencyBuilder:
         return [
             self._ensure_source(
                 name='OpenSSL',
-                glob='openssl*.tar.gz',
-                filename='openssl.tar.gz',
+                filename=f'openssl-{self.openssl_version}.tar.gz',
                 version=self.openssl_version,
                 env_label='PYXMLSEC_OPENSSL_VERSION',
                 default_url=latest_openssl_release,
@@ -165,8 +166,7 @@ class LibXmlsecDependencyBuilder:
             ),
             self._ensure_source(
                 name='zlib',
-                glob='zlib*.tar.gz',
-                filename='zlib.tar.gz',
+                filename=f'zlib-{self.zlib_version}.tar.gz',
                 version=self.zlib_version,
                 env_label='PYXMLSEC_ZLIB_VERSION',
                 default_url=latest_zlib_release,
@@ -174,8 +174,7 @@ class LibXmlsecDependencyBuilder:
             ),
             self._ensure_source(
                 name='libiconv',
-                glob='libiconv*.tar.gz',
-                filename='libiconv.tar.gz',
+                filename=f'libiconv-{self.libiconv_version}.tar.gz',
                 version=self.libiconv_version,
                 env_label='PYXMLSEC_LIBICONV_VERSION',
                 default_url=latest_libiconv_release,
@@ -183,8 +182,7 @@ class LibXmlsecDependencyBuilder:
             ),
             self._ensure_source(
                 name='libxml2',
-                glob='libxml2*.tar.xz',
-                filename='libxml2.tar.xz',
+                filename=f'libxml2-{self.libxml2_version}.tar.xz',
                 version=self.libxml2_version,
                 env_label='PYXMLSEC_LIBXML2_VERSION',
                 default_url=latest_libxml2_release,
@@ -192,8 +190,7 @@ class LibXmlsecDependencyBuilder:
             ),
             self._ensure_source(
                 name='libxslt',
-                glob='libxslt*.tar.xz',
-                filename='libxslt.tar.xz',
+                filename=f'libxslt-{self.libxslt_version}.tar.xz',
                 version=self.libxslt_version,
                 env_label='PYXMLSEC_LIBXSLT_VERSION',
                 default_url=latest_libxslt_release,
@@ -201,8 +198,7 @@ class LibXmlsecDependencyBuilder:
             ),
             self._ensure_source(
                 name='xmlsec1',
-                glob='xmlsec1*.tar.gz',
-                filename='xmlsec1.tar.gz',
+                filename=f'xmlsec1-{self.xmlsec1_version}.tar.gz',
                 version=self.xmlsec1_version,
                 env_label='PYXMLSEC_XMLSEC1_VERSION',
                 default_url=latest_xmlsec_release,
@@ -210,13 +206,12 @@ class LibXmlsecDependencyBuilder:
             ),
         ]
 
-    def _ensure_source(self, name, glob, filename, version, env_label, default_url, version_url):
-        archive = next(self.libs_dir.glob(glob), None)
-        if archive is not None:
+    def _ensure_source(self, name, filename, version, env_label, default_url, version_url):
+        archive = self.libs_dir / filename
+        if archive.is_file():
             return archive
 
         self.info('{:10}: {}'.format(name, 'source tar not found, downloading ...'))
-        archive = self.libs_dir / filename
         if version is None:
             url = default_url()
             self.info('{:10}: {}'.format(name, f'{env_label} unset, downloading latest from {url}'))
@@ -231,6 +226,8 @@ class LibXmlsecDependencyBuilder:
         return f'https://download.gnome.org/sources/{lib_name}/{version_prefix}/{lib_name}-{version}.tar.xz'
 
     def _extract_archives(self, archives):
+        self._reset_directory(self.build_libs_dir)
+        self._reset_directory(self.prefix_dir)
         for archive in archives:
             self.info(f'Unpacking {archive.name}')
             try:
@@ -241,6 +238,13 @@ class LibXmlsecDependencyBuilder:
                         tar.extractall(path=str(self.build_libs_dir))
             except EOFError as error:
                 raise DistutilsError(f'Bad {archive.name} downloaded; remove it and try again.') from error
+
+    def _reset_directory(self, path: Path) -> None:
+        for entry in path.iterdir():
+            if entry.is_dir():
+                shutil.rmtree(entry)
+            else:
+                entry.unlink()
 
     def _prepare_build_environment(self, build_platform):
         prefix_arg = f'--prefix={self.prefix_dir}'
