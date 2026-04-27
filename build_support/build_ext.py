@@ -8,13 +8,21 @@ from setuptools.command.build_ext import build_ext as build_ext_orig
 from .static_build import CrossCompileInfo, StaticBuildHelper
 
 
+def _env_flag(name: str, default: bool) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+
+    return value.strip().lower() not in {'', '0', 'false', 'no', 'off'}
+
+
 class build_ext(build_ext_orig):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self.debug = os.environ.get('PYXMLSEC_ENABLE_DEBUG', False)
-        self.static = os.environ.get('PYXMLSEC_STATIC_DEPS', False)
-        self.size_opt = os.environ.get('PYXMLSEC_OPTIMIZE_SIZE', True)
+        self.debug = _env_flag('PYXMLSEC_ENABLE_DEBUG', False)
+        self.static = _env_flag('PYXMLSEC_STATIC_DEPS', False)
+        self.size_opt = _env_flag('PYXMLSEC_OPTIMIZE_SIZE', True)
 
     def info(self, message) -> None:
         self.announce(message, level=log.INFO)
