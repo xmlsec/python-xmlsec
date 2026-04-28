@@ -3,11 +3,14 @@ from tests import base
 
 
 class TestModule(base.TestMemoryLeaks):
-    def test_reinitialize_module(self):
-        """This test doesn't explicitly verify anything, but will be invoked first in the suite.
+    iterations = 0
 
-        So if the subsequent tests don't fail, we know that the ``init()``/``shutdown()``
-        function pair doesn't break anything.
+    def test_init_shutdown_module(self):
+        """Check explicit initialization before final module shutdown.
+
+        This test is invoked last because shutdown is process-final: since
+        xmlsec1 1.3.11, its OpenSSL backend may call OPENSSL_cleanup(), after
+        which OpenSSL cannot be reinitialized in the same process.
         """
-        xmlsec.shutdown()
         xmlsec.init()
+        xmlsec.shutdown()

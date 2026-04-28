@@ -101,8 +101,11 @@ static int PyXmlSec_Init(void) {
 static char PyXmlSec_PyInit__doc__[] = \
     "init() -> None\n"
     "Initializes the library for general operation.\n\n"
-    "This is called upon library import and does not need to be called\n"
-    "again :func:`~.shutdown` is called explicitly).\n";
+    "This is called upon library import and normally does not need to be\n"
+    "called explicitly. It is only valid before shutdown() has been called.\n\n"
+    "Calling init() after shutdown() is unsupported because upstream\n"
+    "xmlsec1 1.3.11+ may call OPENSSL_cleanup() during shutdown, and OpenSSL\n"
+    "cannot be reinitialized in the same process after that cleanup.\n";
 static PyObject* PyXmlSec_PyInit(PyObject *self) {
    if (PyXmlSec_Init() < 0) {
         return NULL;
@@ -114,7 +117,11 @@ static char PyXmlSec_PyShutdown__doc__[] = \
     "shutdown() -> None\n"
     "Shutdowns the library and cleanup any leftover resources.\n\n"
     "This is called automatically upon interpreter termination and\n"
-    "should not need to be called explicitly.";
+    "should not need to be called explicitly.\n\n"
+    "Shutdown is process-final. Do not call init() after shutdown(),\n"
+    "because upstream xmlsec1 1.3.11+ may call OPENSSL_cleanup() during shutdown,\n"
+    "and OpenSSL cannot be reinitialized in the same process after that\n"
+    "cleanup.";
 static PyObject* PyXmlSec_PyShutdown(PyObject* self) {
     PyXmlSec_Free(free_mode);
     Py_RETURN_NONE;
