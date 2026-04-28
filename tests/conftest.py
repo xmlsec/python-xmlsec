@@ -5,7 +5,7 @@ def pytest_collection_modifyitems(items):
     xmlsec1 1.3.11, so no tests should use xmlsec after it runs.
     """
 
-    def module_shutdown_tests_last(item):
-        return int('test_xmlsec.py::TestModule::test_initialize_module' in item.nodeid)
+    def module_init_shutdown_tests_last(item):
+        return int('test_xmlsec.py::TestModule::test_init_shutdown_module' in item.nodeid)
 
-    items.sort(key=module_shutdown_tests_last)
+    items.sort(key=module_init_shutdown_tests_last)

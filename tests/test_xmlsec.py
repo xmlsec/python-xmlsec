@@ -5,7 +5,7 @@ from tests import base
 class TestModule(base.TestMemoryLeaks):
     iterations = 0
 
-    def test_initialize_module(self):
+    def test_init_shutdown_module(self):
         """Check explicit initialization before final module shutdown.
 
         This test is invoked last because shutdown is process-final: since
