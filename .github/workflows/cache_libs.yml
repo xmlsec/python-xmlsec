@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       LIBICONV_VERSION:
-        default: "1.18"
+        default: "1.19"
         required: false
         type: string
       LIBXML2_VERSION:
@@ -28,7 +28,7 @@ on:
         required: false
         type: string
       WIN_LIBICONV_VERSION:
-        default: "1.18-1"
+        default: "1.19-1"
         required: false
         type: string
       WIN_LIBXML2_VERSION:
