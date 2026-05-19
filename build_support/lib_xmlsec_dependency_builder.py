@@ -332,7 +332,6 @@ class LibXmlsecDependencyBuilder:
                 './configure',
                 prefix_arg,
                 '--disable-dependency-tracking',
-                '--disable-nls',
                 '--disable-shared',
                 *host_arg,
             ],
