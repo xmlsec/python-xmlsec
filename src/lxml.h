@@ -29,6 +29,17 @@ PyXmlSec_LxmlElementPtr PyXmlSec_elementFactory(PyXmlSec_LxmlDocumentPtr doc, xm
 // converts o to PyObject, None object is not allowed, does not increment ref_counts
 int PyXmlSec_LxmlElementConverter(PyObject* o, PyXmlSec_LxmlElementPtr* p);
 
+// Serializes an lxml element (and its subtree) to a bytes object using lxml's
+// own libxml2. This is the ABI-safe way to read a tree owned by lxml: only the
+// resulting bytes cross over to xmlsec's libxml2, never raw node pointers.
+// Returns a new reference, or NULL (with an exception set) on failure.
+PyObject* PyXmlSec_LxmlElementToBytes(PyObject* element);
+
+// Parses bytes into a fresh lxml element using lxml's own libxml2, so the
+// returned node is owned and managed by lxml. Returns a new reference, or NULL
+// (with an exception set) on failure.
+PyObject* PyXmlSec_LxmlElementFromBytes(PyObject* data);
+
 // get version numbers for libxml2 both compiled and loaded
 long PyXmlSec_GetLibXmlVersionMajor();
 long PyXmlSec_GetLibXmlVersionMinor();

@@ -102,7 +102,13 @@ FINALIZE:
 }
 
 int PyXmlSec_InitLxmlModule(void) {
-    if (PyXmlSec_CheckLxmlLibraryVersion() < 0) {
+    // By default we refuse to import when lxml and xmlsec link different libxml2
+    // versions, because passing raw nodes between the two libraries can segfault
+    // (https://github.com/xmlsec/python-xmlsec/issues/283). Setting
+    // PYXMLSEC_SKIP_VERSION_CHECK opts out of that guard: it is needed to exercise
+    // the serialized, ABI-decoupled code paths (issue #356) under a mismatch, but
+    // it is unsafe for any operation that still hands an lxml node to xmlsec.
+    if (PyXmlSec_CheckLxmlLibraryVersion() < 0 && getenv("PYXMLSEC_SKIP_VERSION_CHECK") == NULL) {
         PyXmlSec_SetLastError("lxml & xmlsec libxml2 library version mismatch");
         return -1;
     }
@@ -128,4 +134,40 @@ int PyXmlSec_LxmlElementConverter(PyObject* o, PyXmlSec_LxmlElementPtr* p) {
     // rootNodeOrRaise - increments ref-count, so need to compensate this.
     Py_DECREF(node);
     return 1;
+}
+
+PyObject* PyXmlSec_LxmlElementToBytes(PyObject* element) {
+    // Done entirely through lxml's Python API so that the tree is walked by the
+    // same libxml2 that allocated it. `with_tail=False` keeps the output to the
+    // element itself, which xmlsec's libxml2 then re-parses from bytes.
+    PyObject* etree = PyImport_ImportModule("lxml.etree");
+    if (etree == NULL) {
+        return NULL;
+    }
+    PyObject* tostring = PyObject_GetAttrString(etree, "tostring");
+    Py_DECREF(etree);
+    if (tostring == NULL) {
+        return NULL;
+    }
+
+    PyObject* result = NULL;
+    PyObject* args = PyTuple_Pack(1, element);
+    PyObject* kwargs = Py_BuildValue("{s:O}", "with_tail", Py_False);
+    if (args != NULL && kwargs != NULL) {
+        result = PyObject_Call(tostring, args, kwargs);
+    }
+    Py_XDECREF(args);
+    Py_XDECREF(kwargs);
+    Py_DECREF(tostring);
+    return result;
+}
+
+PyObject* PyXmlSec_LxmlElementFromBytes(PyObject* data) {
+    PyObject* etree = PyImport_ImportModule("lxml.etree");
+    if (etree == NULL) {
+        return NULL;
+    }
+    PyObject* result = PyObject_CallMethod(etree, "fromstring", "O", data);
+    Py_DECREF(etree);
+    return result;
 }

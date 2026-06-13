@@ -14,6 +14,10 @@
 #include "lxml.h"
 
 #include <xmlsec/templates.h>
+#include <xmlsec/strings.h>
+
+#include <libxml/parser.h>
+#include <libxml/tree.h>
 
 #define PYXMLSEC_TEMPLATES_DOC "Xml Templates processing"
 
@@ -82,6 +86,20 @@ static char PyXmlSec_TemplateAddReference__doc__[] = \
     ":type type: :class:`str` or :data:`None`\n"
     ":return: the pointer to newly created :xml:`<dsig:Reference/>` node\n"
     ":rtype: :class:`lxml.etree._Element`";
+// ABI-decoupled implementation (issue #356), serving as the template for
+// converting the rest of the node-passing functions. Rather than handing the
+// lxml-owned `node->_c_node` to xmlsec (which corrupts memory when lxml and
+// xmlsec link different libxml2 versions), we exchange serialized XML bytes:
+// lxml serializes the template, xmlsec re-parses+mutates a private copy, and we
+// graft the result back into the lxml tree. Only bytes cross the boundary.
+//
+// Two gotchas handled below (both will recur in every converted function):
+//   - namespaces: a standalone node dump drops ancestor-declared namespaces, so
+//     we xmlUnlinkNode THEN xmlReconciliateNs (order matters).
+//   - formatting: xmlsec's trailing "\n" tail node isn't part of the dumped
+//     subtree; dropping it changes the canonicalized (signed) bytes, so we
+//     capture and reapply it.
+// See CLAUDE.md ("Reference implementation") for the full rationale.
 static PyObject* PyXmlSec_TemplateAddReference(PyObject* self, PyObject *args, PyObject *kwargs) {
     static char *kwlist[] = { "node", "digest_method", "id", "uri", "type", NULL};
 
@@ -90,7 +108,25 @@ static PyObject* PyXmlSec_TemplateAddReference(PyObject* self, PyObject *args, P
     const char* id = NULL;
     const char* uri = NULL;
     const char* type = NULL;
-    xmlNodePtr res;
+
+    // lxml-owned objects (manipulated only through lxml's own libxml2)
+    PyObject* serialized = NULL;
+    PyObject* ref_bytes = NULL;
+    PyObject* new_ref = NULL;
+    PyObject* tag = NULL;
+    PyObject* signed_info = NULL;
+    PyObject* appended = NULL;
+
+    // xmlsec-owned objects (created and freed by xmlsec's own libxml2)
+    xmlDocPtr doc = NULL;
+    xmlNodePtr res = NULL;
+    xmlBufferPtr buffer = NULL;
+
+    char* xml_data = NULL;
+    Py_ssize_t xml_size = 0;
+    // formatting whitespace xmlsec appends after the reference (its tail), which
+    // is a sibling text node and therefore not captured by dumping the node alone
+    xmlChar* tail = NULL;
 
     PYXMLSEC_DEBUG("template add_reference - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O!|zzz:add_reference", kwlist,
@@ -98,19 +134,132 @@ static PyObject* PyXmlSec_TemplateAddReference(PyObject* self, PyObject *args, P
     {
         goto ON_FAIL;
     }
+
+    // To avoid passing an lxml-owned node straight into xmlsec's libxml2 (which
+    // segfaults when the two libraries link different libxml2 versions, see
+    // https://github.com/xmlsec/python-xmlsec/issues/356), we round-trip through
+    // serialized XML: lxml serializes the template, xmlsec re-parses it with its
+    // own libxml2, adds the reference, and we reflect the new node back into the
+    // lxml tree. Only bytes cross the boundary, never raw pointers.
+    serialized = PyXmlSec_LxmlElementToBytes((PyObject*)node);
+    if (serialized == NULL || PyBytes_AsStringAndSize(serialized, &xml_data, &xml_size) < 0) {
+        goto ON_FAIL;
+    }
+
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplSignatureAddReference(node->_c_node, digest->id, XSTR(id), XSTR(uri), XSTR(type));
+    doc = xmlReadMemory(xml_data, (int)xml_size, NULL, NULL, XML_PARSE_NONET);
+    if (doc != NULL) {
+        res = xmlSecTmplSignatureAddReference(xmlDocGetRootElement(doc), digest->id, XSTR(id), XSTR(uri), XSTR(type));
+        if (res != NULL) {
+            // Capture the formatting text node xmlsec placed right after the
+            // reference so we can reproduce it as the grafted node's tail; this
+            // keeps the canonicalized (and therefore signed) bytes byte-identical
+            // to the direct, non-serialized construction.
+            if (res->next != NULL && res->next->type == XML_TEXT_NODE && res->next->content != NULL) {
+                tail = xmlStrdup(res->next->content);
+            }
+            // Detach the new reference, then pull the namespaces it relies on
+            // (declared on the ancestors we are dropping) down onto it. Both are
+            // required: while the node is still attached the dsig namespace is
+            // reachable via its ancestors, so xmlReconciliateNs is a no-op and a
+            // standalone dump would silently lose the namespace.
+            xmlUnlinkNode(res);
+            xmlReconciliateNs(doc, res);
+            buffer = xmlBufferCreate();
+            if (buffer != NULL && xmlNodeDump(buffer, doc, res, 0, 0) < 0) {
+                xmlBufferFree(buffer);
+                buffer = NULL;
+            }
+        }
+    }
     Py_END_ALLOW_THREADS;
+
+    if (doc == NULL) {
+        PyErr_SetString(PyXmlSec_InternalError, "cannot parse serialized template.");
+        goto ON_FAIL;
+    }
     if (res == NULL) {
         PyXmlSec_SetLastError("cannot add reference.");
         goto ON_FAIL;
     }
+    if (buffer == NULL) {
+        PyErr_SetString(PyXmlSec_InternalError, "cannot serialize reference.");
+        goto ON_FAIL;
+    }
+
+    // Re-parse the new reference with lxml so the resulting node is owned by
+    // lxml, then graft it onto the SignedInfo of the original template.
+    ref_bytes = PyBytes_FromStringAndSize((const char*)xmlBufferContent(buffer), (Py_ssize_t)xmlBufferLength(buffer));
+    if (ref_bytes == NULL) {
+        goto ON_FAIL;
+    }
+    new_ref = PyXmlSec_LxmlElementFromBytes(ref_bytes);
+    if (new_ref == NULL) {
+        goto ON_FAIL;
+    }
+
+    tag = PyUnicode_FromFormat("{%s}%s", (const char*)xmlSecDSigNs, (const char*)xmlSecNodeSignedInfo);
+    if (tag == NULL) {
+        goto ON_FAIL;
+    }
+    signed_info = PyObject_CallMethod((PyObject*)node, "find", "O", tag);
+    if (signed_info == NULL) {
+        goto ON_FAIL;
+    }
+    if (signed_info == Py_None) {
+        PyXmlSec_SetLastError("cannot add reference.");
+        goto ON_FAIL;
+    }
+    appended = PyObject_CallMethod(signed_info, "append", "O", new_ref);
+    if (appended == NULL) {
+        goto ON_FAIL;
+    }
+    if (tail != NULL) {
+        PyObject* py_tail = PyUnicode_FromString((const char*)tail);
+        if (py_tail == NULL) {
+            goto ON_FAIL;
+        }
+        int rv = PyObject_SetAttrString(new_ref, "tail", py_tail);
+        Py_DECREF(py_tail);
+        if (rv < 0) {
+            goto ON_FAIL;
+        }
+    }
+
+    // `res` was unlinked from `doc`, so it must be freed on its own.
+    xmlFree(tail);
+    xmlFreeNode(res);
+    xmlFreeDoc(doc);
+    xmlBufferFree(buffer);
+    Py_DECREF(serialized);
+    Py_DECREF(ref_bytes);
+    Py_DECREF(tag);
+    Py_DECREF(signed_info);
+    Py_DECREF(appended);
 
     PYXMLSEC_DEBUG("template add_reference - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return new_ref;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template add_reference - fail");
+    if (tail != NULL) {
+        xmlFree(tail);
+    }
+    if (res != NULL) {
+        xmlFreeNode(res);
+    }
+    if (doc != NULL) {
+        xmlFreeDoc(doc);
+    }
+    if (buffer != NULL) {
+        xmlBufferFree(buffer);
+    }
+    Py_XDECREF(serialized);
+    Py_XDECREF(ref_bytes);
+    Py_XDECREF(new_ref);
+    Py_XDECREF(tag);
+    Py_XDECREF(signed_info);
+    Py_XDECREF(appended);
     return NULL;
 }
 
