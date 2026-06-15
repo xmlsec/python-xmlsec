@@ -47,9 +47,10 @@ allocated:
    (`etree.tostring`). Input is never mutated by xmlsec.
 2. **bytes → xmlsec node**: re-parse with xmlsec's libxml2 (`xmlReadMemory`).
 3. Run the xmlsec operation on that fresh, xmlsec-owned node.
-4. **xmlsec node → bytes → lxml**: serialize the result with xmlsec's libxml2
-   (`xmlNodeDump`), re-parse with lxml (`etree.fromstring`), and graft it into
-   the original lxml tree.
+4. **xmlsec doc → bytes → lxml**: serialize the whole mutated document with
+   xmlsec's libxml2 (`xmlDocDumpMemory`), re-parse with lxml
+   (`etree.fromstring`), locate the new node, and graft it into the original
+   lxml tree.
 
 Only bytes cross between the two libxml2 worlds — never a pointer.
 
@@ -60,61 +61,108 @@ Only bytes cross between the two libxml2 worlds — never a pointer.
 
 ### Bridge helpers
 
-Two small helpers in [src/lxml.c](src/lxml.c) (declared in
-[src/lxml.h](src/lxml.h)) are the only sanctioned crossing points. They go
-through lxml's Python API so the tree is always walked by lxml's libxml2:
+Three helpers in [src/lxml.c](src/lxml.c) (declared in [src/lxml.h](src/lxml.h))
+are the only sanctioned crossing points. The first two go through lxml's Python
+API so the tree is always walked by lxml's libxml2:
 
 - `PyXmlSec_LxmlElementToBytes(element)` → `etree.tostring(element, with_tail=False)`
 - `PyXmlSec_LxmlElementFromBytes(data)` → `etree.fromstring(data)`
 
+- **`PyXmlSec_LxmlAddChildViaXmlSec(element, op, ctx, error)`** — the reusable
+  round-trip. It is the ABI-safe drop-in for the old "call an `xmlSecTmpl*Add*`
+  function on `element->_c_node`, then `elementFactory` the result" one-liner.
+  It owns the entire serialize → mutate → reflect dance (below); a converted
+  function supplies only the `op` callback (the `xmlSecTmpl*` call + its args via
+  `ctx`) and an error string. **Convert new functions by writing an `op`, not by
+  re-implementing the round-trip.**
+
 ## Reference implementation: `template.add_reference`
 
 `PyXmlSec_TemplateAddReference` in [src/template.c](src/template.c) is the first
-function converted and the **template for converting the rest**. Read it
-alongside this section. The flow:
+function converted and the **template for converting the rest**. After the
+refactor it is tiny: parse args, build a `ctx`, and call the helper. The
+xmlsec-specific part is the `op`:
 
-1. `PyXmlSec_LxmlElementToBytes(node)` — serialize the `<Signature>` element.
+```c
+static xmlNodePtr PyXmlSec_TemplateAddReferenceOp(xmlNodePtr root, void* ctx) {
+    struct ... * c = ctx;
+    return xmlSecTmplSignatureAddReference(root, c->digest, XSTR(c->id), XSTR(c->uri), XSTR(c->type));
+}
+```
+
+`op` receives `root` = the copy's root element, i.e. the equivalent of the
+original `element->_c_node`, and returns the node it created (same contract as
+the old direct call). Everything else is the helper's job.
+
+### What the helper does (and the key decision)
+
+1. `PyXmlSec_LxmlElementToBytes(element)` — serialize the subtree.
 2. `xmlReadMemory(...)` — parse into a throwaway xmlsec-owned `xmlDocPtr`.
-3. `xmlSecTmplSignatureAddReference(xmlDocGetRootElement(doc), ...)` — xmlsec
-   adds the `<Reference>` to the copy and returns it (`res`).
-4. Reflect back: dump `res`, `PyXmlSec_LxmlElementFromBytes(...)`, then
-   `find` the `SignedInfo` of the *original* node and `append` the new element.
-5. Return the grafted lxml element (a live node in the user's tree, so the
+3. `res = op(xmlDocGetRootElement(doc), ctx)` — run the caller's xmlsec
+   mutation on the copy. `res` stays attached to `doc`.
+4. Record `res`'s **element-index path** from the root (so it can be re-found
+   after a round-trip), then dump the **whole** mutated document with
+   `xmlDocDumpMemory` — *not* the lone `res` subtree.
+5. `PyXmlSec_LxmlElementFromBytes(...)` the dump, walk the recorded path to the
+   new node, walk the same path (minus the last step) in the *original*
+   `element` to reach the parent, and `append` the new node there.
+6. Return the grafted lxml node (a live node in the user's tree, so the
    incremental builder — `add_transform(ref, ...)` — keeps working).
 
-### Two non-obvious gotchas (the reason this took iterations)
+Dumping the **entire** document in step 4 (rather than just `res`) is the load-
+bearing decision: it keeps the round-trip byte-identical to the old raw-pointer
+code *without* any manual fix-up, because two things that would otherwise
+diverge only exist in the surrounding document:
 
-These will recur in every function we convert, so they're worth understanding:
+**(a) Namespaces.** `xmlNodeDump` of a *subtree* does not emit namespace
+declarations that live on ancestors. `<Reference>` uses the dsig namespace
+declared up on `<Signature>`; dump it alone and you get `<Reference>` with no
+`xmlns` → it re-parses into the *wrong* (empty) namespace, and xmlsec no longer
+recognizes it. Dumping the whole document keeps the `<Signature>` declaration in
+the bytes, so lxml re-parses the reference into the correct dsig namespace.
 
-**(a) Namespaces are lost on a naive node dump.** `xmlNodeDump` of a subtree does
-*not* emit namespace declarations that live on ancestors. The `<Reference>`
-uses the dsig namespace declared up on `<Signature>`, so dumping it alone yields
-`<Reference>` with no `xmlns` → re-parses into the *wrong* (empty) namespace.
-Fix: **`xmlUnlinkNode(res)` first, then `xmlReconciliateNs(doc, res)`.** Order
-matters — while the node is still attached, the namespace is reachable via its
-ancestors, so reconcile thinks nothing is wrong and does nothing. Only after
-unlinking does reconcile redeclare the namespace onto the node itself.
+**(b) Whitespace.** xmlsec pretty-prints by inserting newline text nodes between
+children. The `\n` it puts *after* `<Reference>` is a *sibling* tail node, not
+part of the `<Reference>` subtree. Drop it and the canonicalized `<SignedInfo>`
+bytes change → the computed `SignatureValue` changes → byte-exact signature
+fixtures break. In a whole-document dump that `\n` is just bytes between two
+elements; lxml re-parses it as the new element's `.tail`, and `append` carries
+the tail along.
 
-**(b) Whitespace changes the signature.** xmlsec pretty-prints by inserting
-newline text nodes between children. The newline it puts *after* the
-`<Reference>` element is a *sibling* tail node, not part of the dumped subtree,
-so the round-trip drops it.
-That single missing `\n` changes the canonicalized `SignedInfo` bytes, which
-changes the computed `SignatureValue` and breaks byte-exact signature fixtures.
-Fix: capture `res->next`'s text (the tail) *before* unlinking, and reapply it as
-the grafted element's `.tail`. Any converted function that relies on xmlsec's
-formatting must preserve these tail text nodes to stay byte-compatible.
+> An earlier (pre-helper) version dumped only the `res` subtree and hit both as
+> bugs, patching them by hand (`xmlUnlinkNode` + `xmlReconciliateNs` for the
+> namespace; `xmlStrdup`-ing `res->next`'s text and reapplying it as `.tail` for
+> the whitespace). The whole-document dump deletes all of that. The cost is that
+> the new node must be *located* after the round-trip instead of handed back as
+> `res`; the helper does this generically via the element-index path.
 
-### Memory / ref-count notes
+### Helper assumptions & when *not* to use it
 
-- `res` is unlinked from `doc`, so it is **not** freed by `xmlFreeDoc(doc)` — it
-  must be `xmlFreeNode`'d separately.
-- The captured `tail` is `xmlStrdup`'d → `xmlFree` it (NULL-safe on the success
-  path).
-- Every `PyObject_CallMethod`/`PyUnicode_*` result is a new reference and is
-  `Py_DECREF`'d, including the `None` returned by `.append(...)`.
-- The pure-C libxml2 work runs inside `Py_BEGIN_ALLOW_THREADS`; all the lxml
-  Python-API calls run with the GIL held, outside it.
+The path-based reflect assumes `op` **appends exactly one new node beneath a
+parent that already exists in `element`**, and that the templates contain no
+comment/PI siblings (so a libxml2 element index equals an lxml child index).
+This holds for the `xmlSecTmpl*Add*` family. Two shapes need more than the
+current helper:
+
+- **find-or-create** (`xmlSecTmpl*Ensure*`, e.g. `ensure_key_info`): `op` may
+  return an *existing* node without adding anything → appending it would
+  duplicate. Needs a "did the tree actually grow?" check before grafting.
+- **intermediate ancestors** (e.g. `add_transform` may create a `<Transforms>`
+  wrapper *and* the `<Transform>`): the topmost new node, not `res`, is what
+  must be grafted.
+
+Extend the helper (or branch inside it) when you reach those; don't force-fit.
+
+### Memory / ref-count notes (inside the helper)
+
+- `res` stays attached to `doc`, so `xmlFreeDoc(doc)` reclaims it — it is **not**
+  freed separately.
+- `xmlDocDumpMemory`'s output buffer is `xmlFree`'d (NULL-safe on failure).
+- Every `PySequence_GetItem` / `PyObject_CallMethod` result is a new reference
+  and is `Py_DECREF`'d, including the `None` returned by `.append(...)` and the
+  reparsed whole-document tree (dropped once the new node is grafted out of it).
+- `op` runs inside `Py_BEGIN_ALLOW_THREADS` (pure libxml2/xmlsec, no Python);
+  all the lxml Python-API calls run with the GIL held, outside it.
 
 ## Version guard / opt-in escape hatch
 
@@ -176,14 +224,18 @@ note `ru_maxrss` is **bytes** on macOS, kB on Linux).
 ## Status & rollout
 
 - ✅ `template.add_reference` — converted and validated (full suite green +
-  10k-iteration loop, no crash/leak, under a real 2.14↔2.15 mismatch).
+  10k-iteration loop, no crash/leak, under a real 2.14↔2.15 mismatch). The
+  reusable round-trip lives in `PyXmlSec_LxmlAddChildViaXmlSec`.
 - ⬜ Everything else still passes raw lxml nodes to xmlsec and is unsafe on a
   mismatch: the rest of `src/template.c`, `src/ds.c` (sign/verify),
   `src/enc.c` (encrypt/decrypt), `src/tree.c`.
 
-When converting another function, reuse the `add_reference` pattern and watch
-for the same two gotchas (namespace reconciliation after unlink; preserving
-xmlsec's formatting tail nodes). Each function differs in *where* the result
-grafts back (e.g. `add_reference` → `SignedInfo`; `ensure_key_info` →
-`Signature`). The default version guard can only be relaxed once **all**
-node-passing paths are converted.
+When converting another function, **write an `op` and call
+`PyXmlSec_LxmlAddChildViaXmlSec`** rather than re-implementing the round-trip;
+the helper handles serialization, the whole-document dump, and grafting (which
+sidesteps the namespace/whitespace divergences for free). For the simple
+`xmlSecTmpl*Add*` family that is the whole change. Watch for the two shapes the
+current helper does not yet cover — find-or-create (`ensure_key_info`) and
+intermediate-ancestor creation (`add_transform`) — and extend the helper when
+you reach them (see "Helper assumptions & when *not* to use it"). The default
+version guard can only be relaxed once **all** node-passing paths are converted.
