@@ -94,6 +94,7 @@ be relaxed once all node-passing paths are converted.
   `template.ensure_key_info` — one per reflect shape. Validated under a real
   2.14 ↔ 2.15 mismatch: full suite green, 10k-iteration loop with no crash,
   no leak, byte-identical output.
-- ⬜ Rest of `src/template.c` — mechanical: the four-line pattern above.
+- ⬜ Rest of `src/template.c` — mechanical: follow the step-by-step guide in
+  [converting-functions.md](converting-functions.md).
 - ⬜ `src/ds.c` (sign/verify), `src/enc.c` (encrypt/decrypt), `src/tree.c` —
   need a whole-document reflect strategy.
