@@ -59,6 +59,26 @@ call mutates at most one place in the tree — true for all `xmlSecTmpl*`
 functions. Whole-document operations (`sign`, `encrypt`) mutate many places
 and will need a different reflect step on top of the same Begin machinery.
 
+## The fast path: shadows only when needed
+
+Copying is pointless when lxml links the same libxml2 as the extension — the
+raw-node behavior that shipped for years is safe then, and it is the only
+configuration the import guard currently lets run. So `Begin`/`End` are
+dual-path, decided once at import:
+
+- **matched versions** (the guard passed): `Begin` aliases the live
+  `_c_node` into `shadow.root` with no serialization, and `End` just wraps
+  the node xmlsec returned — machine-identical to the pre-shadow code, zero
+  overhead;
+- **mismatch** (import allowed via `PYXMLSEC_SKIP_VERSION_CHECK` today,
+  automatic once everything is converted), **or `PYXMLSEC_FORCE_SHADOW` set**:
+  the full shadow round-trip described above.
+
+Call sites cannot tell the difference; every converted function inherits both
+paths. `PYXMLSEC_FORCE_SHADOW` exists so CI keeps the shadow path exercised on
+matched libraries (see the test matrix), where it must also pass the full
+suite.
+
 > The shadow decouples *lxml* from xmlsec. The extension and `libxmlsec1`
 > must still share one libxml2 (wheels/static builds guarantee this).
 
@@ -87,6 +107,10 @@ PYXMLSEC_SKIP_VERSION_CHECK=1 PYTHONPATH=src python -m pytest tests/
 exists to exercise the shadow paths; it is **unsafe** for every operation
 still on the raw-node path, so keep it off in normal use. The guard can only
 be relaxed once all node-passing paths are converted.
+
+On a *matched* build (no mismatch available), run the suite twice instead:
+once plain (fast path) and once with `PYXMLSEC_FORCE_SHADOW=1` (shadow path
+on matched libraries — safe everywhere, so the whole suite must pass).
 
 ## Status
 

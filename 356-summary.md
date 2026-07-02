@@ -53,6 +53,12 @@ byte-identical — namespaces and xmlsec's `"\n"` formatting included.
     synced) instead of duplicating it.
   A conversion is four lines: `Begin` / the unchanged xmlsec call on
   `shadow.root` / `End` — no per-function callback or context struct.
+- **A fast path** decided once at import: when lxml links the same libxml2 as
+  the extension (the only configuration the import guard lets run today),
+  `Begin`/`End` skip the copy entirely and behave exactly like the old direct
+  code — zero overhead. The shadow round-trip activates under a mismatch, or
+  with `PYXMLSEC_FORCE_SHADOW=1`, which CI uses to keep the shadow path
+  exercised on matched libraries.
 - **An escape hatch** for development: `PYXMLSEC_SKIP_VERSION_CHECK` bypasses
   the import-time mismatch guard so the converted paths can be exercised under
   a real mismatch. The guard itself stays on by default.

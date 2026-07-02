@@ -101,6 +101,15 @@ FINALIZE:
     return result;
 }
 
+// Non-zero when converted functions must run their xmlsec call on a shadow
+// copy instead of directly on lxml's nodes; decided once at import, below.
+static int PyXmlSec_LxmlShadowActive = 1;
+
+// The two lxml.etree callables the shadow crossings use, resolved once at
+// import and kept for the lifetime of the process.
+static PyObject* PyXmlSec_LxmlEtreeToString;
+static PyObject* PyXmlSec_LxmlEtreeFromString;
+
 int PyXmlSec_InitLxmlModule(void) {
     // By default refuse to import when lxml and xmlsec link different libxml2
     // versions: passing raw nodes between the two libraries then corrupts
@@ -108,8 +117,27 @@ int PyXmlSec_InitLxmlModule(void) {
     // PYXMLSEC_SKIP_VERSION_CHECK bypasses the guard — needed to exercise the
     // shadow-copy paths (issue #356) under a mismatch, but unsafe for every
     // operation that still hands an lxml node to xmlsec.
-    if (PyXmlSec_CheckLxmlLibraryVersion() < 0 && getenv("PYXMLSEC_SKIP_VERSION_CHECK") == NULL) {
+    int mismatch = PyXmlSec_CheckLxmlLibraryVersion() < 0;
+    if (mismatch && getenv("PYXMLSEC_SKIP_VERSION_CHECK") == NULL) {
         PyXmlSec_SetLastError("lxml & xmlsec libxml2 library version mismatch");
+        return -1;
+    }
+
+    // Matched versions are the long-standing status quo: xmlsec may mutate
+    // lxml's nodes directly, so converted functions skip the copy (the
+    // Begin/End fast path). Shadows turn on under a mismatch — or always with
+    // PYXMLSEC_FORCE_SHADOW, the knob CI uses to exercise the shadow path on
+    // matched libraries.
+    PyXmlSec_LxmlShadowActive = mismatch || getenv("PYXMLSEC_FORCE_SHADOW") != NULL;
+
+    PyObject* etree = PyImport_ImportModule("lxml.etree");
+    if (etree == NULL) {
+        return -1;
+    }
+    PyXmlSec_LxmlEtreeToString = PyObject_GetAttrString(etree, "tostring");
+    PyXmlSec_LxmlEtreeFromString = PyObject_GetAttrString(etree, "fromstring");
+    Py_DECREF(etree);
+    if (PyXmlSec_LxmlEtreeToString == NULL || PyXmlSec_LxmlEtreeFromString == NULL) {
         return -1;
     }
 
@@ -151,39 +179,19 @@ int PyXmlSec_LxmlElementConverter(PyObject* o, PyXmlSec_LxmlElementPtr* p) {
 // tree; with_tail keeps the serialization to the element itself.
 static PyObject* PyXmlSec_LxmlElementToBytes(PyObject* element) {
     PyObject* result = NULL;
-    PyObject* args = NULL;
-    PyObject* kwargs = NULL;
-    PyObject* tostring = NULL;
-    PyObject* etree = PyImport_ImportModule("lxml.etree");
-    if (etree == NULL) {
-        return NULL;
-    }
-    tostring = PyObject_GetAttrString(etree, "tostring");
-    Py_DECREF(etree);
-    if (tostring == NULL) {
-        return NULL;
-    }
-    args = PyTuple_Pack(1, element);
-    kwargs = Py_BuildValue("{s:O}", "with_tail", Py_False);
+    PyObject* args = PyTuple_Pack(1, element);
+    PyObject* kwargs = Py_BuildValue("{s:O}", "with_tail", Py_False);
     if (args != NULL && kwargs != NULL) {
-        result = PyObject_Call(tostring, args, kwargs);
+        result = PyObject_Call(PyXmlSec_LxmlEtreeToString, args, kwargs);
     }
     Py_XDECREF(args);
     Py_XDECREF(kwargs);
-    Py_DECREF(tostring);
     return result;
 }
 
 // etree.fromstring(data) — the parsed nodes are owned and managed by lxml.
 static PyObject* PyXmlSec_LxmlElementFromBytes(PyObject* data) {
-    PyObject* result;
-    PyObject* etree = PyImport_ImportModule("lxml.etree");
-    if (etree == NULL) {
-        return NULL;
-    }
-    result = PyObject_CallMethod(etree, "fromstring", "O", data);
-    Py_DECREF(etree);
-    return result;
+    return PyObject_CallFunctionObjArgs(PyXmlSec_LxmlEtreeFromString, data, NULL);
 }
 
 // Nodes that exist before the xmlsec call are tagged through the libxml2
@@ -295,6 +303,14 @@ int PyXmlSec_LxmlShadowBegin(PyXmlSec_LxmlShadow* shadow, PyXmlSec_LxmlElementPt
     shadow->doc = NULL;
     shadow->root = NULL;
 
+    // Fast path: lxml links the same libxml2 (the import guard passed), so
+    // xmlsec can mutate lxml's nodes directly and no copy is needed; End sees
+    // doc == NULL and just wraps the result node.
+    if (!PyXmlSec_LxmlShadowActive) {
+        shadow->root = element->_c_node;
+        return 0;
+    }
+
     bytes = PyXmlSec_LxmlElementToBytes((PyObject*)element);
     if (bytes == NULL || PyBytes_AsStringAndSize(bytes, &data, &size) < 0) {
         Py_XDECREF(bytes);
@@ -331,6 +347,15 @@ PyObject* PyXmlSec_LxmlShadowEnd(PyXmlSec_LxmlShadow* shadow, xmlNodePtr res, co
     int path[PYXMLSEC_SHADOW_MAX_DEPTH];
     int rel[PYXMLSEC_SHADOW_MAX_DEPTH];
     int depth, rel_depth, insert_idx;
+
+    // Fast path (no copy was made): res is a node in the live lxml tree.
+    if (shadow->doc == NULL) {
+        if (res == NULL) {
+            PyXmlSec_SetLastError(error);
+            return NULL;
+        }
+        return (PyObject*)PyXmlSec_elementFactory(shadow->element->_doc, res);
+    }
 
     if (res == NULL) {
         PyXmlSec_SetLastError(error);

@@ -52,6 +52,13 @@ int PyXmlSec_LxmlElementConverter(PyObject* o, PyXmlSec_LxmlElementPtr* p);
 // when the node is NULL). End must be called exactly once after a successful
 // Begin; it always releases the copy.
 //
+// Fast path: when lxml links the same libxml2 as this extension (the
+// import-time version check passed), no copy is needed — Begin aliases the
+// live node into `root` (leaving `doc` NULL) and End just wraps the result,
+// which is the long-standing direct behavior with zero overhead. Setting
+// PYXMLSEC_FORCE_SHADOW in the environment forces the shadow path even on
+// matched libraries; CI uses it to keep that path exercised.
+//
 // The reflection covers the whole xmlSecTmpl* family: a new subtree grafted at
 // the position xmlsec chose (including intermediate nodes like <Transforms>
 // and the "\n" formatting text around it), or — for find-or-create calls that
