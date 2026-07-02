@@ -91,6 +91,8 @@ static PyObject* PyXmlSec_TemplateAddReference(PyObject* self, PyObject *args, P
     const char* uri = NULL;
     const char* type = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template add_reference - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O!|zzz:add_reference", kwlist,
@@ -98,16 +100,21 @@ static PyObject* PyXmlSec_TemplateAddReference(PyObject* self, PyObject *args, P
     {
         goto ON_FAIL;
     }
+    // The xmlsec call runs on a private copy of `node`, never on lxml's own
+    // nodes (issue #356); the shadow reflects the new <Reference> back.
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplSignatureAddReference(node->_c_node, digest->id, XSTR(id), XSTR(uri), XSTR(type));
+    res = xmlSecTmplSignatureAddReference(shadow.root, digest->id, XSTR(id), XSTR(uri), XSTR(type));
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot add reference.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot add reference.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template add_reference - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template add_reference - fail");
@@ -129,6 +136,8 @@ static PyObject* PyXmlSec_TemplateAddTransform(PyObject* self, PyObject *args, P
     PyXmlSec_LxmlElementPtr node = NULL;
     PyXmlSec_Transform* transform = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template add_transform - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O!:add_transform", kwlist,
@@ -136,16 +145,19 @@ static PyObject* PyXmlSec_TemplateAddTransform(PyObject* self, PyObject *args, P
     {
         goto ON_FAIL;
     }
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplReferenceAddTransform(node->_c_node, transform->id);
+    res = xmlSecTmplReferenceAddTransform(shadow.root, transform->id);
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot add transform.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot add transform.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template add_transform - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template add_transform - fail");
@@ -167,6 +179,8 @@ static PyObject* PyXmlSec_TemplateEnsureKeyInfo(PyObject* self, PyObject *args, 
     PyXmlSec_LxmlElementPtr node = NULL;
     const char* id = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template ensure_key_info - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&|z:ensure_key_info", kwlist, PyXmlSec_LxmlElementConverter, &node, &id))
@@ -174,16 +188,19 @@ static PyObject* PyXmlSec_TemplateEnsureKeyInfo(PyObject* self, PyObject *args, 
         goto ON_FAIL;
     }
 
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplSignatureEnsureKeyInfo(node->_c_node, XSTR(id));
+    res = xmlSecTmplSignatureEnsureKeyInfo(shadow.root, XSTR(id));
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot ensure key info.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot ensure key info.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template ensure_key_info - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template ensure_key_info - fail");

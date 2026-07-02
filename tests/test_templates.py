@@ -36,6 +36,18 @@ class TestTemplates(base.TestMemoryLeaks):
         ki = xmlsec.template.ensure_key_info(sign, id='Id')
         self.assertEqual('Id', ki.get('Id'))
 
+    def test_ensure_key_info_existing(self):
+        root = self.load_xml('doc.xml')
+        sign = xmlsec.template.create(root, c14n_method=consts.TransformExclC14N, sign_method=consts.TransformRsaSha1)
+        ki = xmlsec.template.ensure_key_info(sign)
+        self.assertIs(ki.getroottree().getroot(), root)
+        # the second call finds the existing node instead of adding another one,
+        # but still applies the requested id to it
+        ki2 = xmlsec.template.ensure_key_info(sign, id='Id')
+        self.assertIs(ki2, ki)
+        self.assertEqual('Id', ki.get('Id'))
+        self.assertEqual(1, sum(1 for n in sign if n.tag == f'{{{consts.DSigNs}}}KeyInfo'))
+
     def test_ensure_key_info_fail(self):
         with self.assertRaisesRegex(xmlsec.Error, 'cannot ensure key info.'):
             xmlsec.template.ensure_key_info(etree.fromstring(b'<Data/>'), id='Id')
@@ -91,6 +103,32 @@ class TestTemplates(base.TestMemoryLeaks):
     def test_add_reference_fail(self):
         with self.assertRaisesRegex(xmlsec.Error, 'cannot add reference.'):
             xmlsec.template.add_reference(etree.Element('root'), consts.TransformSha1)
+
+    def test_add_transform(self):
+        root = self.load_xml('doc.xml')
+        sign = xmlsec.template.create(root, c14n_method=consts.TransformExclC14N, sign_method=consts.TransformRsaSha1)
+        ref = xmlsec.template.add_reference(sign, consts.TransformSha1, uri='URI')
+        tr = xmlsec.template.add_transform(ref, consts.TransformEnveloped)
+        # the returned node is live in the original tree, inside the
+        # <Transforms> wrapper the first call creates before <DigestMethod>
+        self.assertIs(tr.getroottree().getroot(), root)
+        transforms = tr.getparent()
+        self.assertEqual(f'{{{consts.DSigNs}}}Transforms', transforms.tag)
+        self.assertIs(ref[0], transforms)
+        self.assertEqual(f'{{{consts.DSigNs}}}DigestMethod', ref[1].tag)
+
+    def test_add_transform_existing_transforms(self):
+        root = self.load_xml('doc.xml')
+        sign = xmlsec.template.create(root, c14n_method=consts.TransformExclC14N, sign_method=consts.TransformRsaSha1)
+        ref = xmlsec.template.add_reference(sign, consts.TransformSha1, uri='URI')
+        tr = xmlsec.template.add_transform(ref, consts.TransformEnveloped)
+        # a second transform lands in the existing wrapper, after the first
+        tr2 = xmlsec.template.add_transform(ref, consts.TransformExclC14N)
+        transforms = tr.getparent()
+        self.assertIs(tr2.getparent(), transforms)
+        self.assertEqual(2, len(transforms))
+        self.assertIs(transforms[0], tr)
+        self.assertIs(transforms[1], tr2)
 
     def test_add_transform_bad_args(self):
         with self.assertRaises(TypeError):
