@@ -39,6 +39,10 @@ class TestTemplates(base.TestMemoryLeaks):
     def test_ensure_key_info_existing(self):
         root = self.load_xml('doc.xml')
         sign = xmlsec.template.create(root, c14n_method=consts.TransformExclC14N, sign_method=consts.TransformRsaSha1)
+        # attach the template the way real callers do; a created template is
+        # detached (on the shadow path it also lives in its own document
+        # until grafted, so liveness is only observable through `root`)
+        root.append(sign)
         ki = xmlsec.template.ensure_key_info(sign)
         self.assertIs(ki.getroottree().getroot(), root)
         # the second call finds the existing node instead of adding another one,
@@ -107,6 +111,10 @@ class TestTemplates(base.TestMemoryLeaks):
     def test_add_transform(self):
         root = self.load_xml('doc.xml')
         sign = xmlsec.template.create(root, c14n_method=consts.TransformExclC14N, sign_method=consts.TransformRsaSha1)
+        # attach the template the way real callers do; a created template is
+        # detached (on the shadow path it also lives in its own document
+        # until grafted, so liveness is only observable through `root`)
+        root.append(sign)
         ref = xmlsec.template.add_reference(sign, consts.TransformSha1, uri='URI')
         tr = xmlsec.template.add_transform(ref, consts.TransformEnveloped)
         # the returned node is live in the original tree, inside the

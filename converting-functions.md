@@ -19,13 +19,18 @@ grep -n '_c_node\|_c_doc' src/template.c
 Read the `xmlSecTmpl*` function it wraps (xmlsec1's `src/templates.c`) and
 match it to a row:
 
-| Shape | Examples | Covered? |
+| Shape | Examples | How |
 |---|---|---|
 | Adds a subtree under the element (any position, possibly with intermediate nodes) | `add_key_name`, `add_key_value`, `add_x509_data`, `x509_data_add_*`, `add_encrypted_key` | ✅ just follow step 3 |
-| Find-or-create, may set attributes on the existing node | `encrypted_data_ensure_key_info`, `encrypted_data_ensure_cipher_value` | ✅ just follow step 3 |
-| Returns a status `int`, mutates one child | `transform_add_c14n_inclusive_namespaces` | ✅ with a twist: after the call, locate the affected child on the copy (here: the `<InclusiveNamespaces>` under `shadow.root`) and pass *that* to `End`; discard the returned element and return `None` |
-| Returns a **detached** node — the element argument only supplies the document | `create`, `encrypted_data_create` | ❌ `End` would raise "unexpected result node"; needs its own reflect (no graft — parse the standalone result with lxml and return it) |
-| Reads or mutates the **whole document** | `ds.c` sign/verify, `enc.c` encrypt/decrypt, `tree.c` | ❌ needs a whole-document reflect strategy |
+| Find-or-create, may set attributes on the existing node | `encrypted_data_ensure_key_info`, `encrypted_data_ensure_cipher_value` | ✅ just follow step 3 (a call that can also *rename the prefix* of the existing node uses `EndReplace` instead of `End`) |
+| Returns a status `int`, mutates one child | `transform_add_c14n_inclusive_namespaces` | ✅ pass `PyXmlSec_LxmlShadowFindFresh(&shadow)` to `End`; discard the returned element and return `None` |
+| Returns a **detached** node — the element argument only supplies the document | `create`, `encrypted_data_create` | ✅ `BeginNewDoc`/`EndNewDoc`: the call runs against a private document and the result comes back as a new detached lxml element |
+| Read-only search | `tree.c` find_child/find_node (subtree), find_parent (whole doc) | ✅ `Begin` (or `BeginDoc` when the search leaves the subtree) + `EndFind`, which returns `None` on not-found |
+| Reads or mutates the **whole document**, possibly at several places | `ds.c` sign (whole-doc + multi-site), verify (read-only) | ✅ `BeginDoc` + `ReplayIds`, then `ReflectAll` (sign) or `Discard` (verify) |
+| **Replaces** nodes | `enc.c` encrypt_xml/decrypt (`encrypt_binary`/`encrypt_uri` are template-shaped: `Begin` + `ReflectAll`) | ✅ `BeginDoc`, remove the consumed live node/content first, then `ReflectAll` grafts the replacement (`_setroot` when the document root itself was replaced) |
+
+All shapes are converted; `developer.md`'s "Beyond templates" section explains
+each reflect. This guide stays as the recipe should new bindings appear.
 
 `res` does not have to be the topmost node the call created — `End` walks up
 to the topmost new ancestor itself. Any node inside the new subtree works.

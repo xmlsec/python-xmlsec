@@ -56,8 +56,54 @@ Child indices count exactly the node types lxml exposes as children (elements,
 comments, PIs, entity refs), so paths recorded on the raw copy resolve
 identically through lxml's `__getitem__`/`insert`. `End` assumes the xmlsec
 call mutates at most one place in the tree — true for all `xmlSecTmpl*`
-functions. Whole-document operations (`sign`, `encrypt`) mutate many places
-and will need a different reflect step on top of the same Begin machinery.
+functions.
+
+## Beyond templates: the whole-code rollout
+
+Every binding that used to hand a raw lxml node to xmlsec now goes through a
+shadow. The extra shapes (all in [src/lxml.c](src/lxml.c), contracts in
+[src/lxml.h](src/lxml.h)):
+
+- **Create** (`template.create`, `encrypted_data_create`):
+  `BeginNewDoc`/`EndNewDoc`. The call builds a *detached* subtree and only
+  needs a document to allocate in — a private one on the shadow path. The
+  result comes back as a new detached lxml element (in its own document; lxml
+  moves it when the caller grafts it), instead of the raw path's "detached
+  node inside the source document", which lxml's API cannot express.
+- **Finders** (`tree.find_child`/`find_node`/`find_parent`): `EndFind` maps
+  the found copy node back by path and returns `None` on not-found.
+  `find_parent` walks upward, so it uses the whole-document Begin.
+- **Whole-document** (`sign`, `verify`, `decrypt`, `find_parent`):
+  `BeginDoc` serializes `element.getroottree()` (comments/PIs outside the
+  root and the internal DTD subset survive), records the element's position
+  through lxml's API, and hands back the copy's counterpart node.
+- **Multi-site reflect** (`sign`, `encrypt_binary`, `encrypt_uri`):
+  `ReflectAll` scans the copy for *every* topmost untagged node and grafts
+  each back — new subtrees via `insert`, new/changed text (DigestValue,
+  SignatureValue) via the text slots. Two-phase: payloads are fetched from
+  the re-parsed copy while it is still in its final state, then applied to
+  the live tree in document order (a graft moves a node out of the re-parsed
+  copy, which would invalidate later fetches).
+- **Replacement reflect** (`encrypt_xml`, `decrypt`): encryption/decryption
+  *replace* nodes, so the live target (or its content, or the document root
+  via `_setroot`) is removed first and `ReflectAll` grafts what took its
+  place. `encrypt_xml` re-serializes the template into the same shadow doc
+  (`ImportElement`); a template attached inside the target's own tree is
+  therefore copied, not moved. `verify` needs no reflect at all — `Discard`
+  just frees the copy.
+- **ID registration** (`tree.add_ids`, `SignatureContext.register_id`): these
+  used to write lxml's ID hash with our libxml2. Under the shadow they record
+  the id-attribute specs in a registry keyed by document identity
+  (`RecordId`), and every `BeginDoc` replays them onto the copy
+  (`ReplayIds`) so `#id` references resolve. The replay scans the whole copy
+  for the recorded attribute names — a superset of the raw registration. The
+  registry holds no strong references to documents (lxml objects refuse weak
+  references, so entries are validated by a stored `_c_doc` address and
+  capped in size).
+- **Prefix rename** (`encrypted_data_ensure_key_info(ns=...)` on an existing
+  KeyInfo): `EndReplace` swaps the live element for the copy's version, since
+  lxml cannot rename a prefix in place; the returned element is then a new
+  object rather than the original proxy.
 
 ## The fast path: shadows only when needed
 
@@ -114,11 +160,30 @@ on matched libraries — safe everywhere, so the whole suite must pass).
 
 ## Status
 
-- ✅ `template.add_reference`, `template.add_transform`,
-  `template.ensure_key_info` — one per reflect shape. Validated under a real
-  2.14 ↔ 2.15 mismatch: full suite green, 10k-iteration loop with no crash,
-  no leak, byte-identical output.
-- ⬜ Rest of `src/template.c` — mechanical: follow the step-by-step guide in
-  [converting-functions.md](converting-functions.md).
-- ⬜ `src/ds.c` (sign/verify), `src/enc.c` (encrypt/decrypt), `src/tree.c` —
-  need a whole-document reflect strategy.
+- ✅ All of `src/template.c` (create, references, transforms, key info, x509,
+  encrypted data, C14N namespaces).
+- ✅ `src/tree.c` (find_child/find_node/find_parent, add_ids).
+- ✅ `src/ds.c` (register_id, sign, verify; the binary operations never
+  touched nodes).
+- ✅ `src/enc.c` (encrypt_binary, encrypt_uri, encrypt_xml, decrypt).
+- Validated under a real 2.14 ↔ 2.15 mismatch: full suite green, 10k-iteration
+  sign/verify/encrypt/decrypt loop with no crash, no leak, byte-identical
+  output; and on a matched static build: full suite green on both the fast
+  path and `PYXMLSEC_FORCE_SHADOW=1`.
+- ⬜ Endgame: turn the import-time guard into a mode switch (mismatch sets
+  the shadow flag instead of refusing to import) and retire
+  `PYXMLSEC_SKIP_VERSION_CHECK`. That is the actual user-facing resolution
+  of #356, kept as its own change.
+
+Known, deliberate divergences on the shadow path (all invisible to the
+documented API): created templates live in their own document until grafted;
+`encrypted_data_ensure_key_info(ns=...)` on an existing KeyInfo returns a new
+element object; `register_id` skips the live duplicate-id check (it runs per
+copy instead); `encrypt_xml` copies rather than moves a template that is
+attached inside the target tree; signature/encryption contexts keep no live
+result nodes after the call (they never usefully did). One hard limitation:
+operations that would replace the **document root** (encrypting the root
+element, decrypting a root `EncryptedData`) raise `xmlsec.Error` — lxml's API
+cannot swap a document's root, and morphing it in place would rewrite
+namespace prefixes, breaking signatures over the content. Re-parse the
+document or work on a subelement instead.

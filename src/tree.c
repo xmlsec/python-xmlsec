@@ -33,6 +33,8 @@ static PyObject* PyXmlSec_TreeFindChild(PyObject* self, PyObject *args, PyObject
     const char* name = NULL;
     const char* ns = (const char*)xmlSecDSigNs;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("tree find_child - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&s|s:find_child", kwlist,
@@ -41,15 +43,21 @@ static PyObject* PyXmlSec_TreeFindChild(PyObject* self, PyObject *args, PyObject
         goto ON_FAIL;
     }
 
+    // Read-only, but still ABI-unsafe on raw nodes: the search runs on a
+    // shadow copy and the found node is mapped back by path (issue #356).
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecFindChild(node->_c_node, XSTR(name), XSTR(ns));
+    res = xmlSecFindChild(shadow.root, XSTR(name), XSTR(ns));
     Py_END_ALLOW_THREADS;
+    result = PyXmlSec_LxmlShadowEndFind(&shadow, res);
+    if (result == NULL) {
+        goto ON_FAIL;
+    }
 
     PYXMLSEC_DEBUG("tree find_child - ok");
-    if (res == NULL) {
-        Py_RETURN_NONE;
-    }
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("tree find_child - fail");
@@ -74,6 +82,9 @@ static PyObject* PyXmlSec_TreeFindParent(PyObject* self, PyObject *args, PyObjec
     const char* name = NULL;
     const char* ns = (const char*)xmlSecDSigNs;
     xmlNodePtr res;
+    xmlNodePtr target;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("tree find_parent - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&s|s:find_parent", kwlist,
@@ -82,15 +93,21 @@ static PyObject* PyXmlSec_TreeFindParent(PyObject* self, PyObject *args, PyObjec
         goto ON_FAIL;
     }
 
+    // The search walks upward, so the shadow must cover the whole tree; the
+    // call then starts from the copy's counterpart of `node`.
+    if (PyXmlSec_LxmlShadowBeginDoc(&shadow, node, &target) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecFindParent(node->_c_node, XSTR(name), XSTR(ns));
+    res = xmlSecFindParent(target, XSTR(name), XSTR(ns));
     Py_END_ALLOW_THREADS;
+    result = PyXmlSec_LxmlShadowEndFind(&shadow, res);
+    if (result == NULL) {
+        goto ON_FAIL;
+    }
 
     PYXMLSEC_DEBUG("tree find_parent - ok");
-    if (res == NULL) {
-        Py_RETURN_NONE;
-    }
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("tree find_parent - fail");
@@ -115,6 +132,8 @@ static PyObject* PyXmlSec_TreeFindNode(PyObject* self, PyObject *args, PyObject 
     const char* name = NULL;
     const char* ns = (const char*)xmlSecDSigNs;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("tree find_node - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&s|s:find_node", kwlist,
@@ -123,15 +142,19 @@ static PyObject* PyXmlSec_TreeFindNode(PyObject* self, PyObject *args, PyObject 
         goto ON_FAIL;
     }
 
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecFindNode(node->_c_node, XSTR(name), XSTR(ns));
+    res = xmlSecFindNode(shadow.root, XSTR(name), XSTR(ns));
     Py_END_ALLOW_THREADS;
+    result = PyXmlSec_LxmlShadowEndFind(&shadow, res);
+    if (result == NULL) {
+        goto ON_FAIL;
+    }
 
     PYXMLSEC_DEBUG("tree find_node - ok");
-    if (res == NULL) {
-        Py_RETURN_NONE;
-    }
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("tree find_node - fail");
@@ -169,6 +192,30 @@ static PyObject* PyXmlSec_TreeAddIds(PyObject* self, PyObject *args, PyObject *k
     }
     n = PyObject_Length(ids);
     if (n < 0) goto ON_FAIL;
+
+    // Shadow mode: registering IDs on lxml's document with our libxml2 is
+    // exactly the cross-library write issue #356 forbids. Record the
+    // attribute names instead; every whole-document shadow (sign, verify,
+    // decrypt) replays them onto its private copy. The replay scans the whole
+    // copy rather than just this subtree — a superset of the registration.
+    if (PyXmlSec_LxmlShadowIsActive()) {
+        for (i = 0; i < n; ++i) {
+            const char* name;
+            key = PyLong_FromSsize_t(i);
+            if (key == NULL) goto ON_FAIL;
+            tmp = PyObject_GetItem(ids, key);
+            Py_DECREF(key);
+            if (tmp == NULL) goto ON_FAIL;
+            name = PyUnicode_AsUTF8(tmp);
+            if (name == NULL || PyXmlSec_LxmlShadowRecordId(node, name, NULL) < 0) {
+                Py_DECREF(tmp);
+                goto ON_FAIL;
+            }
+            Py_DECREF(tmp);
+        }
+        PYXMLSEC_DEBUG("tree add_ids - ok");
+        Py_RETURN_NONE;
+    }
 
     list = (const xmlChar**)xmlMalloc(sizeof(xmlChar*) * (n + 1));
     if (list == NULL) {

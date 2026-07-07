@@ -146,6 +146,39 @@ static PyObject* PyXmlSec_SignatureContextRegisterId(PyObject* self, PyObject* a
         goto ON_FAIL;
     }
 
+    // Shadow mode: never touch lxml's document (its ID hash) with our libxml2
+    // (issue #356). Validate through lxml's API and record the spec; the
+    // whole-document shadows (sign/verify/decrypt) replay it onto their
+    // private copies. The duplicate-id check runs there, per copy.
+    if (PyXmlSec_LxmlShadowIsActive()) {
+        PyObject* key;
+        PyObject* value;
+        if (id_ns != NULL) {
+            key = PyUnicode_FromFormat("{%s}%s", id_ns, id_attr);
+        } else {
+            key = PyUnicode_FromString(id_attr);
+        }
+        if (key == NULL) {
+            goto ON_FAIL;
+        }
+        value = PyObject_CallMethod((PyObject*)node, "get", "O", key);
+        Py_DECREF(key);
+        if (value == NULL) {
+            goto ON_FAIL;
+        }
+        if (value == Py_None) {
+            Py_DECREF(value);
+            PyErr_SetString(PyXmlSec_Error, "missing attribute.");
+            goto ON_FAIL;
+        }
+        Py_DECREF(value);
+        if (PyXmlSec_LxmlShadowRecordId(node, id_attr, id_ns) < 0) {
+            goto ON_FAIL;
+        }
+        PYXMLSEC_DEBUGF("%p: register id - ok", self);
+        Py_RETURN_NONE;
+    }
+
     if (id_ns != NULL) {
         attr = xmlHasNsProp(node->_c_node, XSTR(id_attr), XSTR(id_ns));
     } else {
@@ -189,6 +222,8 @@ static PyObject* PyXmlSec_SignatureContextSign(PyObject* self, PyObject* args, P
 
     PyXmlSec_SignatureContext* ctx = (PyXmlSec_SignatureContext*)self;
     PyXmlSec_LxmlElementPtr node = NULL;
+    xmlNodePtr target;
+    PyXmlSec_LxmlShadow shadow;
     int rv;
 
     PYXMLSEC_DEBUGF("%p: sign - start", self);
@@ -196,12 +231,28 @@ static PyObject* PyXmlSec_SignatureContextSign(PyObject* self, PyObject* args, P
         goto ON_FAIL;
     }
 
+    // References (URI="", "#id") reach anywhere in the document, so the
+    // shadow covers the whole tree (issue #356); registered IDs are replayed
+    // onto the copy so they resolve. Signing fills several places inside
+    // <Signature> (DigestValue, SignatureValue, KeyInfo), all reflected by
+    // the multi-site reflection.
+    if (PyXmlSec_LxmlShadowBeginDoc(&shadow, node, &target) < 0) {
+        goto ON_FAIL;
+    }
+    if (PyXmlSec_LxmlShadowReplayIds(&shadow) < 0) {
+        PyXmlSec_LxmlShadowDiscard(&shadow);
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    rv = xmlSecDSigCtxSign(ctx->handle, node->_c_node);
+    rv = xmlSecDSigCtxSign(ctx->handle, target);
     PYXMLSEC_DUMP(xmlSecDSigCtxDebugDump, ctx->handle);
     Py_END_ALLOW_THREADS;
     if (rv < 0) {
+        PyXmlSec_LxmlShadowDiscard(&shadow);
         PyXmlSec_SetLastError("failed to sign");
+        goto ON_FAIL;
+    }
+    if (PyXmlSec_LxmlShadowReflectAll(&shadow) < 0) {
         goto ON_FAIL;
     }
     PYXMLSEC_DEBUGF("%p: sign - ok", self);
@@ -224,6 +275,8 @@ static PyObject* PyXmlSec_SignatureContextVerify(PyObject* self, PyObject* args,
 
     PyXmlSec_SignatureContext* ctx = (PyXmlSec_SignatureContext*)self;
     PyXmlSec_LxmlElementPtr node = NULL;
+    xmlNodePtr target;
+    PyXmlSec_LxmlShadow shadow;
     int rv;
 
     PYXMLSEC_DEBUGF("%p: verify - start", self);
@@ -231,10 +284,20 @@ static PyObject* PyXmlSec_SignatureContextVerify(PyObject* self, PyObject* args,
         goto ON_FAIL;
     }
 
+    // Verification is read-only: whole-document shadow, replayed IDs, and no
+    // reflection at all — the copy is simply discarded.
+    if (PyXmlSec_LxmlShadowBeginDoc(&shadow, node, &target) < 0) {
+        goto ON_FAIL;
+    }
+    if (PyXmlSec_LxmlShadowReplayIds(&shadow) < 0) {
+        PyXmlSec_LxmlShadowDiscard(&shadow);
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    rv = xmlSecDSigCtxVerify(ctx->handle, node->_c_node);
+    rv = xmlSecDSigCtxVerify(ctx->handle, target);
     PYXMLSEC_DUMP(xmlSecDSigCtxDebugDump, ctx->handle);
     Py_END_ALLOW_THREADS;
+    PyXmlSec_LxmlShadowDiscard(&shadow);
 
     if (rv < 0) {
         PyXmlSec_SetLastError("failed to verify");

@@ -166,6 +166,7 @@ static PyObject* PyXmlSec_EncryptionContextEncryptBinary(PyObject* self, PyObjec
     PyXmlSec_LxmlElementPtr template = NULL;
     const char* data = NULL;
     Py_ssize_t data_size = 0;
+    PyXmlSec_LxmlShadow shadow;
     int rv;
 
     PYXMLSEC_DEBUGF("%p: encrypt_binary - start", self);
@@ -175,13 +176,23 @@ static PyObject* PyXmlSec_EncryptionContextEncryptBinary(PyObject* self, PyObjec
         goto ON_FAIL;
     }
 
+    // The encryption fills several places inside the template subtree
+    // (CipherValue, KeyInfo/EncryptedKey); the multi-site reflection carries
+    // them all back (issue #356).
+    if (PyXmlSec_LxmlShadowBegin(&shadow, template) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    rv = xmlSecEncCtxBinaryEncrypt(ctx->handle, template->_c_node, (const xmlSecByte*)data, (xmlSecSize)data_size);
+    rv = xmlSecEncCtxBinaryEncrypt(ctx->handle, shadow.root, (const xmlSecByte*)data, (xmlSecSize)data_size);
     PYXMLSEC_DUMP(xmlSecEncCtxDebugDump, ctx->handle);
     Py_END_ALLOW_THREADS;
 
     if (rv < 0) {
+        PyXmlSec_LxmlShadowDiscard(&shadow);
         PyXmlSec_SetLastError("failed to encrypt binary");
+        goto ON_FAIL;
+    }
+    if (PyXmlSec_LxmlShadowReflectAll(&shadow) < 0) {
         goto ON_FAIL;
     }
     Py_INCREF(template);
@@ -214,6 +225,144 @@ static void PyXmlSec_ClearReplacedNodes(xmlSecEncCtxPtr ctx, PyXmlSec_LxmlDocume
     ctx->replacedNodeList = NULL;
 }
 
+// Shadow-path body of encrypt_xml (issue #356): the target document and the
+// template are both re-parsed into one private copy, the encryption runs
+// there, and the replacement is reflected back through lxml — the fresh
+// <EncryptedData/> takes the target's place (`Type=Element`) or its content
+// (`Type=Content`). One divergence from the raw path: a template that is
+// *attached* inside the target's own tree is copied, not moved, so it also
+// remains at its original position.
+static PyObject* PyXmlSec_EncryptionContextEncryptXmlShadow(PyXmlSec_EncryptionContext* ctx, PyXmlSec_LxmlElementPtr template, PyXmlSec_LxmlElementPtr node) {
+    PyXmlSec_LxmlShadow shadow;
+    xmlNodePtr target = NULL;
+    xmlNodePtr tmpl_copy;
+    PyObject* type_value = NULL;
+    PyObject* parent = NULL;
+    PyObject* result = NULL;
+    PyObject* tmp = NULL;
+    const char* type_str;
+    long idx = -1;
+    int is_content = 0;
+    int rv;
+
+    type_value = PyObject_CallMethod((PyObject*)template, "get", "s", "Type");
+    if (type_value == NULL) {
+        return NULL;
+    }
+    type_str = type_value == Py_None ? NULL : PyUnicode_AsUTF8(type_value);
+    if (type_str == NULL || !(strcmp(type_str, (const char*)xmlSecTypeEncElement) == 0
+            || strcmp(type_str, (const char*)xmlSecTypeEncContent) == 0)) {
+        PyErr_SetString(PyXmlSec_Error, "unsupported `Type`, it should be `element` or `content`");
+        goto ON_FAIL;
+    }
+    is_content = strcmp(type_str, (const char*)xmlSecTypeEncContent) == 0;
+
+    parent = PyObject_CallMethod((PyObject*)node, "getparent", NULL);
+    if (parent == NULL) {
+        goto ON_FAIL;
+    }
+    if (parent != Py_None) {
+        tmp = PyObject_CallMethod(parent, "index", "O", node);
+        if (tmp == NULL) {
+            goto ON_FAIL;
+        }
+        idx = PyLong_AsLong(tmp);
+        Py_CLEAR(tmp);
+        if (idx < 0) {
+            goto ON_FAIL;
+        }
+    }
+
+    if (PyXmlSec_LxmlShadowBeginDoc(&shadow, node, &target) < 0) {
+        goto ON_FAIL;
+    }
+    tmpl_copy = PyXmlSec_LxmlShadowImportElement(&shadow, template);
+    if (tmpl_copy == NULL) {
+        PyXmlSec_LxmlShadowDiscard(&shadow);
+        goto ON_FAIL;
+    }
+
+    Py_BEGIN_ALLOW_THREADS;
+    rv = xmlSecEncCtxXmlEncrypt(ctx->handle, tmpl_copy, target);
+    PYXMLSEC_DUMP(xmlSecEncCtxDebugDump, ctx->handle);
+    Py_END_ALLOW_THREADS;
+
+    if (rv < 0) {
+        // still detached means the encryption never consumed our template copy
+        if (tmpl_copy->parent == NULL) {
+            xmlFreeNode(tmpl_copy);
+        }
+        PyXmlSec_LxmlShadowDiscard(&shadow);
+        PyXmlSec_SetLastError("failed to encrypt xml");
+        goto ON_FAIL;
+    }
+
+    if (parent == Py_None && !is_content) {
+        // The encryption replaced the copy's root, which cannot be reflected:
+        // lxml's API offers no way to swap a document's root element (and
+        // morphing it in place would rewrite namespace prefixes, breaking
+        // signatures over the content). The live tree is untouched. Encrypt a
+        // subelement instead, or re-parse the document.
+        PyXmlSec_LxmlShadowDiscard(&shadow);
+        PyErr_SetString(PyXmlSec_Error,
+            "encrypting the document root is not supported when lxml and xmlsec use different libxml2 libraries");
+        goto ON_FAIL;
+    }
+
+    if (is_content) {
+        // the node stays; its old content was consumed and replaced by the
+        // fresh <EncryptedData/>, which the reflection grafts back in
+        Py_ssize_t len = PyObject_Length((PyObject*)node);
+        if (len < 0) {
+            PyXmlSec_LxmlShadowDiscard(&shadow);
+            goto ON_FAIL;
+        }
+        while (len-- > 0) {
+            PyObject* child = PySequence_GetItem((PyObject*)node, 0);
+            tmp = child != NULL ? PyObject_CallMethod((PyObject*)node, "remove", "O", child) : NULL;
+            Py_XDECREF(child);
+            if (tmp == NULL) {
+                PyXmlSec_LxmlShadowDiscard(&shadow);
+                goto ON_FAIL;
+            }
+            Py_CLEAR(tmp);
+        }
+        if (PyXmlSec_LxmlShadowReflectAll(&shadow) < 0) {
+            goto ON_FAIL;
+        }
+        result = PySequence_GetItem((PyObject*)node, 0);
+        if (result == NULL) {
+            goto ON_FAIL;
+        }
+    } else {
+        // Type=Element: the node itself was consumed and replaced
+        tmp = PyObject_CallMethod(parent, "remove", "O", node);
+        if (tmp == NULL) {
+            PyXmlSec_LxmlShadowDiscard(&shadow);
+            goto ON_FAIL;
+        }
+        Py_CLEAR(tmp);
+        if (PyXmlSec_LxmlShadowReflectAll(&shadow) < 0) {
+            goto ON_FAIL;
+        }
+        result = PySequence_GetItem(parent, (Py_ssize_t)idx);
+        if (result == NULL) {
+            goto ON_FAIL;
+        }
+    }
+
+    Py_DECREF(type_value);
+    Py_XDECREF(parent);
+    return result;
+
+ON_FAIL:
+    Py_XDECREF(type_value);
+    Py_XDECREF(parent);
+    Py_XDECREF(tmp);
+    Py_XDECREF(result);
+    return NULL;
+}
+
 static const char PyXmlSec_EncryptionContextEncryptXml__doc__[] = \
     "encrypt_xml(template, node) -> lxml.etree._Element\n"
     "Encrypts ``node`` using ``template``.\n\n"
@@ -243,6 +392,16 @@ static PyObject* PyXmlSec_EncryptionContextEncryptXml(PyObject* self, PyObject* 
     {
         goto ON_FAIL;
     }
+
+    if (PyXmlSec_LxmlShadowIsActive()) {
+        PyObject* result = PyXmlSec_EncryptionContextEncryptXmlShadow(ctx, template, node);
+        if (result == NULL) {
+            goto ON_FAIL;
+        }
+        PYXMLSEC_DEBUGF("%p: encrypt_xml - ok", self);
+        return result;
+    }
+
     tmpType = xmlGetProp(template->_c_node, XSTR("Type"));
     if (tmpType == NULL || !(xmlStrEqual(tmpType, xmlSecTypeEncElement) || xmlStrEqual(tmpType, xmlSecTypeEncContent))) {
         PyErr_SetString(PyXmlSec_Error, "unsupported `Type`, it should be `element` or `content`");
@@ -316,6 +475,7 @@ static PyObject* PyXmlSec_EncryptionContextEncryptUri(PyObject* self, PyObject* 
     PyXmlSec_EncryptionContext* ctx = (PyXmlSec_EncryptionContext*)self;
     PyXmlSec_LxmlElementPtr template = NULL;
     const char* uri = NULL;
+    PyXmlSec_LxmlShadow shadow;
     int rv;
 
     PYXMLSEC_DEBUGF("%p: encrypt_uri - start", self);
@@ -323,13 +483,20 @@ static PyObject* PyXmlSec_EncryptionContextEncryptUri(PyObject* self, PyObject* 
         goto ON_FAIL;
     }
 
+    if (PyXmlSec_LxmlShadowBegin(&shadow, template) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    rv = xmlSecEncCtxUriEncrypt(ctx->handle, template->_c_node, (const xmlSecByte*)uri);
+    rv = xmlSecEncCtxUriEncrypt(ctx->handle, shadow.root, (const xmlSecByte*)uri);
     PYXMLSEC_DUMP(xmlSecEncCtxDebugDump, ctx->handle);
     Py_END_ALLOW_THREADS;
 
     if (rv < 0) {
+        PyXmlSec_LxmlShadowDiscard(&shadow);
         PyXmlSec_SetLastError("failed to encrypt URI");
+        goto ON_FAIL;
+    }
+    if (PyXmlSec_LxmlShadowReflectAll(&shadow) < 0) {
         goto ON_FAIL;
     }
     PYXMLSEC_DEBUGF("%p: encrypt_uri - ok", self);
@@ -337,6 +504,116 @@ static PyObject* PyXmlSec_EncryptionContextEncryptUri(PyObject* self, PyObject* 
     return (PyObject*)template;
 ON_FAIL:
     PYXMLSEC_DEBUGF("%p: encrypt_uri - fail", self);
+    return NULL;
+}
+
+// Shadow-path body of decrypt (issue #356): whole-document copy (with the
+// registered IDs replayed, for RetrievalMethod references), decryption on the
+// copy, then a replacement reflect — the decrypted subtree or content takes
+// the <EncryptedData/>'s place in the live tree. Binary results need no
+// reflection at all.
+static PyObject* PyXmlSec_EncryptionContextDecryptShadow(PyXmlSec_EncryptionContext* ctx, PyXmlSec_LxmlElementPtr node) {
+    PyXmlSec_LxmlShadow shadow;
+    xmlNodePtr target = NULL;
+    PyObject* parent = NULL;
+    PyObject* result = NULL;
+    PyObject* tmp = NULL;
+    long idx = -1;
+    xmlChar* ttype;
+    int not_content;
+    int rv;
+
+    parent = PyObject_CallMethod((PyObject*)node, "getparent", NULL);
+    if (parent == NULL) {
+        return NULL;
+    }
+    if (parent != Py_None) {
+        tmp = PyObject_CallMethod(parent, "index", "O", node);
+        if (tmp == NULL) {
+            goto ON_FAIL;
+        }
+        idx = PyLong_AsLong(tmp);
+        Py_CLEAR(tmp);
+        if (idx < 0) {
+            goto ON_FAIL;
+        }
+    }
+
+    if (PyXmlSec_LxmlShadowBeginDoc(&shadow, node, &target) < 0) {
+        goto ON_FAIL;
+    }
+    if (PyXmlSec_LxmlShadowReplayIds(&shadow) < 0) {
+        PyXmlSec_LxmlShadowDiscard(&shadow);
+        goto ON_FAIL;
+    }
+
+    // the Type decides the reflect shape; read it from the copy before the
+    // decryption consumes the node
+    ttype = xmlGetProp(target, XSTR("Type"));
+    not_content = (ttype == NULL || !xmlStrEqual(ttype, xmlSecTypeEncContent));
+    xmlFree(ttype);
+
+    Py_BEGIN_ALLOW_THREADS;
+    ctx->handle->mode = xmlSecCheckNodeName(target, xmlSecNodeEncryptedKey, xmlSecEncNs) ? xmlEncCtxModeEncryptedKey : xmlEncCtxModeEncryptedData;
+    PYXMLSEC_DEBUGF("mode: %d", ctx->handle->mode);
+    rv = xmlSecEncCtxDecrypt(ctx->handle, target);
+    PYXMLSEC_DUMP(xmlSecEncCtxDebugDump, ctx->handle);
+    Py_END_ALLOW_THREADS;
+
+    if (rv < 0) {
+        PyXmlSec_LxmlShadowDiscard(&shadow);
+        PyXmlSec_SetLastError("failed to decrypt");
+        goto ON_FAIL;
+    }
+
+    if (!ctx->handle->resultReplaced) {
+        PyXmlSec_LxmlShadowDiscard(&shadow);
+        Py_DECREF(parent);
+        PYXMLSEC_DEBUGF("%p: binary.decrypt - ok", ctx);
+        return PyBytes_FromStringAndSize(
+            (const char*)xmlSecBufferGetData(ctx->handle->result),
+            (Py_ssize_t)xmlSecBufferGetSize(ctx->handle->result)
+        );
+    }
+
+    if (parent == Py_None) {
+        // Decryption replaced the document root; lxml's API offers no way to
+        // swap a document's root element, so this cannot be reflected (the
+        // live tree is untouched). Re-parse the document into a wrapper or
+        // decrypt a non-root EncryptedData instead.
+        PyXmlSec_LxmlShadowDiscard(&shadow);
+        PyErr_SetString(PyXmlSec_Error,
+            "decrypting the document root is not supported when lxml and xmlsec use different libxml2 libraries");
+        goto ON_FAIL;
+    } else {
+        // the node was consumed; the reflection grafts whatever replaced it
+        tmp = PyObject_CallMethod(parent, "remove", "O", node);
+        if (tmp == NULL) {
+            PyXmlSec_LxmlShadowDiscard(&shadow);
+            goto ON_FAIL;
+        }
+        Py_CLEAR(tmp);
+        if (PyXmlSec_LxmlShadowReflectAll(&shadow) < 0) {
+            goto ON_FAIL;
+        }
+        if (not_content) {
+            result = PySequence_GetItem(parent, (Py_ssize_t)idx);
+            if (result == NULL) {
+                goto ON_FAIL;
+            }
+        } else {
+            result = parent;
+            Py_INCREF(result);
+        }
+    }
+
+    Py_DECREF(parent);
+    return result;
+
+ON_FAIL:
+    Py_XDECREF(parent);
+    Py_XDECREF(tmp);
+    Py_XDECREF(result);
     return NULL;
 }
 
@@ -370,6 +647,15 @@ static PyObject* PyXmlSec_EncryptionContextDecrypt(PyObject* self, PyObject* arg
     PYXMLSEC_DEBUGF("%p: decrypt - start", self);
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&:decrypt", kwlist, PyXmlSec_LxmlElementConverter, &node)) {
         goto ON_FAIL;
+    }
+
+    if (PyXmlSec_LxmlShadowIsActive()) {
+        PyObject* result = PyXmlSec_EncryptionContextDecryptShadow(ctx, node);
+        if (result == NULL) {
+            goto ON_FAIL;
+        }
+        PYXMLSEC_DEBUGF("%p: decrypt - ok", self);
+        return result;
     }
 
     xparent = node->_c_node->parent;
