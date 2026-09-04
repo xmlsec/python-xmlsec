@@ -272,6 +272,16 @@ class TestSignContext(base.TestMemoryLeaks):
         """add_ids registers the subtree it is given, not the whole document."""
         self.assert_covers_registered_element_only(lambda root: xmlsec.tree.add_ids(root.find('Scope'), ['ID']))
 
+    def test_add_ids_records_nothing_when_an_item_is_not_a_name(self):
+        """A rejected add_ids leaves no part of its list registered, so the "#dup" reference resolves to nothing."""
+
+        def register(root):
+            with self.assertRaises(TypeError):
+                xmlsec.tree.add_ids(root.find('Scope'), ['ID', 1])
+
+        with self.assertRaises(xmlsec.Error):
+            self.sign_duplicate_id(register)
+
     def test_sign_binary_bad_args(self):
         ctx = xmlsec.SignatureContext()
         ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
@@ -444,3 +454,22 @@ class TestIdRegistryLifetime(base.TestMemoryLeaks):
         sign = xmlsec.tree.find_node(root, consts.NodeSignature)
         ctx.key = xmlsec.Key.from_file(self.path('rsapub.pem'), format=consts.KeyDataFormatPem)
         ctx.verify(sign)  # resolves #ID through the registration made before the churn
+
+    def test_registration_survives_a_sibling_being_adopted_away(self):
+        """An element moved into another document must not make its old document's registrations look collectable."""
+        root = etree.fromstring(b'<Root><Moved ID="moved"/><Stays ID="stays"><Data>x</Data></Stays></Root>')
+        ctx = xmlsec.SignatureContext()
+        moved = root.find('Moved')
+        ctx.register_id(moved, 'ID')
+        ctx.register_id(root.find('Stays'), 'ID')
+
+        etree.fromstring(b'<Other/>').append(moved)  # `moved` now references the other document
+        del moved
+        ctx.register_id(etree.fromstring(b'<Churn ID="churn"/>'), 'ID')  # a new document prunes the registry
+
+        sign = xmlsec.template.create(root, consts.TransformExclC14N, consts.TransformRsaSha1, ns='ds')
+        root.append(sign)
+        ref = xmlsec.template.add_reference(sign, consts.TransformSha1, uri='#stays')
+        xmlsec.template.add_transform(ref, consts.TransformExclC14N)
+        ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
+        ctx.sign(sign)  # resolves #stays only if `root`'s registrations survived the prune

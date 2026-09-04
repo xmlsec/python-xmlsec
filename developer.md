@@ -245,6 +245,13 @@ All invisible to the documented API:
   (they never usefully did);
 - documents nested deeper than 256 levels (only possible with `huge_tree`)
   are refused with an internal error;
+- a subtree of a document that declares entities in its internal subset
+  (`resolve_entities=False`) is copied by copying the whole document and
+  cutting it back to the element, since the subtree's `&name;` references
+  need their declarations; `encrypt_xml` templates are still serialized on
+  their own, so a *template* carrying unresolved entity references is not
+  supported (signing and encryption of such a document are refused on both
+  paths anyway — libxml2's c14n rejects entity-reference nodes);
 - operations that replace the **document root** (encrypting the root element
   with `Type=Element`, decrypting a root `EncryptedData`) morph the live root
   element in place into the replacement, because lxml's API cannot swap a

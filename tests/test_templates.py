@@ -98,6 +98,15 @@ class TestTemplates(base.TestMemoryLeaks):
         for a in ('Id', 'URI', 'Type'):
             self.assertEqual(a, ref.get(a))
 
+    def test_add_reference_beside_an_entity_reference(self):
+        """A graft must count entity references as children, exactly as lxml's insert does (issue #356)."""
+        root = etree.fromstring(b'<!DOCTYPE Root [ <!ENTITY greet "hello"> ]>\n<Root/>', etree.XMLParser(resolve_entities=False))
+        sign = xmlsec.template.create(root, c14n_method=consts.TransformExclC14N, sign_method=consts.TransformRsaSha1)
+        root.append(sign)
+        sign[0].insert(0, etree.Entity('greet'))  # SignedInfo now leads with an entity reference
+        ref = xmlsec.template.add_reference(sign, consts.TransformSha1, uri='#abc')
+        self.assertIs(ref, sign[0][3])
+
     def test_add_reference_bad_args(self):
         with self.assertRaises(TypeError):
             xmlsec.template.add_reference('', consts.TransformSha1)

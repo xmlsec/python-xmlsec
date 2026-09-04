@@ -199,20 +199,26 @@ static PyObject* PyXmlSec_TreeAddIds(PyObject* self, PyObject *args, PyObject *k
     // decrypt) replays them onto its private copy, over the subtree rooted at
     // `node` — the scope xmlSecAddIDs walks below.
     if (PyXmlSec_LxmlShadowIsActive()) {
+        // Materialize and validate the whole list before recording any of it,
+        // as the fast path below does before it calls xmlSecAddIDs: a bad
+        // item must leave nothing registered.
+        PyObject* names = PyList_New(0);
+        int rv;
+        if (names == NULL) goto ON_FAIL;
         for (i = 0; i < n; ++i) {
-            const char* name;
             key = PyLong_FromSsize_t(i);
-            if (key == NULL) goto ON_FAIL;
-            tmp = PyObject_GetItem(ids, key);
-            Py_DECREF(key);
-            if (tmp == NULL) goto ON_FAIL;
-            name = PyUnicode_AsUTF8(tmp);
-            if (name == NULL || PyXmlSec_LxmlShadowRecordId(node, name, NULL, 1) < 0) {
-                Py_DECREF(tmp);
+            tmp = key != NULL ? PyObject_GetItem(ids, key) : NULL;
+            Py_XDECREF(key);
+            if (tmp == NULL || PyUnicode_AsUTF8(tmp) == NULL || PyList_Append(names, tmp) < 0) {
+                Py_XDECREF(tmp);
+                Py_DECREF(names);
                 goto ON_FAIL;
             }
             Py_DECREF(tmp);
         }
+        rv = PyXmlSec_LxmlShadowRecordIds(node, names, NULL, 1);
+        Py_DECREF(names);
+        if (rv < 0) goto ON_FAIL;
         PYXMLSEC_DEBUG("tree add_ids - ok");
         Py_RETURN_NONE;
     }

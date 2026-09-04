@@ -90,7 +90,9 @@ typedef struct {
     int ntags;
 } PyXmlSec_LxmlShadow;
 
-// Subtree copy: `shadow.root` is the copy of `element`.
+// Subtree copy: `shadow.root` is the copy of `element`. When the document
+// declares entities, the whole document is copied and then cut back to the
+// element, so that the subtree's entity references keep their declarations.
 int PyXmlSec_LxmlShadowBegin(PyXmlSec_LxmlShadow* shadow, PyXmlSec_LxmlElementPtr element);
 
 // Whole-document copy, for calls that read or mutate beyond the element's
@@ -152,6 +154,12 @@ xmlNodePtr PyXmlSec_LxmlShadowImportElement(PyXmlSec_LxmlShadow* shadow, PyXmlSe
 // document instead would let an unrelated element with the same id value win
 // the lookup and steer a `#id` reference away from the registered one.
 int PyXmlSec_LxmlShadowRecordId(PyXmlSec_LxmlElementPtr element, const char* name, const char* ns, int subtree);
+
+// The same for a whole list of attribute names (`names`, a list of str), for
+// add_ids: either every name is recorded or, if anything fails, none is —
+// the fast path likewise builds its complete list before it touches the
+// document, so a bad list leaves no half-applied registration behind.
+int PyXmlSec_LxmlShadowRecordIds(PyXmlSec_LxmlElementPtr element, PyObject* names, const char* ns, int subtree);
 
 // get version numbers for libxml2 both compiled and loaded
 long PyXmlSec_GetLibXmlVersionMajor();
