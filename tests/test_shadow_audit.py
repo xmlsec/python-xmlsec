@@ -11,6 +11,8 @@ checks the two rules that keep every binding on the shadow path whenever it is o
 2. raw node access (``->_c_node`` / ``->_c_doc``) appears only inside the functions listed in
    ``RAW_ACCESS_ALLOWED``.
 
+Comments and string literals are blanked first, so only real code counts for either rule.
+
 Adding a function to either list is a deliberate design decision; see developer.md.
 """
 
@@ -52,11 +54,45 @@ CONVERTER = 'PyXmlSec_LxmlElementConverter'
 IS_ACTIVE = 'PyXmlSec_LxmlShadowIsActive()'
 
 
+def _blank_comments_and_literals(source: str) -> str:
+    """Blanks the body of every comment and string/char literal, keeping lines and columns.
+
+    The checks below match raw text, so without this a comment explaining ``->_c_node`` or
+    naming a ``PyXmlSec_LxmlShadowBegin*`` helper would read as the code itself — a binding
+    could lose its guard and still pass because of the comment describing it.
+    """
+    out: list[str] = []
+    i, n = 0, len(source)
+    while i < n:
+        pair = source[i : i + 2]
+        if pair in ('//', '/*'):
+            end = source.find('\n', i) if pair == '//' else source.find('*/', i + 2) + 2
+            if end < 2:  # unterminated: the rest of the file is comment
+                end = n
+            out.append(''.join('\n' if c == '\n' else ' ' for c in source[i:end]))
+            i = end
+        elif source[i] in '"\'':
+            quote = source[i]
+            out.append(quote)
+            i += 1
+            while i < n and source[i] != quote:
+                step = 2 if source[i] == '\\' and i + 1 < n else 1
+                out.append(''.join('\n' if c == '\n' else ' ' for c in source[i : i + step]))
+                i += step
+            if i < n:
+                out.append(quote)
+                i += 1
+        else:
+            out.append(source[i])
+            i += 1
+    return ''.join(out)
+
+
 def _functions(source: str) -> Iterator[tuple[str, list[str]]]:
     """Yields (name, [lines]) for every PyXmlSec_* function defined in the C source."""
     name = None
     body: list[str] = []
-    for line in source.splitlines():
+    for line in _blank_comments_and_literals(source).splitlines():
         match = FUNCTION_DEF.match(line)
         if match and not line.rstrip().endswith(';'):
             if name is not None:
@@ -133,6 +169,22 @@ class TestShadowAudit(unittest.TestCase):
         self.assertEqual(2, len(found), found)
         self.assertIn('never calls a PyXmlSec_LxmlShadowBegin*', found[0])
         self.assertIn('outside the allowed functions', found[1])
+
+    def test_checker_reads_code_not_comments(self) -> None:
+        # the guard named in a comment does not guard anything, and a mention in a literal is not access
+        bad = (
+            'static PyObject* PyXmlSec_Bad(PyObject* self, PyObject* args) {\n'
+            '    PyXmlSec_LxmlElementPtr node = NULL;\n'
+            '    if (!PyArg_ParseTuple(args, "O&:bad", PyXmlSec_LxmlElementConverter, &node)) return NULL;\n'
+            '    // PyXmlSec_LxmlShadowBegin(&shadow, node, "cannot copy.") belongs here\n'
+            '    /* and node->_c_node would then be shadow.root */\n'
+            '    PyErr_SetString(PyXmlSec_Error, "node->_c_node is not for xmlsec.");\n'
+            '    return NULL;\n'
+            '}\n'
+        )
+        found = violations(bad, 'bad.c')
+        self.assertEqual(1, len(found), found)
+        self.assertIn('never calls a PyXmlSec_LxmlShadowBegin*', found[0])
 
     def test_checker_flags_raw_access_before_the_switch(self) -> None:
         bad = (
