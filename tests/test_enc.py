@@ -109,6 +109,50 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         self.assertIs(decrypted.getroottree().getroot(), decrypted)
         self.assertEqual(xml, etree.tostring(decrypted.getroottree()))
 
+    def encrypt_with_attached_template(self, enc_type, index):
+        # A template that hangs in the target's own document is *moved* into
+        # the target's place, whichever path runs: the document must not end
+        # up with a second, empty <EncryptedData/> where the template was, and
+        # the text that followed it must stay behind (issue #356).
+        root = etree.fromstring(b'<Root>\n  <A/>\n  <Data>secret</Data>\n  <B/>\n</Root>')
+        enc_data = xmlsec.template.encrypted_data_create(root, consts.TransformAes128Cbc, type=enc_type, ns='xenc')
+        xmlsec.template.encrypted_data_ensure_cipher_value(enc_data)
+        root.insert(index, enc_data)
+        enc_data.tail = '\n  tail\n  '
+
+        ctx = xmlsec.EncryptionContext()
+        ctx.key = xmlsec.Key.generate(consts.KeyDataAes, 128, consts.KeyDataTypeSession)
+        encrypted = ctx.encrypt_xml(enc_data, root.find('Data'))
+
+        self.assertEqual(f'{{{consts.EncNs}}}{consts.NodeEncryptedData}', encrypted.tag)
+        self.assertEqual(1, len(root.findall(f'.//{{{consts.EncNs}}}{consts.NodeEncryptedData}')))
+        self.assertIn('tail', etree.tostring(root).decode())
+
+    def test_encrypt_xml_attached_template_element(self):
+        self.encrypt_with_attached_template(consts.TypeEncElement, 0)
+        self.encrypt_with_attached_template(consts.TypeEncElement, 2)
+
+    def test_encrypt_xml_attached_template_content(self):
+        self.encrypt_with_attached_template(consts.TypeEncContent, 0)
+        self.encrypt_with_attached_template(consts.TypeEncContent, 2)
+
+    def test_encrypt_binary_over_a_filled_cipher_value(self):
+        # The reflection must carry a rewritten text value back, not only the
+        # first one written into an empty element (issue #356).
+        root = self.load_xml('enc1-in.xml')
+        enc_data = xmlsec.template.encrypted_data_create(root, consts.TransformAes128Cbc, type=consts.TypeEncContent, ns='xenc')
+        xmlsec.template.encrypted_data_ensure_cipher_value(enc_data)
+
+        def encrypt(data):
+            ctx = xmlsec.EncryptionContext()
+            ctx.key = xmlsec.Key.generate(consts.KeyDataAes, 128, consts.KeyDataTypeSession)
+            ctx.encrypt_binary(enc_data, data)
+            return xmlsec.tree.find_node(enc_data, consts.NodeCipherValue, consts.EncNs).text
+
+        first = encrypt(b'first')
+        self.assertIsNotNone(first)
+        self.assertNotEqual(first, encrypt(b'a rather different payload'))
+
     def test_encrypt_xml_bad_args(self):
         ctx = xmlsec.EncryptionContext()
         with self.assertRaises(TypeError):

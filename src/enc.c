@@ -230,14 +230,124 @@ static void PyXmlSec_ClearReplacedNodes(xmlSecEncCtxPtr ctx, PyXmlSec_LxmlDocume
     ctx->replacedNodeList = NULL;
 }
 
+// The raw path hands `xmlSecEncCtxXmlEncrypt` the template node itself
+// whenever it belongs to the target's document, and xmlsec *moves* it into
+// the target's place. The shadow path encrypts a copy of it instead, so
+// without this the live tree would keep the original where it was and the
+// document would end up with a second, empty <EncryptedData/> — a tree shape
+// that depended on which libxml2 the extension is linked against. Unlink it
+// once the reflection is done, leaving its tail text behind the way libxml2's
+// `xmlReplaceNode` does, since lxml drops an element's tail together with the
+// element. A detached template, or one in another document, is copied on both
+// paths and stays where it is. Returns 0, or -1 with an exception set.
+static int PyXmlSec_EncryptionContextDropMovedTemplate(PyXmlSec_LxmlElementPtr template, PyXmlSec_LxmlElementPtr node) {
+    PyObject* parent = NULL;
+    PyObject* tree = NULL;
+    PyObject* root = NULL;
+    PyObject* top = NULL;
+    PyObject* tail = NULL;
+    PyObject* prev = NULL;
+    PyObject* slot = NULL;
+    PyObject* tmp = NULL;
+    const char* name = "tail";
+    int rv = -1;
+
+    parent = PyObject_CallMethod((PyObject*)template, "getparent", NULL);
+    if (parent == NULL) {
+        goto DONE;
+    }
+    if (parent == Py_None) {
+        rv = 0;
+        goto DONE;
+    }
+
+    // Only a template still hanging under the live document root is one the
+    // raw path would have moved; one carried off inside the subtree the
+    // encryption replaced, or one belonging to another document, is not.
+    tree = PyObject_CallMethod((PyObject*)node, "getroottree", NULL);
+    root = tree != NULL ? PyObject_CallMethod(tree, "getroot", NULL) : NULL;
+    if (root == NULL) {
+        goto DONE;
+    }
+    top = parent;
+    Py_INCREF(top);
+    for (;;) {
+        tmp = PyObject_CallMethod(top, "getparent", NULL);
+        if (tmp == NULL) {
+            goto DONE;
+        }
+        if (tmp == Py_None) {
+            Py_CLEAR(tmp);
+            break;
+        }
+        Py_DECREF(top);
+        top = tmp;
+        tmp = NULL;
+    }
+    if (top != root) {
+        rv = 0;
+        goto DONE;
+    }
+
+    tail = PyObject_GetAttrString((PyObject*)template, "tail");
+    if (tail == NULL) {
+        goto DONE;
+    }
+    if (tail != Py_None) {
+        prev = PyObject_CallMethod((PyObject*)template, "getprevious", NULL);
+        if (prev == NULL) {
+            goto DONE;
+        }
+        if (prev == Py_None) {
+            // first child: the text libxml2 would leave behind belongs to the
+            // parent's own text slot
+            Py_DECREF(prev);
+            Py_INCREF(parent);
+            prev = parent;
+            name = "text";
+        }
+        slot = PyObject_GetAttrString(prev, name);
+        if (slot == NULL) {
+            goto DONE;
+        }
+        if (slot != Py_None) {
+            tmp = PyUnicode_Concat(slot, tail);
+            if (tmp == NULL) {
+                goto DONE;
+            }
+            Py_DECREF(tail);
+            tail = tmp;
+            tmp = NULL;
+        }
+        if (PyObject_SetAttrString(prev, name, tail) < 0) {
+            goto DONE;
+        }
+    }
+    tmp = PyObject_CallMethod(parent, "remove", "O", template);
+    if (tmp == NULL) {
+        goto DONE;
+    }
+    rv = 0;
+
+DONE:
+    Py_XDECREF(parent);
+    Py_XDECREF(tree);
+    Py_XDECREF(root);
+    Py_XDECREF(top);
+    Py_XDECREF(tail);
+    Py_XDECREF(prev);
+    Py_XDECREF(slot);
+    Py_XDECREF(tmp);
+    return rv;
+}
+
 // Shadow-path body of encrypt_xml (issue #356): the target document and the
 // template are both re-parsed into one private copy, the encryption runs
 // there, and the replacement is reflected back through lxml — the fresh
 // <EncryptedData/> takes the target's place (`Type=Element`; the document
 // root is morphed in place, as lxml cannot swap it) or its content
-// (`Type=Content`). One divergence from the raw path: a template that is
-// *attached* inside the target's own tree is copied, not moved, so it also
-// remains at its original position.
+// (`Type=Content`). The live template is unlinked afterwards when the raw
+// path would have moved it.
 static PyObject* PyXmlSec_EncryptionContextEncryptXmlShadow(PyXmlSec_EncryptionContext* ctx, PyXmlSec_LxmlElementPtr template, PyXmlSec_LxmlElementPtr node) {
     PyXmlSec_LxmlShadow shadow;
     xmlNodePtr target = NULL;
@@ -357,6 +467,10 @@ static PyObject* PyXmlSec_EncryptionContextEncryptXmlShadow(PyXmlSec_EncryptionC
         if (result == NULL) {
             goto ON_FAIL;
         }
+    }
+
+    if (PyXmlSec_EncryptionContextDropMovedTemplate(template, node) < 0) {
+        goto ON_FAIL;
     }
 
     Py_DECREF(type_value);

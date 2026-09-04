@@ -114,13 +114,21 @@ records two kinds of *site*:
 - **graft** — a fresh node (element, comment, PI) to insert at its child
   index. Fresh subtrees are grafted wholesale; the scan never descends into
   them.
-- **sync** — a tagged parent that gained any fresh node (element or text)
-  gets its text slots (its `.text` and each child's `.tail`) copied over from
-  the re-parsed copy. That covers everything xmlsec does to text: the `"\n"`
-  formatting around a new node, values filled into empty elements
-  (`DigestValue`, `SignatureValue`), and content it removed (encrypt
-  `Type=Content`) — a removal leaves no fresh node behind, so only a
-  wholesale sync can see it.
+- **sync** — a tagged parent whose children changed gets its text slots (its
+  `.text` and each child's `.tail`) copied over from the re-parsed copy. That
+  covers everything xmlsec does to text: the `"\n"` formatting around a new
+  node, values filled into empty elements (`DigestValue`, `SignatureValue`),
+  and content it removed (encrypt `Type=Content`). A tag therefore records
+  more than "this node existed": it also holds the node's child count, since
+  a removal leaves no fresh node behind and only the changed count shows it
+  happened, and an FNV-1a fingerprint of a text node's own content, since
+  appending to a text node (`xmlNodeAddContent` onto a trailing text child)
+  changes neither the node nor the count. Writing an element's value goes
+  through `xmlNodeSetContent`, which frees the old text node and parses a
+  fresh one, so re-signing over an existing `DigestValue` is caught by the
+  fresh-node rule; the fingerprint is what keeps the invariant ("a parent
+  whose children changed gets a sync") from depending on that libxml2
+  internal.
 
 Sites are addressed by **child-index paths** from the copy root, counting
 exactly the node types lxml exposes as children (elements, comments, PIs,
@@ -239,8 +247,10 @@ All invisible to the documented API:
 - `encrypted_data_ensure_key_info(ns=...)` on an existing `KeyInfo` returns
   a new element object rather than the original proxy;
 - `register_id` skips the live duplicate-id check (it runs per copy instead);
-- `encrypt_xml` *copies* a template that is attached inside the target tree
-  rather than moving it, so it also remains at its original position;
+- `encrypt_xml` encrypts a *copy* of the template, so the caller's template
+  proxy is not the returned element; a template attached in the target's own
+  document is unlinked afterwards (keeping its tail text where libxml2 would
+  leave it), so the resulting tree matches the raw path's move;
 - signature/encryption contexts keep no live result nodes after the call
   (they never usefully did);
 - documents nested deeper than 256 levels (only possible with `huge_tree`)

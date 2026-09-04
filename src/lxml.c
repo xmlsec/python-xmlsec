@@ -335,7 +335,10 @@ static int PyXmlSec_LxmlDocumentHasInternalDtd(PyObject* tree, int* dtd) {
 // the call is what the call created. Each tag also records the child count
 // the node had, which is what makes a *removal* visible — a call can delete a
 // node and leave nothing fresh behind (an <EncryptedData/> that decrypts to
-// empty content), and only the changed count shows it happened. A tag
+// empty content), and only the changed count shows it happened — and a
+// fingerprint of the node's content, which is what makes an *in-place* text
+// rewrite visible: appending to a text node (xmlNodeAddContent onto a
+// trailing text child) leaves both the node and the count untouched. A tag
 // pointer is compared against the array bounds, never dereferenced blindly:
 // a foreign _private (lxml's own proxy, when both libraries are the same
 // libxml2) simply falls outside.
@@ -353,6 +356,21 @@ static int PyXmlSec_LxmlShadowCountNodes(xmlNodePtr node) {
     return count;
 }
 
+// FNV-1a over the content a text or CDATA node carries; 0 for every other
+// node type, whose content the reflection does not carry back on its own.
+static unsigned long long PyXmlSec_LxmlShadowContentPrint(xmlNodePtr node) {
+    unsigned long long fingerprint = 14695981039346656037ULL;
+    const xmlChar* p;
+
+    if (node->type != XML_TEXT_NODE && node->type != XML_CDATA_SECTION_NODE) {
+        return 0;
+    }
+    for (p = node->content; p != NULL && *p != 0; ++p) {
+        fingerprint = (fingerprint ^ (unsigned long long)*p) * 1099511628211ULL;
+    }
+    return fingerprint;
+}
+
 // Hands out `shadow->tags` in document order; returns the next free slot.
 static int PyXmlSec_LxmlShadowTagNodes(PyXmlSec_LxmlShadow* shadow, xmlNodePtr node, int next) {
     for (; node != NULL; node = node->next) {
@@ -362,6 +380,7 @@ static int PyXmlSec_LxmlShadowTagNodes(PyXmlSec_LxmlShadow* shadow, xmlNodePtr n
         for (child = node->children; child != NULL; child = child->next) {
             ++tag->children;
         }
+        tag->content = PyXmlSec_LxmlShadowContentPrint(node);
         node->_private = (void*)tag;
         next = PyXmlSec_LxmlShadowTagNodes(shadow, node->children, next);
     }
@@ -1157,14 +1176,14 @@ ON_FAIL:
 //           index. Fresh subtrees are grafted wholesale; the scan never
 //           descends into them.
 //   sync  — a tagged parent whose children changed — it gained a fresh node
-//           (element or text), or lost a tagged one — gets its text slots
-//           (its .text and each child's .tail) copied over from the re-parsed
-//           copy. That covers everything xmlsec does to text: the "\n"
-//           formatting around a new node, values filled into empty elements
-//           (DigestValue), and content it removed (encrypt Type=Content) —
-//           a removal leaves no fresh node behind, so only the tagged child
-//           count shows that it happened, and only a wholesale sync can carry
-//           it across.
+//           (element or text), lost a tagged one, or had a tagged text child
+//           rewritten in place — gets its text slots (its .text and each
+//           child's .tail) copied over from the re-parsed copy. That covers
+//           everything xmlsec does to text: the "\n" formatting around a new
+//           node, values filled into empty elements (DigestValue), and
+//           content it removed (encrypt Type=Content) — a removal leaves no
+//           fresh node behind, so only the tagged child count shows that it
+//           happened, and only a wholesale sync can carry it across.
 //
 // The reflection is two-phase: first every site's payload is fetched from
 // the re-parsed copy while it is still in its final, untouched state, then
@@ -1222,16 +1241,22 @@ static int PyXmlSec_LxmlShadowSiteAppend(PyXmlSec_LxmlShadowSiteList* list, xmlN
 // Walks the tagged structure of the copy in document order, recording a
 // graft for every fresh node and, after them, a sync for their parent — and
 // for a parent that no longer holds the children it was tagged with, whose
-// text slots are the only trace the removal left.
+// text slots are the only trace the removal left, or one whose own text
+// survived the call but with different content.
 static int PyXmlSec_LxmlShadowCollectSites(PyXmlSec_LxmlShadowSiteList* list, xmlNodePtr parent) {
     PyXmlSec_LxmlShadowTag* tag = PYXMLSEC_SHADOW_TAG(list->shadow, parent);
     xmlNodePtr n;
     int fresh = 0;
     int tagged = 0;
+    int rewritten = 0;
 
     for (n = parent->children; n != NULL; n = n->next) {
-        if (PYXMLSEC_SHADOW_TAGGED(list->shadow, n)) {
+        PyXmlSec_LxmlShadowTag* child_tag = PYXMLSEC_SHADOW_TAG(list->shadow, n);
+        if (child_tag != NULL) {
             ++tagged;
+            if (child_tag->content != PyXmlSec_LxmlShadowContentPrint(n)) {
+                rewritten = 1;
+            }
             if (n->type == XML_ELEMENT_NODE && PyXmlSec_LxmlShadowCollectSites(list, n) < 0) {
                 return -1;
             }
@@ -1242,7 +1267,7 @@ static int PyXmlSec_LxmlShadowCollectSites(PyXmlSec_LxmlShadowSiteList* list, xm
             return -1;
         }
     }
-    if ((fresh || (tag != NULL && tag->children != tagged))
+    if ((fresh || rewritten || (tag != NULL && tag->children != tagged))
         && PyXmlSec_LxmlShadowSiteAppend(list, parent, PYXMLSEC_SHADOW_SITE_SYNC) < 0) {
         return -1;
     }

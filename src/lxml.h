@@ -75,10 +75,12 @@ int PyXmlSec_LxmlElementConverter(PyObject* o, PyXmlSec_LxmlElementPtr* p);
 
 // One per node of the copy that existed before the xmlsec call: the tag the
 // node's libxml2 _private field points at, holding the child count that node
-// had. Untagged after the call means the call created the node; a changed
-// child count means it removed (or moved) one.
+// had and a fingerprint of the content it held. Untagged after the call means
+// the call created the node; a changed child count means it removed (or
+// moved) one; a changed fingerprint means it rewrote a text node in place.
 typedef struct {
     int children;
+    unsigned long long content;
 } PyXmlSec_LxmlShadowTag;
 
 typedef struct {
