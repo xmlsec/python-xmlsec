@@ -239,14 +239,18 @@ All invisible to the documented API:
 - signature/encryption contexts keep no live result nodes after the call
   (they never usefully did);
 - documents nested deeper than 256 levels (only possible with `huge_tree`)
-  are refused with an internal error.
-
-One hard limitation: operations that would replace the **document root**
-(encrypting the root element with `Type=Element`, decrypting a root
-`EncryptedData`) raise `xmlsec.Error` — lxml's API cannot swap a document's
-root, and morphing it in place would rewrite namespace prefixes, breaking
-signatures over the content. Re-parse the document into a wrapper or work on
-a subelement instead.
+  are refused with an internal error;
+- operations that replace the **document root** (encrypting the root element
+  with `Type=Element`, decrypting a root `EncryptedData`) morph the live root
+  element in place into the replacement, because lxml's API cannot swap a
+  document's root (`_ElementTree._setroot` only rebinds that one Python
+  object). The result is the same as on the raw path — the returned element
+  is the new root, with the replacement's own namespace declarations and
+  document-level siblings intact — except that the caller's root proxy (and
+  any `_ElementTree` holding it) *becomes* the replacement instead of going
+  stale as a detached copy of the old root. A root replaced by anything but a
+  single element (a `Type=Content` decryption of the root) is refused with
+  `xmlsec.Error`.
 
 ## Building & validating
 

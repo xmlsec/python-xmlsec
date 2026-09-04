@@ -233,7 +233,8 @@ static void PyXmlSec_ClearReplacedNodes(xmlSecEncCtxPtr ctx, PyXmlSec_LxmlDocume
 // Shadow-path body of encrypt_xml (issue #356): the target document and the
 // template are both re-parsed into one private copy, the encryption runs
 // there, and the replacement is reflected back through lxml — the fresh
-// <EncryptedData/> takes the target's place (`Type=Element`) or its content
+// <EncryptedData/> takes the target's place (`Type=Element`; the document
+// root is morphed in place, as lxml cannot swap it) or its content
 // (`Type=Content`). One divergence from the raw path: a template that is
 // *attached* inside the target's own tree is copied, not moved, so it also
 // remains at its original position.
@@ -307,18 +308,6 @@ static PyObject* PyXmlSec_EncryptionContextEncryptXmlShadow(PyXmlSec_EncryptionC
         goto ON_FAIL;
     }
 
-    if (parent == Py_None && !is_content) {
-        // The encryption replaced the copy's root, which cannot be reflected:
-        // lxml's API offers no way to swap a document's root element (and
-        // morphing it in place would rewrite namespace prefixes, breaking
-        // signatures over the content). The live tree is untouched. Encrypt a
-        // subelement instead, or re-parse the document.
-        PyXmlSec_LxmlShadowDiscard(&shadow);
-        PyErr_SetString(PyXmlSec_Error,
-            "encrypting the document root is not supported when lxml and xmlsec use different libxml2 libraries");
-        goto ON_FAIL;
-    }
-
     if (is_content) {
         // the node stays; its old content was consumed and replaced by the
         // fresh <EncryptedData/>, which the reflection grafts back in
@@ -344,6 +333,15 @@ static PyObject* PyXmlSec_EncryptionContextEncryptXmlShadow(PyXmlSec_EncryptionC
         if (result == NULL) {
             goto ON_FAIL;
         }
+    } else if (parent == Py_None) {
+        // Type=Element on the document root: the reflection morphs the live
+        // root in place into the fresh <EncryptedData/>, so the node itself
+        // is the result — the new root, as on the raw path
+        if (PyXmlSec_LxmlShadowReflect(&shadow, 0, NULL) < 0) {
+            goto ON_FAIL;
+        }
+        result = (PyObject*)node;
+        Py_INCREF(result);
     } else {
         // Type=Element: the node itself was consumed and replaced
         tmp = PyObject_CallMethod(parent, "remove", "O", node);
@@ -582,35 +580,32 @@ static PyObject* PyXmlSec_EncryptionContextDecryptShadow(PyXmlSec_EncryptionCont
         );
     }
 
-    if (parent == Py_None) {
-        // Decryption replaced the document root; lxml's API offers no way to
-        // swap a document's root element, so this cannot be reflected (the
-        // live tree is untouched). Re-parse the document into a wrapper or
-        // decrypt a non-root EncryptedData instead.
-        PyXmlSec_LxmlShadowDiscard(&shadow);
-        PyErr_SetString(PyXmlSec_Error,
-            "decrypting the document root is not supported when lxml and xmlsec use different libxml2 libraries");
-        goto ON_FAIL;
-    } else {
-        // the node was consumed; the reflection grafts whatever replaced it
+    // the node was consumed; the reflection grafts whatever replaced it — or,
+    // for the document root (no parent to remove it from), morphs the node
+    // itself into the replacement, which is then the new root: the raw path's
+    // result too
+    if (parent != Py_None) {
         tmp = PyObject_CallMethod(parent, "remove", "O", node);
         if (tmp == NULL) {
             PyXmlSec_LxmlShadowDiscard(&shadow);
             goto ON_FAIL;
         }
         Py_CLEAR(tmp);
-        if (PyXmlSec_LxmlShadowReflect(&shadow, 0, NULL) < 0) {
+    }
+    if (PyXmlSec_LxmlShadowReflect(&shadow, 0, NULL) < 0) {
+        goto ON_FAIL;
+    }
+    if (parent == Py_None) {
+        result = (PyObject*)node;
+        Py_INCREF(result);
+    } else if (not_content) {
+        result = PySequence_GetItem(parent, (Py_ssize_t)idx);
+        if (result == NULL) {
             goto ON_FAIL;
         }
-        if (not_content) {
-            result = PySequence_GetItem(parent, (Py_ssize_t)idx);
-            if (result == NULL) {
-                goto ON_FAIL;
-            }
-        } else {
-            result = parent;
-            Py_INCREF(result);
-        }
+    } else {
+        result = parent;
+        Py_INCREF(result);
     }
 
     Py_DECREF(parent);

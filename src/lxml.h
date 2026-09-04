@@ -59,7 +59,10 @@ int PyXmlSec_LxmlElementConverter(PyObject* o, PyXmlSec_LxmlElementPtr* p);
 //   EndFind  the same for read-only finders; a NULL result is None, not an
 //            error.
 //   Reflect  for calls that return only a status: rv < 0 raises `error`,
-//            otherwise the changes are reflected.
+//            otherwise the changes are reflected. A call that replaced the
+//            copy's root element (encrypt/decrypt of the document root)
+//            morphs the live element in place into the replacement, since
+//            lxml cannot swap a document's root.
 //   Discard  releases the copy without reflecting (read-only calls such as
 //            verify, and error paths before End).
 //

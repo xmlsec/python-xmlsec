@@ -109,6 +109,7 @@ static int PyXmlSec_LxmlShadowActive = 1;
 // and kept for the lifetime of the process.
 static PyObject* PyXmlSec_LxmlEtreeToString;
 static PyObject* PyXmlSec_LxmlEtreeFromString;
+static PyObject* PyXmlSec_LxmlEtreeCleanupNamespaces;
 static PyObject* PyXmlSec_LxmlEtreeParser;
 
 // Shadow-mode ID registry: maps the identity of an lxml document to the list
@@ -164,9 +165,11 @@ int PyXmlSec_InitLxmlModule(void) {
     }
     PyXmlSec_LxmlEtreeToString = PyObject_GetAttrString(etree, "tostring");
     PyXmlSec_LxmlEtreeFromString = PyObject_GetAttrString(etree, "fromstring");
+    PyXmlSec_LxmlEtreeCleanupNamespaces = PyObject_GetAttrString(etree, "cleanup_namespaces");
     PyXmlSec_LxmlEtreeParser = PyXmlSec_LxmlNewParser(etree);
     Py_DECREF(etree);
-    if (PyXmlSec_LxmlEtreeToString == NULL || PyXmlSec_LxmlEtreeFromString == NULL || PyXmlSec_LxmlEtreeParser == NULL) {
+    if (PyXmlSec_LxmlEtreeToString == NULL || PyXmlSec_LxmlEtreeFromString == NULL
+            || PyXmlSec_LxmlEtreeCleanupNamespaces == NULL || PyXmlSec_LxmlEtreeParser == NULL) {
         return -1;
     }
 
@@ -898,6 +901,151 @@ static int PyXmlSec_LxmlShadowSetTextSlots(PyObject* parent, PyObject* slots) {
     return 0;
 }
 
+// etree.cleanup_namespaces(element, top_nsmap=..., keep_ns_prefixes=...);
+// either keyword may be NULL to leave it out.
+static int PyXmlSec_LxmlCleanupNamespaces(PyObject* element, PyObject* top_nsmap, PyObject* keep) {
+    PyObject* args = PyTuple_Pack(1, element);
+    PyObject* kwargs = PyDict_New();
+    PyObject* result = NULL;
+
+    if (args != NULL && kwargs != NULL
+            && (top_nsmap == NULL || PyDict_SetItemString(kwargs, "top_nsmap", top_nsmap) == 0)
+            && (keep == NULL || PyDict_SetItemString(kwargs, "keep_ns_prefixes", keep) == 0)) {
+        result = PyObject_Call(PyXmlSec_LxmlEtreeCleanupNamespaces, args, kwargs);
+    }
+    Py_XDECREF(args);
+    Py_XDECREF(kwargs);
+    Py_XDECREF(result);
+    return result != NULL ? 0 : -1;
+}
+
+// The call replaced the copy's root element itself — encrypt_xml with
+// Type=Element on the document root, decrypt of a root <EncryptedData/>.
+// lxml offers no way to swap a document's root element (_ElementTree._setroot
+// only rebinds that one Python object; the document keeps its root), so the
+// live element is morphed in place into `fresh`, the re-parsed replacement,
+// through lxml's public API: emptied and stripped of every namespace
+// declaration, given exactly the declarations of `fresh` (a temporary child
+// pins the default namespace, which cleanup_namespaces would otherwise drop
+// as unused before the tag can use it — the tag setter itself never declares
+// a default namespace), then renamed and refilled. The children go through
+// lxml's usual namespace reconciliation, like every graft. The live proxy
+// thus *becomes* the replacement, where the raw path leaves the caller's old
+// root proxy (and any _ElementTree holding it) detached and stale.
+static int PyXmlSec_LxmlShadowMorphRoot(PyObject* live, PyObject* fresh) {
+    PyObject* tag = NULL;
+    PyObject* tail = NULL;
+    PyObject* nsmap = NULL;
+    PyObject* keep = NULL;
+    PyObject* pin = NULL;
+    PyObject* attrib = NULL;
+    PyObject* fresh_attrib = NULL;
+    PyObject* text = NULL;
+    PyObject* children = NULL;
+    PyObject* tmp = NULL;
+    PyObject* key;
+    PyObject* href;
+    Py_ssize_t pos = 0;
+    const char* local;
+    int rv = -1;
+
+    // Empty the element and give it a namespace-free name (the tail is not
+    // the call's to change), so that every old declaration is unused and
+    // cleanup_namespaces drops it — a conflicting old prefix would otherwise
+    // block the new declaration.
+    tag = PyObject_GetAttrString(fresh, "tag");
+    tail = PyObject_GetAttrString(live, "tail");
+    if (tag == NULL || tail == NULL || (local = PyUnicode_AsUTF8(tag)) == NULL) {
+        goto DONE;
+    }
+    if (strchr(local, '}') != NULL) {
+        local = strchr(local, '}') + 1;
+    }
+    tmp = PyObject_CallMethod(live, "clear", NULL);
+    if (tmp == NULL || PyObject_SetAttrString(live, "tail", tail) < 0) {
+        goto DONE;
+    }
+    Py_CLEAR(tmp);
+    tmp = PyUnicode_FromString(local);
+    if (tmp == NULL || PyObject_SetAttrString(live, "tag", tmp) < 0) {
+        goto DONE;
+    }
+    Py_CLEAR(tmp);
+    if (PyXmlSec_LxmlCleanupNamespaces(live, NULL, NULL) < 0) {
+        goto DONE;
+    }
+
+    // Declare exactly the replacement's namespaces.
+    nsmap = PyObject_GetAttrString(fresh, "nsmap");
+    keep = PyList_New(0);
+    if (nsmap == NULL || keep == NULL) {
+        goto DONE;
+    }
+    if (!PyDict_Check(nsmap)) {
+        PyErr_SetString(PyXmlSec_InternalError, "unexpected nsmap.");
+        goto DONE;
+    }
+    while (PyDict_Next(nsmap, &pos, &key, &href)) {
+        if (key == Py_None) {
+            tmp = PyUnicode_FromFormat("{%U}pin", href);
+            pin = tmp != NULL ? PyObject_CallMethod(live, "makeelement", "O", tmp) : NULL;
+            Py_CLEAR(tmp);
+            tmp = pin != NULL ? PyObject_CallMethod(live, "append", "O", pin) : NULL;
+            if (tmp == NULL) {
+                goto DONE;
+            }
+            Py_CLEAR(tmp);
+        } else if (PyList_Append(keep, key) < 0) {
+            goto DONE;
+        }
+    }
+    if (PyXmlSec_LxmlCleanupNamespaces(live, nsmap, keep) < 0) {
+        goto DONE;
+    }
+
+    // Rename and refill.
+    if (PyObject_SetAttrString(live, "tag", tag) < 0) {
+        goto DONE;
+    }
+    attrib = PyObject_GetAttrString(live, "attrib");
+    fresh_attrib = PyObject_GetAttrString(fresh, "attrib");
+    tmp = attrib != NULL && fresh_attrib != NULL ? PyObject_CallMethod(attrib, "update", "O", fresh_attrib) : NULL;
+    if (tmp == NULL) {
+        goto DONE;
+    }
+    Py_CLEAR(tmp);
+    if (pin != NULL) {
+        tmp = PyObject_CallMethod(live, "remove", "O", pin);
+        if (tmp == NULL) {
+            goto DONE;
+        }
+        Py_CLEAR(tmp);
+    }
+    text = PyObject_GetAttrString(fresh, "text");
+    if (text == NULL || PyObject_SetAttrString(live, "text", text) < 0) {
+        goto DONE;
+    }
+    children = PySequence_List(fresh);
+    tmp = children != NULL ? PyObject_CallMethod(live, "extend", "O", children) : NULL;
+    if (tmp == NULL) {
+        goto DONE;
+    }
+    rv = 0;
+
+DONE:
+    Py_XDECREF(tag);
+    Py_XDECREF(tail);
+    Py_XDECREF(nsmap);
+    Py_XDECREF(keep);
+    Py_XDECREF(pin);
+    Py_XDECREF(attrib);
+    Py_XDECREF(fresh_attrib);
+    Py_XDECREF(text);
+    Py_XDECREF(children);
+    Py_XDECREF(tmp);
+    return rv;
+}
+
 // Applies every change in the copy to the live tree. Does not release the
 // copy. Returns 0, or -1 with an exception set.
 static int PyXmlSec_LxmlShadowReflectSites(PyXmlSec_LxmlShadow* shadow) {
@@ -906,13 +1054,36 @@ static int PyXmlSec_LxmlShadowReflectSites(PyXmlSec_LxmlShadow* shadow) {
     int i;
     int rv = -1;
 
-    // Re-fetch the root: replacement operations may swap nodes at the top. A
-    // fresh root means the call replaced the root itself, which cannot be
-    // reflected (lxml cannot swap a document's root); the callers that can
-    // hit that (enc.c) check for it before getting here.
+    // Re-fetch the root: replacement operations may swap nodes at the top.
     list.top = xmlDocGetRootElement(shadow->doc);
-    if (list.top == NULL || !PYXMLSEC_SHADOW_MARKED(list.top)) {
+    if (list.top == NULL) {
         PyErr_SetString(PyXmlSec_InternalError, "unexpected mutation site.");
+        goto DONE;
+    }
+    if (!PYXMLSEC_SHADOW_MARKED(list.top)) {
+        // A fresh root: the call replaced the root itself, so there are no
+        // sites to graft — the live root is morphed into it wholesale. lxml
+        // holds one element (plus comments and PIs) at document level, so a
+        // root replaced by anything else (a Type=Content decryption of the
+        // root) cannot be reflected.
+        xmlNodePtr n;
+        int elements = 0;
+        int others = 0;
+        for (n = shadow->doc->children; n != NULL; n = n->next) {
+            if (n->type == XML_ELEMENT_NODE) {
+                ++elements;
+            } else if (n->type != XML_COMMENT_NODE && n->type != XML_PI_NODE && n->type != XML_DTD_NODE) {
+                ++others;
+            }
+        }
+        if (elements != 1 || others != 0) {
+            PyErr_SetString(PyXmlSec_Error, "the document root was replaced by content that is not a single element");
+            goto DONE;
+        }
+        copy_root = PyXmlSec_LxmlShadowDumpCopy(shadow);
+        if (copy_root != NULL) {
+            rv = PyXmlSec_LxmlShadowMorphRoot((PyObject*)shadow->element, copy_root);
+        }
         goto DONE;
     }
     if (PyXmlSec_LxmlShadowCollectSites(&list, list.top) < 0) {
