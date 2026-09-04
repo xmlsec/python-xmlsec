@@ -264,7 +264,9 @@ class TestSignContext(base.TestMemoryLeaks):
 
     def test_register_id_covers_only_the_registered_node(self):
         """register_id registers the node it is given, not every element with that attribute."""
-        self.assert_covers_registered_element_only(lambda root: xmlsec.SignatureContext().register_id(root.find('Scope/Real'), 'ID'))
+        self.assert_covers_registered_element_only(
+            lambda root: xmlsec.SignatureContext().register_id(root.find('Scope/Real'), 'ID')
+        )
 
     def test_add_ids_covers_only_the_given_subtree(self):
         """add_ids registers the subtree it is given, not the whole document."""
