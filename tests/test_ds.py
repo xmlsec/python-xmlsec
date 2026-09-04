@@ -188,6 +188,30 @@ class TestSignContext(base.TestMemoryLeaks):
             expected_xml_file = 'sign5-out.xml'
         self.assertEqual(self.load_xml(expected_xml_file), root)
 
+    def test_sign_and_verify_with_registered_id(self):
+        """Should resolve a #id reference registered through register_id (not add_ids) on sign and verify."""
+        root = self.load_xml('sign4-in.xml')
+        ctx = xmlsec.SignatureContext()
+        ctx.register_id(root, 'ID')
+        sign = xmlsec.template.create(root, consts.TransformExclC14N, consts.TransformRsaSha1, ns='ds')
+        root.append(sign)
+        ref = xmlsec.template.add_reference(sign, consts.TransformSha1, uri='#' + root.get('ID'))
+        xmlsec.template.add_transform(ref, consts.TransformEnveloped)
+        xmlsec.template.add_transform(ref, consts.TransformExclC14N)
+        ki = xmlsec.template.ensure_key_info(sign)
+        xmlsec.template.add_x509_data(ki)
+
+        ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
+        ctx.key.load_cert_from_file(self.path('rsacert.pem'), consts.KeyDataFormatPem)
+        ctx.key.name = 'rsakey.pem'
+        ctx.sign(sign)
+        self.assertEqual(self.load_xml('sign4-out.xml'), root)
+
+        verify_ctx = xmlsec.SignatureContext()
+        verify_ctx.register_id(root, 'ID')
+        verify_ctx.key = xmlsec.Key.from_file(self.path('rsapub.pem'), format=consts.KeyDataFormatPem)
+        verify_ctx.verify(sign)
+
     def test_sign_binary_bad_args(self):
         ctx = xmlsec.SignatureContext()
         ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)

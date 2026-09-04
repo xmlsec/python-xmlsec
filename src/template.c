@@ -62,7 +62,7 @@ static PyObject* PyXmlSec_TemplateCreate(PyObject* self, PyObject *args, PyObjec
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplSignatureCreateNsPref(tdoc, c14n->id, sign->id, XSTR(id), XSTR(ns));
     Py_END_ALLOW_THREADS;
-    result = PyXmlSec_LxmlShadowEndNewDoc(&shadow, res, "cannot create template.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot create template.");
     if (result == NULL) {
         goto ON_FAIL;
     }
@@ -736,7 +736,7 @@ static PyObject* PyXmlSec_TemplateCreateEncryptedData(PyObject* self, PyObject *
         res->ns->prefix = xmlStrdup(XSTR(ns));
     }
     Py_END_ALLOW_THREADS;
-    result = PyXmlSec_LxmlShadowEndNewDoc(&shadow, res, "cannot create encrypted data.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot create encrypted data.");
     if (result == NULL) {
         goto ON_FAIL;
     }
@@ -787,13 +787,7 @@ static PyObject* PyXmlSec_TemplateEncryptedDataEnsureKeyInfo(PyObject* self, PyO
         res->ns->prefix = xmlStrdup(XSTR(ns));
     }
     Py_END_ALLOW_THREADS;
-    if (ns != NULL) {
-        // renaming the prefix of a KeyInfo that already existed needs the
-        // replace reflect — attribute sync cannot express it
-        result = PyXmlSec_LxmlShadowEndReplace(&shadow, res, "cannot ensure key info for encrypted data.");
-    } else {
-        result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot ensure key info for encrypted data.");
-    }
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot ensure key info for encrypted data.");
     if (result == NULL) {
         goto ON_FAIL;
     }
@@ -860,7 +854,6 @@ static PyObject* PyXmlSec_TemplateTransformAddC14NInclNamespaces(PyObject* self,
     PyXmlSec_LxmlElementPtr node = NULL;
     PyObject* prefixes = NULL;
     PyObject* sep;
-    PyObject* result;
     int res;
     const char* c_prefixes;
     PyXmlSec_LxmlShadow shadow;
@@ -896,20 +889,11 @@ static PyObject* PyXmlSec_TemplateTransformAddC14NInclNamespaces(PyObject* self,
     Py_BEGIN_ALLOW_THREADS;
     res = xmlSecTmplTransformAddC14NInclNamespaces(shadow.root, XSTR(c_prefixes));
     Py_END_ALLOW_THREADS;
-    if (res != 0) {
-        PyXmlSec_LxmlShadowDiscard(&shadow);
-        PyXmlSec_SetLastError("cannot add 'inclusive' namespaces to the ExcC14N transform node");
+    // the call only reports a status; the reflect grafts the
+    // <InclusiveNamespaces/> it created back into the live tree
+    if (PyXmlSec_LxmlShadowReflect(&shadow, res, "cannot add 'inclusive' namespaces to the ExcC14N transform node") < 0) {
         goto ON_FAIL;
     }
-    // The call only reports a status; locate the <InclusiveNamespaces> it
-    // created on the copy and let End graft it back (the returned element is
-    // not part of this function's interface).
-    result = PyXmlSec_LxmlShadowEnd(&shadow, PyXmlSec_LxmlShadowFindFresh(&shadow),
-        "cannot add 'inclusive' namespaces to the ExcC14N transform node");
-    if (result == NULL) {
-        goto ON_FAIL;
-    }
-    Py_DECREF(result);
 
     Py_DECREF(prefixes);
     PYXMLSEC_DEBUG("transform_add_c14n_inclusive_namespaces - ok");

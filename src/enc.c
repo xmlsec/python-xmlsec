@@ -177,8 +177,8 @@ static PyObject* PyXmlSec_EncryptionContextEncryptBinary(PyObject* self, PyObjec
     }
 
     // The encryption fills several places inside the template subtree
-    // (CipherValue, KeyInfo/EncryptedKey); the multi-site reflection carries
-    // them all back (issue #356).
+    // (CipherValue, KeyInfo/EncryptedKey); the reflect carries them all back
+    // (issue #356).
     if (PyXmlSec_LxmlShadowBegin(&shadow, template) < 0) {
         goto ON_FAIL;
     }
@@ -187,12 +187,7 @@ static PyObject* PyXmlSec_EncryptionContextEncryptBinary(PyObject* self, PyObjec
     PYXMLSEC_DUMP(xmlSecEncCtxDebugDump, ctx->handle);
     Py_END_ALLOW_THREADS;
 
-    if (rv < 0) {
-        PyXmlSec_LxmlShadowDiscard(&shadow);
-        PyXmlSec_SetLastError("failed to encrypt binary");
-        goto ON_FAIL;
-    }
-    if (PyXmlSec_LxmlShadowReflectAll(&shadow) < 0) {
+    if (PyXmlSec_LxmlShadowReflect(&shadow, rv, "failed to encrypt binary") < 0) {
         goto ON_FAIL;
     }
     Py_INCREF(template);
@@ -214,12 +209,22 @@ static void PyXmlSec_ClearReplacedNodes(xmlSecEncCtxPtr ctx, PyXmlSec_LxmlDocume
     while (n != NULL) {
         PYXMLSEC_DEBUGF("clear replaced node %p", n);
         nn = n->next;
-        // if n has references, it will not be deleted
-        elem = (PyXmlSec_LxmlElementPtr)PyXmlSec_elementFactory(doc, n);
-        if (NULL == elem)
+        // Sever the chain first: lxml releases an element together with the
+        // text siblings that follow it, which would free the next node of
+        // this list under our feet (Type=Content replaces text nodes too).
+        n->next = NULL;
+        n->prev = NULL;
+        if (PyXmlSec_IsElement(n)) {
+            // if n has references, it will not be deleted
+            elem = (PyXmlSec_LxmlElementPtr)PyXmlSec_elementFactory(doc, n);
+            if (NULL == elem)
+                xmlFreeNode(n);
+            else
+                Py_DECREF(elem);
+        } else {
+            // text and CDATA nodes never have lxml proxies
             xmlFreeNode(n);
-        else
-            Py_DECREF(elem);
+        }
         n = nn;
     }
     ctx->replacedNodeList = NULL;
@@ -282,6 +287,11 @@ static PyObject* PyXmlSec_EncryptionContextEncryptXmlShadow(PyXmlSec_EncryptionC
         goto ON_FAIL;
     }
 
+    // The replaced nodes belong to the private copy: xmlsec must free them
+    // itself (with our libxml2) rather than hand them back, because the copy
+    // is discarded right after and nothing could release them later.
+    ctx->handle->flags &= ~XMLSEC_ENC_RETURN_REPLACED_NODE;
+
     Py_BEGIN_ALLOW_THREADS;
     rv = xmlSecEncCtxXmlEncrypt(ctx->handle, tmpl_copy, target);
     PYXMLSEC_DUMP(xmlSecEncCtxDebugDump, ctx->handle);
@@ -327,7 +337,7 @@ static PyObject* PyXmlSec_EncryptionContextEncryptXmlShadow(PyXmlSec_EncryptionC
             }
             Py_CLEAR(tmp);
         }
-        if (PyXmlSec_LxmlShadowReflectAll(&shadow) < 0) {
+        if (PyXmlSec_LxmlShadowReflect(&shadow, 0, NULL) < 0) {
             goto ON_FAIL;
         }
         result = PySequence_GetItem((PyObject*)node, 0);
@@ -342,7 +352,7 @@ static PyObject* PyXmlSec_EncryptionContextEncryptXmlShadow(PyXmlSec_EncryptionC
             goto ON_FAIL;
         }
         Py_CLEAR(tmp);
-        if (PyXmlSec_LxmlShadowReflectAll(&shadow) < 0) {
+        if (PyXmlSec_LxmlShadowReflect(&shadow, 0, NULL) < 0) {
             goto ON_FAIL;
         }
         result = PySequence_GetItem(parent, (Py_ssize_t)idx);
@@ -491,12 +501,7 @@ static PyObject* PyXmlSec_EncryptionContextEncryptUri(PyObject* self, PyObject* 
     PYXMLSEC_DUMP(xmlSecEncCtxDebugDump, ctx->handle);
     Py_END_ALLOW_THREADS;
 
-    if (rv < 0) {
-        PyXmlSec_LxmlShadowDiscard(&shadow);
-        PyXmlSec_SetLastError("failed to encrypt URI");
-        goto ON_FAIL;
-    }
-    if (PyXmlSec_LxmlShadowReflectAll(&shadow) < 0) {
+    if (PyXmlSec_LxmlShadowReflect(&shadow, rv, "failed to encrypt URI") < 0) {
         goto ON_FAIL;
     }
     PYXMLSEC_DEBUGF("%p: encrypt_uri - ok", self);
@@ -542,16 +547,17 @@ static PyObject* PyXmlSec_EncryptionContextDecryptShadow(PyXmlSec_EncryptionCont
     if (PyXmlSec_LxmlShadowBeginDoc(&shadow, node, &target) < 0) {
         goto ON_FAIL;
     }
-    if (PyXmlSec_LxmlShadowReplayIds(&shadow) < 0) {
-        PyXmlSec_LxmlShadowDiscard(&shadow);
-        goto ON_FAIL;
-    }
 
     // the Type decides the reflect shape; read it from the copy before the
     // decryption consumes the node
     ttype = xmlGetProp(target, XSTR("Type"));
     not_content = (ttype == NULL || !xmlStrEqual(ttype, xmlSecTypeEncContent));
     xmlFree(ttype);
+
+    // The replaced node belongs to the private copy: xmlsec must free it
+    // itself (with our libxml2) rather than hand it back, because the copy
+    // is discarded right after and nothing could release it later.
+    ctx->handle->flags &= ~XMLSEC_ENC_RETURN_REPLACED_NODE;
 
     Py_BEGIN_ALLOW_THREADS;
     ctx->handle->mode = xmlSecCheckNodeName(target, xmlSecNodeEncryptedKey, xmlSecEncNs) ? xmlEncCtxModeEncryptedKey : xmlEncCtxModeEncryptedData;
@@ -593,7 +599,7 @@ static PyObject* PyXmlSec_EncryptionContextDecryptShadow(PyXmlSec_EncryptionCont
             goto ON_FAIL;
         }
         Py_CLEAR(tmp);
-        if (PyXmlSec_LxmlShadowReflectAll(&shadow) < 0) {
+        if (PyXmlSec_LxmlShadowReflect(&shadow, 0, NULL) < 0) {
             goto ON_FAIL;
         }
         if (not_content) {

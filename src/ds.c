@@ -232,27 +232,18 @@ static PyObject* PyXmlSec_SignatureContextSign(PyObject* self, PyObject* args, P
     }
 
     // References (URI="", "#id") reach anywhere in the document, so the
-    // shadow covers the whole tree (issue #356); registered IDs are replayed
-    // onto the copy so they resolve. Signing fills several places inside
-    // <Signature> (DigestValue, SignatureValue, KeyInfo), all reflected by
-    // the multi-site reflection.
+    // shadow covers the whole tree (issue #356), with the registered IDs
+    // replayed onto the copy. Signing fills several places inside
+    // <Signature> (DigestValue, SignatureValue, KeyInfo); the reflect carries
+    // them all back.
     if (PyXmlSec_LxmlShadowBeginDoc(&shadow, node, &target) < 0) {
-        goto ON_FAIL;
-    }
-    if (PyXmlSec_LxmlShadowReplayIds(&shadow) < 0) {
-        PyXmlSec_LxmlShadowDiscard(&shadow);
         goto ON_FAIL;
     }
     Py_BEGIN_ALLOW_THREADS;
     rv = xmlSecDSigCtxSign(ctx->handle, target);
     PYXMLSEC_DUMP(xmlSecDSigCtxDebugDump, ctx->handle);
     Py_END_ALLOW_THREADS;
-    if (rv < 0) {
-        PyXmlSec_LxmlShadowDiscard(&shadow);
-        PyXmlSec_SetLastError("failed to sign");
-        goto ON_FAIL;
-    }
-    if (PyXmlSec_LxmlShadowReflectAll(&shadow) < 0) {
+    if (PyXmlSec_LxmlShadowReflect(&shadow, rv, "failed to sign") < 0) {
         goto ON_FAIL;
     }
     PYXMLSEC_DEBUGF("%p: sign - ok", self);
@@ -284,13 +275,9 @@ static PyObject* PyXmlSec_SignatureContextVerify(PyObject* self, PyObject* args,
         goto ON_FAIL;
     }
 
-    // Verification is read-only: whole-document shadow, replayed IDs, and no
-    // reflection at all — the copy is simply discarded.
+    // Verification is read-only: whole-document shadow (with the registered
+    // IDs replayed) and no reflection at all — the copy is simply discarded.
     if (PyXmlSec_LxmlShadowBeginDoc(&shadow, node, &target) < 0) {
-        goto ON_FAIL;
-    }
-    if (PyXmlSec_LxmlShadowReplayIds(&shadow) < 0) {
-        PyXmlSec_LxmlShadowDiscard(&shadow);
         goto ON_FAIL;
     }
     Py_BEGIN_ALLOW_THREADS;

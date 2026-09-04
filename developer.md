@@ -1,134 +1,247 @@
 # Decoupling lxml and xmlsec across libxml2 (#356)
 
+**TL;DR** — `python-xmlsec` crashes when `lxml` and `xmlsec1` are built
+against different `libxml2` versions, because it passes raw libxml2 node
+pointers between them. Every xmlsec call now runs on a private *copy* of the
+element ("shadow") owned by our libxml2, and the change it makes is reflected
+back into the live lxml tree afterwards, so only serialized bytes ever cross
+the boundary. Converting a binding is four lines; when the libxml2 versions
+match, the copy is skipped and the old direct code runs unchanged.
+
+## The problem
+
 `python-xmlsec` glues together two libraries that both build on **libxml2**:
-lxml (the tree the user edits) and xmlsec1 (the C library that signs/encrypts).
-Historically the extension reached into an lxml `_Element` for its raw
-`xmlNodePtr` and handed it to xmlsec1. That is only safe when both libraries
-link the *same* libxml2 at runtime — and they often don't (lxml wheels bundle
-their own). Mixing two libxml2 builds on one tree corrupts memory: segfaults,
+lxml (the tree the user edits in Python) and xmlsec1 (the C library that
+signs/encrypts). Historically the extension reached into an lxml `_Element`
+for its raw `xmlNodePtr` and handed it to xmlsec1. That is only safe when both
+libraries link the *same* libxml2 at runtime — and they often don't, because
+lxml wheels bundle their own. Two libxml2 builds touching one tree means
+mismatched struct layouts, dictionaries and allocators: segfaults,
 double-frees, wrong signatures
-([#356](https://github.com/xmlsec/python-xmlsec/issues/356)). The only guard
-was refusing to import on a version mismatch (#283).
+([#356](https://github.com/xmlsec/python-xmlsec/issues/356)). The only
+mitigation so far was refusing to import on a version mismatch (#283).
 
 ## The fix: shadow copies
 
-Never share nodes; share **bytes**. Each xmlsec call runs on a private,
-throwaway copy of the element ("shadow") owned by *our* libxml2, and the
-change it makes is reflected back into the live lxml tree afterwards — again
-via bytes. Implemented as one pair of helpers in [src/lxml.c](src/lxml.c)
-(contract in [src/lxml.h](src/lxml.h)); converting a function is four lines,
-with no per-function callback or context struct:
+Bytes have no ABI. Each binding therefore does:
+
+```text
+ lxml element ──(lxml's libxml2 serializes)──► bytes
+ bytes ──(our libxml2 parses)──► private "shadow" copy
+ xmlsec mutates the shadow (it never sees an lxml node)
+ shadow ──(our libxml2 dumps)──► bytes ──(lxml parses)──► changes grafted
+                                                          into the live tree
+```
+
+The user-visible behaviour is unchanged: the input element gains exactly what
+xmlsec added, the returned node is live in the caller's tree (incremental
+building like `add_transform(ref, ...)` keeps working, and proxies the caller
+holds stay valid), and the serialized output is byte-identical — namespaces
+and xmlsec's `"\n"` formatting included.
+
+The whole mechanism lives in [src/lxml.c](src/lxml.c), with the contract in
+[src/lxml.h](src/lxml.h). A binding looks like this (`add_reference`):
 
 ```c
 PyXmlSec_LxmlShadow shadow;
-if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) goto ON_FAIL;      // lxml → bytes → our copy
+if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) goto ON_FAIL;        // lxml → bytes → our copy
 Py_BEGIN_ALLOW_THREADS;
-res = xmlSecTmplSignatureAddReference(shadow.root, ...);            // xmlsec mutates the copy
+res = xmlSecTmplSignatureAddReference(shadow.root, ...);              // xmlsec mutates the copy
 Py_END_ALLOW_THREADS;
 result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot add reference."); // reflect back, return lxml node
 ```
 
-`Begin` serializes the element with lxml's own `etree.tostring` and re-parses
-the bytes with `xmlReadMemory`, tagging every pre-existing node through the
-libxml2 `_private` field. `End` walks up from `res` to find the topmost
-untagged (= new) node and reflects generically, covering every shape in the
-`xmlSecTmpl*` family:
+No per-function callback or context struct: the call site is the plain xmlsec
+call, and the helper works out what the call did.
 
-- **plain add** (`add_reference`): the new subtree is grafted into the live
-  tree at the same position, located by child-index path.
-- **intermediate ancestors** (`add_transform` creating `<Transforms>` around
-  the `<Transform>`): the *topmost* new node is grafted; the returned element
-  is the descendant matching `res`.
-- **find-or-create** (`ensure_key_info`): nothing new in the tree — the
-  existing live element is returned, plus any attributes the call set (`Id`).
+## The API
+
+Three `Begin` flavours make the copy, four `End` functions consume it. Every
+End always releases the copy, on success and on error.
+
+| Function | Use |
+| --- | --- |
+| `Begin(&shadow, element)` | copy of the element's subtree; `shadow.root` is the copy |
+| `BeginDoc(&shadow, element, &target)` | copy of the element's whole document, for calls that follow references or walk upward; `target` is the copy's counterpart of `element`; registered IDs are replayed onto the copy |
+| `BeginNewDoc(&shadow, element)` → `xmlDocPtr` | no copy at all: a private document for calls that only build a *detached* subtree (`create`) |
+| `End(&shadow, res, error)` → element | the lxml element for a result node — grafted into the live tree if the call created it, or the existing live element (with the attributes / prefix the call changed) if it found it; NULL `res` raises `error` |
+| `EndFind(&shadow, res)` → element or `None` | the same for read-only finders; NULL is "not found" |
+| `Reflect(&shadow, rv, error)` → int | for calls returning only a status: `rv < 0` raises `error`, otherwise every change is reflected |
+| `Discard(&shadow)` | release without reflecting (read-only calls, error paths before End) |
+
+Plus three helpers for the call sites whose *semantics* differ per mode:
+`IsActive()` (which path is on), `ImportElement()` (encrypt_xml's template
+import into the shadow document) and `RecordId()` (ID registration, below).
+
+Which pair a binding uses follows from what the xmlsec call does:
+
+| The xmlsec call ... | Begin | End | Bindings |
+| --- | --- | --- | --- |
+| adds or finds a node under the element | `Begin` | `End` | every `xmlSecTmpl*` add / ensure call |
+| builds a detached subtree, needs only a document | `BeginNewDoc` | `End` | `create`, `encrypted_data_create` |
+| searches the subtree, read-only | `Begin` | `EndFind` | `find_child`, `find_node` |
+| searches upward, read-only | `BeginDoc` | `EndFind` | `find_parent` |
+| mutates the subtree, returns a status | `Begin` | `Reflect` | `transform_add_c14n_inclusive_namespaces`, `encrypt_binary`, `encrypt_uri` |
+| mutates anywhere in the document, returns a status | `BeginDoc` | `Reflect` | `sign` |
+| reads the document, returns a status | `BeginDoc` | `Discard` | `verify` |
+| *replaces* the element or its content | `BeginDoc` | remove the consumed live node/content, then `Reflect` | `encrypt_xml`, `decrypt` |
+
+Rules every call site must keep:
+
+- swap `node->_c_node` for `shadow.root` (or `target`) and change **nothing
+  else** about the xmlsec call or its error string;
+- run **exactly one** xmlsec call between Begin and End, and no Python code
+  in between (the `Py_*_ALLOW_THREADS` pair is fine — the call is pure C);
+- call exactly one End function after a successful Begin.
+
+## How the reflection works
+
+`Begin` serializes the element with lxml's own `etree.tostring`, re-parses
+the bytes with `xmlReadMemory`, and tags every node of the copy through the
+libxml2 `_private` field (never serialized, never touched by the parser or
+xmlsec). After the call, whatever is untagged is what the call created. The
+reflection then walks the tagged structure of the copy in document order and
+records two kinds of *site*:
+
+- **graft** — a fresh node (element, comment, PI) to insert at its child
+  index. Fresh subtrees are grafted wholesale; the scan never descends into
+  them.
+- **sync** — a tagged parent that gained any fresh node (element or text)
+  gets its text slots (its `.text` and each child's `.tail`) copied over from
+  the re-parsed copy. That covers everything xmlsec does to text: the `"\n"`
+  formatting around a new node, values filled into empty elements
+  (`DigestValue`, `SignatureValue`), and content it removed (encrypt
+  `Type=Content`) — a removal leaves no fresh node behind, so only a
+  wholesale sync can see it.
+
+Sites are addressed by **child-index paths** from the copy root, counting
+exactly the node types lxml exposes as children (elements, comments, PIs,
+entity refs), so a path recorded on the raw copy resolves identically through
+lxml's `__getitem__` / `insert` on the live tree. The reflection is
+**two-phase**: every payload is fetched from the re-parsed copy first, while
+it is still in its final state, then everything is applied to the live tree in
+document order (a graft moves a node out of the re-parsed copy, which would
+invalidate later fetches; each live insert makes the later, larger indices
+valid; a parent's sync is recorded after its grafts).
 
 Two serialization details are load-bearing for byte-identical signatures:
+the **whole** copy is dumped (`xmlDocDumpMemory`), not just the fresh nodes,
+so ancestor-declared namespaces and the formatting siblings survive the lxml
+re-parse without any manual fix-up; and lxml's `insert` carries a node's tail
+along and reconciles namespaces against the live ancestry.
 
-- `End` dumps the **whole** mutated copy (`xmlDocDumpMemory`), not just the new
-  node, so ancestor-declared namespaces (dsig on `<Signature>`) and xmlsec's
-  `"\n"` formatting siblings survive the lxml re-parse with no manual fix-up;
-  the new node's tail travels with it through `insert()`.
-- xmlsec may also emit a `"\n"` *before* the new node (`xmlSecAddChild` /
-  `AddNextSibling` / `AddPrevSibling`); `End` mirrors that one text slot
-  (parent `.text` or previous sibling `.tail`) from the copy.
+`End` then maps the result node back: it records the path of `res` in the
+copy before reflecting, and after the reflection the live tree mirrors the
+copy's element structure, so the same path resolves to the live counterpart —
+whether the call created it (now grafted) or found it. For a found node the
+tree did not grow there, so the live element is returned with the attributes
+the call set (`Id`) synced onto it; a renamed namespace prefix
+(`encrypted_data_ensure_key_info(ns=...)` on an existing `KeyInfo`) has no
+lxml API, so the live element is swapped for the copy's version and the
+caller gets a new proxy object.
 
-Child indices count exactly the node types lxml exposes as children (elements,
-comments, PIs, entity refs), so paths recorded on the raw copy resolve
-identically through lxml's `__getitem__`/`insert`. `End` assumes the xmlsec
-call mutates at most one place in the tree — true for all `xmlSecTmpl*`
-functions.
-
-## Beyond templates: the whole-code rollout
-
-Every binding that used to hand a raw lxml node to xmlsec now goes through a
-shadow. The extra shapes (all in [src/lxml.c](src/lxml.c), contracts in
-[src/lxml.h](src/lxml.h)):
-
-- **Create** (`template.create`, `encrypted_data_create`):
-  `BeginNewDoc`/`EndNewDoc`. The call builds a *detached* subtree and only
-  needs a document to allocate in — a private one on the shadow path. The
-  result comes back as a new detached lxml element (in its own document; lxml
-  moves it when the caller grafts it), instead of the raw path's "detached
-  node inside the source document", which lxml's API cannot express.
-- **Finders** (`tree.find_child`/`find_node`/`find_parent`): `EndFind` maps
-  the found copy node back by path and returns `None` on not-found.
-  `find_parent` walks upward, so it uses the whole-document Begin.
-- **Whole-document** (`sign`, `verify`, `decrypt`, `find_parent`):
-  `BeginDoc` serializes `element.getroottree()` (comments/PIs outside the
-  root and the internal DTD subset survive), records the element's position
-  through lxml's API, and hands back the copy's counterpart node.
-- **Multi-site reflect** (`sign`, `encrypt_binary`, `encrypt_uri`):
-  `ReflectAll` scans the copy for *every* topmost untagged node and grafts
-  each back — new subtrees via `insert`, new/changed text (DigestValue,
-  SignatureValue) via the text slots. Two-phase: payloads are fetched from
-  the re-parsed copy while it is still in its final state, then applied to
-  the live tree in document order (a graft moves a node out of the re-parsed
-  copy, which would invalidate later fetches).
-- **Replacement reflect** (`encrypt_xml`, `decrypt`): encryption/decryption
-  *replace* nodes, so the live target (or its content, or the document root
-  via `_setroot`) is removed first and `ReflectAll` grafts what took its
-  place. `encrypt_xml` re-serializes the template into the same shadow doc
-  (`ImportElement`); a template attached inside the target's own tree is
-  therefore copied, not moved. `verify` needs no reflect at all — `Discard`
-  just frees the copy.
-- **ID registration** (`tree.add_ids`, `SignatureContext.register_id`): these
-  used to write lxml's ID hash with our libxml2. Under the shadow they record
-  the id-attribute specs in a registry keyed by document identity
-  (`RecordId`), and every `BeginDoc` replays them onto the copy
-  (`ReplayIds`) so `#id` references resolve. The replay scans the whole copy
-  for the recorded attribute names — a superset of the raw registration. The
-  registry holds no strong references to documents (lxml objects refuse weak
-  references, so entries are validated by a stored `_c_doc` address and
-  capped in size).
-- **Prefix rename** (`encrypted_data_ensure_key_info(ns=...)` on an existing
-  KeyInfo): `EndReplace` swaps the live element for the copy's version, since
-  lxml cannot rename a prefix in place; the returned element is then a new
-  object rather than the original proxy.
+`BeginDoc` records the element's position through lxml's API (`getparent` /
+`index`), serializes `element.getroottree()` — comments/PIs outside the root
+and the internal DTD subset survive — and hands back the copy's counterpart;
+`shadow.element` becomes the live *root*, which is where the reflection maps
+paths onto. `BeginNewDoc` creates an empty private document; `End` roots the
+detached result there, dumps it and returns it as a new detached lxml element
+(in a document of its own until grafted; lxml moves it when the caller
+appends it, like the raw path's detached node).
 
 ## The fast path: shadows only when needed
 
 Copying is pointless when lxml links the same libxml2 as the extension — the
-raw-node behavior that shipped for years is safe then, and it is the only
-configuration the import guard currently lets run. So `Begin`/`End` are
+raw-node behaviour that shipped for years is safe then, and it is the only
+configuration the import guard currently lets run. `Begin`/`End` are
 dual-path, decided once at import:
 
 - **matched versions** (the guard passed): `Begin` aliases the live
-  `_c_node` into `shadow.root` with no serialization, and `End` just wraps
-  the node xmlsec returned — machine-identical to the pre-shadow code, zero
-  overhead;
+  `_c_node` into `shadow.root` with no serialization, `End` just wraps the
+  node xmlsec returned, `Reflect` does nothing — machine-identical to the
+  pre-shadow code, zero overhead;
 - **mismatch** (import allowed via `PYXMLSEC_SKIP_VERSION_CHECK` today,
-  automatic once everything is converted), **or `PYXMLSEC_FORCE_SHADOW` set**:
-  the full shadow round-trip described above.
+  automatic once the guard becomes a mode switch), **or `PYXMLSEC_FORCE_SHADOW`
+  set**: the full shadow round-trip.
 
-Call sites cannot tell the difference; every converted function inherits both
-paths. `PYXMLSEC_FORCE_SHADOW` exists so CI keeps the shadow path exercised on
-matched libraries (see the test matrix), where it must also pass the full
-suite.
+Call sites cannot tell the difference. `PYXMLSEC_FORCE_SHADOW` exists so CI
+keeps the shadow path exercised on matched libraries (the workflows run the
+suite twice), where it must also pass the full suite. Measured cost of the
+shadow path per template call: about 8x (72 µs vs 8.6 µs for create +
+add_reference + add_transform + ensure_key_info); whole-document operations
+scale with document size.
+
+The re-parse on our side uses `XML_PARSE_HUGE` and the lxml side a cached
+`XMLParser(huge_tree=True)`, so a `CipherValue` above libxml2's 10 MB
+text-node limit (large `encrypt_binary` payloads) or a document the user
+parsed with `huge_tree` still reflects. That is safe: what gets parsed is
+lxml's own dump of a tree it already parsed.
 
 > The shadow decouples *lxml* from xmlsec. The extension and `libxmlsec1`
-> must still share one libxml2 (wheels/static builds guarantee this).
+> must still share one libxml2 (wheels and static builds guarantee this).
 
-## Building & validating under a real mismatch (macOS / homebrew)
+## ID registration under the shadow
+
+`SignatureContext.register_id` and `tree.add_ids` used to write lxml's ID
+hash with our libxml2 — exactly the cross-library access the shadow forbids.
+Under the shadow they record the id-attribute specs in a registry keyed by
+document identity (`RecordId`), and every `BeginDoc` replays them onto its
+copy so that `#id` references resolve during sign/verify/decrypt. The replay
+scans the whole copy for the recorded attribute names — a superset of the
+single-node registration on the raw path, mirroring what `xmlSecAddIDs` does
+from the root. The registry holds no strong references to documents (lxml's
+classes refuse weak references), so entries are validated by a stored
+`_c_doc` address and capped in size. The two bindings are the only places,
+together with encrypt_xml/decrypt's replacement bodies, that branch on
+`IsActive()`.
+
+## Converting a binding
+
+1. Classify the xmlsec call with the table above.
+2. Edit: swap `node->_c_node` for `shadow.root`, wrap the call in the
+   matching Begin/End pair, keep the error string.
+3. Build and run the suite (see below). Add a test asserting the
+   *reflection*: the returned node is live in the caller's tree
+   (`assertIs(node.getroottree().getroot(), root)`) and at the position
+   xmlsec puts it; for find-or-create, a second call returns the same element.
+4. Validate under a real libxml2 mismatch, and on a matched build with
+   `PYXMLSEC_FORCE_SHADOW=1`.
+
+Beware the leak detector in `tests/base.py`: it reruns each test with
+`gc.disable()` and fails on monotonic object-count growth, which plain
+allocation churn can trigger with no real leak. Keep each test small (split
+rather than combine scenarios), prefer `assertIs(parent[0], tr)` over
+building lists to compare, and check stability with
+`PYXMLSEC_TEST_ITERATIONS=50 PYTHONPATH=src python -m pytest tests/`.
+
+## Known divergences and limitations (shadow path only)
+
+All invisible to the documented API:
+
+- created templates (`create`, `encrypted_data_create`) live in their own
+  document until grafted;
+- `encrypted_data_ensure_key_info(ns=...)` on an existing `KeyInfo` returns
+  a new element object rather than the original proxy;
+- `register_id` skips the live duplicate-id check (it runs per copy instead)
+  and, without `id_ns`, looks the attribute up namespace-strictly where the
+  raw `xmlHasProp` is namespace-agnostic;
+- `encrypt_xml` *copies* a template that is attached inside the target tree
+  rather than moving it, so it also remains at its original position;
+- signature/encryption contexts keep no live result nodes after the call
+  (they never usefully did);
+- documents nested deeper than 256 levels (only possible with `huge_tree`)
+  are refused with an internal error.
+
+One hard limitation: operations that would replace the **document root**
+(encrypting the root element with `Type=Element`, decrypting a root
+`EncryptedData`) raise `xmlsec.Error` — lxml's API cannot swap a document's
+root, and morphing it in place would rewrite namespace prefixes, breaking
+signatures over the content. Re-parse the document into a wrapper or work on
+a subelement instead.
+
+## Building & validating
+
+### Under a real mismatch (macOS / homebrew)
 
 lxml wheels bundle libxml2; build the extension against homebrew's (which
 libxmlsec1 links) so only lxml differs — the true #356 scenario. Watch the
@@ -149,41 +262,33 @@ PYXMLSEC_SKIP_VERSION_CHECK=1 PYTHONPATH=src python -c \
 PYXMLSEC_SKIP_VERSION_CHECK=1 PYTHONPATH=src python -m pytest tests/
 ```
 
-`PYXMLSEC_SKIP_VERSION_CHECK` bypasses the import-time mismatch guard. It
-exists to exercise the shadow paths; it is **unsafe** for every operation
-still on the raw-node path, so keep it off in normal use. The guard can only
-be relaxed once all node-passing paths are converted.
+`PYXMLSEC_SKIP_VERSION_CHECK` bypasses the import-time mismatch guard so the
+shadow paths can be exercised; keep it off in normal use until the guard
+becomes a mode switch. For anything non-trivial, also loop the converted
+function ~10k times under the mismatch and check `ru_maxrss` stays flat and
+the serialized output stays byte-identical between iterations.
 
-On a *matched* build (no mismatch available), run the suite twice instead:
-once plain (fast path) and once with `PYXMLSEC_FORCE_SHADOW=1` (shadow path
-on matched libraries — safe everywhere, so the whole suite must pass).
+### On a matched build (static wheel)
+
+`PYXMLSEC_STATIC_DEPS=true python -m build --wheel` bundles a libxml2 matched
+to lxml's wheels; install it into a venv with wheel lxml
+(`pip install --no-deps --force-reinstall dist/*.whl`) and run the suite twice
+— plain (fast path) and with `PYXMLSEC_FORCE_SHADOW=1` (shadow path on
+matched libraries; safe everywhere, so the whole suite must pass). Gotcha:
+setuptools reuses stale objects from `build/`, so `rm -rf build/lib.*
+build/temp.*` before switching between the dynamic in-place build and the
+static wheel, or the wheel silently ships the old dynamically linked module
+(it is then ~50 KB instead of several MB).
 
 ## Status
 
-- ✅ All of `src/template.c` (create, references, transforms, key info, x509,
-  encrypted data, C14N namespaces).
-- ✅ `src/tree.c` (find_child/find_node/find_parent, add_ids).
-- ✅ `src/ds.c` (register_id, sign, verify; the binary operations never
-  touched nodes).
-- ✅ `src/enc.c` (encrypt_binary, encrypt_uri, encrypt_xml, decrypt).
-- Validated under a real 2.14 ↔ 2.15 mismatch: full suite green, 10k-iteration
-  sign/verify/encrypt/decrypt loop with no crash, no leak, byte-identical
-  output; and on a matched static build: full suite green on both the fast
+- ✅ Every binding that hands a node to xmlsec goes through a shadow:
+  all of `src/template.c`, `src/tree.c`, `src/ds.c` and `src/enc.c`.
+- ✅ Validated under a real 2.14 ↔ 2.15 mismatch (full suite, 10k-iteration
+  sign/verify/encrypt/decrypt loop with flat RSS and byte-identical output,
+  12 MB binary round trip) and on a matched static build on both the fast
   path and `PYXMLSEC_FORCE_SHADOW=1`.
-- ⬜ Endgame: turn the import-time guard into a mode switch (mismatch sets
-  the shadow flag instead of refusing to import) and retire
-  `PYXMLSEC_SKIP_VERSION_CHECK`. That is the actual user-facing resolution
-  of #356, kept as its own change.
-
-Known, deliberate divergences on the shadow path (all invisible to the
-documented API): created templates live in their own document until grafted;
-`encrypted_data_ensure_key_info(ns=...)` on an existing KeyInfo returns a new
-element object; `register_id` skips the live duplicate-id check (it runs per
-copy instead); `encrypt_xml` copies rather than moves a template that is
-attached inside the target tree; signature/encryption contexts keep no live
-result nodes after the call (they never usefully did). One hard limitation:
-operations that would replace the **document root** (encrypting the root
-element, decrypting a root `EncryptedData`) raise `xmlsec.Error` — lxml's API
-cannot swap a document's root, and morphing it in place would rewrite
-namespace prefixes, breaking signatures over the content. Re-parse the
-document or work on a subelement instead.
+- ⬜ Endgame, kept as its own change: turn the import-time guard into a mode
+  switch (a mismatch sets the shadow flag instead of refusing to import) and
+  retire `PYXMLSEC_SKIP_VERSION_CHECK`. That is the user-facing resolution of
+  #356.

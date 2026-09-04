@@ -239,6 +239,19 @@ class TestTemplates(base.TestMemoryLeaks):
         self.assertEqual('Id', ki2.get('Id'))
         self.assertEqual('test', ki2.prefix)
 
+    def test_encrypted_data_ensure_key_info_rename_prefix(self):
+        root = self.load_xml('doc.xml')
+        enc = xmlsec.template.encrypted_data_create(root, method=consts.TransformDes3Cbc)
+        root.append(enc)
+        xmlsec.template.encrypted_data_ensure_key_info(enc)
+        # renaming the prefix of the KeyInfo that already exists keeps it
+        # live, in place, and unique
+        ki = xmlsec.template.encrypted_data_ensure_key_info(enc, ns='test')
+        self.assertIs(ki.getroottree().getroot(), root)
+        self.assertEqual('test', ki.prefix)
+        self.assertIs(enc[1], ki)
+        self.assertEqual(1, sum(1 for n in enc if n.tag == f'{{{consts.DSigNs}}}KeyInfo'))
+
     def test_encrypted_data_ensure_key_info_bad_args(self):
         with self.assertRaises(TypeError):
             xmlsec.template.encrypted_data_ensure_key_info('')

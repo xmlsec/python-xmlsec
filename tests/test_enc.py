@@ -229,6 +229,40 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         self.assertIsNotNone(decrypted)
         self.assertEqual(self.load_xml(f'enc{i}-in.xml'), root)
 
+    def encrypt_content(self, xml, path):
+        """Encrypts the content of the element at ``path`` with a fresh session key."""
+        root = etree.fromstring(xml)
+        key = xmlsec.Key.generate(consts.KeyDataAes, 128, consts.KeyDataTypeSession)
+        enc_data = xmlsec.template.encrypted_data_create(root, consts.TransformAes128Cbc, type=consts.TypeEncContent, ns='xenc')
+        xmlsec.template.encrypted_data_ensure_cipher_value(enc_data)
+        ctx = xmlsec.EncryptionContext()
+        ctx.key = key
+        ctx.encrypt_xml(enc_data, root.find(path))
+        return root, key
+
+    def test_decrypt_content_text_between_whitespace(self):
+        # in a pretty-printed document the decrypted text lands between the
+        # whitespace that surrounded <EncryptedData/>; the parent's text must
+        # carry all three pieces
+        root, key = self.encrypt_content(b'<root><Password>secret</Password><Other/></root>', 'Password')
+        pretty = etree.fromstring(etree.tostring(root, pretty_print=True))
+        enc_data = xmlsec.tree.find_node(pretty, consts.NodeEncryptedData, consts.EncNs)
+        ctx = xmlsec.EncryptionContext()
+        ctx.key = key
+        password = ctx.decrypt(enc_data)
+        self.assertIs(password, pretty[0])
+        self.assertEqual('\n    secret\n  ', password.text)
+        self.assertEqual(0, len(password))
+
+    def test_decrypt_content_mixed(self):
+        root, key = self.encrypt_content(b'<root><Box>hello <b>world</b> end</Box></root>', 'Box')
+        pretty = etree.fromstring(etree.tostring(root, pretty_print=True))
+        enc_data = xmlsec.tree.find_node(pretty, consts.NodeEncryptedData, consts.EncNs)
+        ctx = xmlsec.EncryptionContext()
+        ctx.key = key
+        box = ctx.decrypt(enc_data)
+        self.assertEqual(b'<Box>\n    hello <b>world</b> end\n  </Box>', etree.tostring(box, with_tail=False))
+
     def test_decrypt_bad_args(self):
         ctx = xmlsec.EncryptionContext()
         with self.assertRaises(TypeError):
