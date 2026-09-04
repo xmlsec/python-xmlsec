@@ -94,13 +94,13 @@ Rules every call site must keep:
   in between (the `Py_*_ALLOW_THREADS` pair is fine — the call is pure C);
 - call exactly one End function after a successful Begin.
 
-**Invariant, enforced by `tests/test_shadow_audit.py`:** every C function that
-accepts an lxml element (`PyXmlSec_LxmlElementConverter`) either calls a
+**Invariant, to check by review:** every C function that accepts an lxml
+element (`PyXmlSec_LxmlElementConverter`) either calls a
 `PyXmlSec_LxmlShadowBegin*` helper or is one of the four dual-body functions
 (`register_id`, `add_ids`, `encrypt_xml`, `decrypt`), which must consult
 `IsActive()` before touching a raw node; and `->_c_node` / `->_c_doc` appear
-only in those four and in the helpers' fast-path branches. The test scans
-`src/*.c`, so a raw access anywhere else fails the suite on both paths.
+only in those four and in the helpers' fast-path branches. A quick
+`grep -n '\->_c_\(node\|doc\)' src/*.c` lists every crossing to check.
 
 ## How the reflection works
 
