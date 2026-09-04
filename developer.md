@@ -94,6 +94,15 @@ Rules every call site must keep:
   in between (the `Py_*_ALLOW_THREADS` pair is fine — the call is pure C);
 - call exactly one End function after a successful Begin.
 
+**Invariant, enforced by `tests/test_shadow_audit.py`:** every C function that
+accepts an lxml element (`PyXmlSec_LxmlElementConverter`) either calls a
+`PyXmlSec_LxmlShadowBegin*` helper or is one of the four dual-body functions
+(`register_id`, `add_ids`, `encrypt_xml`, `decrypt`), which must consult
+`IsActive()` before touching a raw node; and `->_c_node` / `->_c_doc` appear
+only in those four, in the helpers' fast-path branches, and in the ID registry
+(which uses the addresses as keys only). The test scans `src/*.c`, so a raw
+access anywhere else fails the suite on both paths.
+
 ## How the reflection works
 
 `Begin` serializes the element with lxml's own `etree.tostring`, re-parses
