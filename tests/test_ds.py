@@ -99,6 +99,33 @@ class TestSignContext(base.TestMemoryLeaks):
         xmlsec.tree.add_ids(root[0], ['ID'])
         xmlsec.SignatureContext().register_id(root[0][0], 'ID')
 
+    def test_register_id_rejects_a_value_a_sibling_attribute_declares(self):
+        """The declared id of an element can sit on another of its attributes, which claims the value all the same."""
+        root = etree.fromstring(b'<Root><N xml:id="dup" ID="dup"/></Root>')
+        with self.assertRaisesRegex(xmlsec.Error, 'duplicated id.'):
+            xmlsec.SignatureContext().register_id(root[0], 'ID')
+
+    def test_register_id_accepts_the_declared_attribute_beside_a_twin(self):
+        """A second attribute repeating the value is not the declared one, so registering the declared one is the no-op."""
+        xml = b'<!DOCTYPE Root SYSTEM "id_attr.dtd">\n<Root><Node ID="dup" other="dup"/></Root>\n'
+        root = etree.fromstring(xml, etree.XMLParser(load_dtd=True), base_url=self.path('doc.xml'))
+        xmlsec.SignatureContext().register_id(root[0], 'ID')
+
+    def test_register_id_rejects_a_value_a_namespaced_registration_claimed(self):
+        """Two attributes of one element differing only in namespace are two attributes: the second cannot win the lookup."""
+        ctx = xmlsec.SignatureContext()
+        root = etree.fromstring(b'<Root xmlns:a="urn:a"><N Id="dup" a:Id="dup"/></Root>')
+        ctx.register_id(root[0], 'Id', id_ns='urn:a')
+        with self.assertRaisesRegex(xmlsec.Error, 'duplicated id.'):
+            ctx.register_id(root[0], 'Id')
+
+    def test_register_id_accepts_the_same_namespaced_attribute_twice(self):
+        """The no-op holds for a namespaced attribute too, which the key comparison must not read as a collision."""
+        ctx = xmlsec.SignatureContext()
+        root = etree.fromstring(b'<Root xmlns:a="urn:a"><N a:Id="dup"/></Root>')
+        ctx.register_id(root[0], 'Id', id_ns='urn:a')
+        ctx.register_id(root[0], 'Id', id_ns='urn:a')
+
     def test_register_id_with_namespace_without_attribute(self):
         ctx = xmlsec.SignatureContext()
         root = self.load_xml('sign_template.xml')

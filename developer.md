@@ -226,7 +226,22 @@ under the shadow. What lxml's own parse declared (a DTD id attribute, an
 `xml:id`) is read back through XPath's `id()`, the one door into lxml's id
 hash that passes nothing but strings and elements; what earlier
 `register_id`/`add_ids` calls claimed is read from the registry, a subtree
-spec through one XPath over its scope. Deferring the check to the replay
+spec through one XPath over its scope.
+
+Both halves compare *attributes*, not elements: `<N xml:id="dup" ID="dup"/>`
+answers `N` to `id('dup')` whichever attribute is asked about, while the fast
+path registers `ID`, finds `xml:id` holding the value and raises. A registry
+spec is therefore resolved to the attribute its `xmlHasProp`/`xmlHasNsProp`
+would pick, and a match on the element itself only settles the declared half
+when a single attribute of the element carries the value — otherwise the
+declared attribute has to be named outright, which no lxml API does (`id()`
+names elements, and an `ATTLIST` without an `ELEMENT` leaves lxml's DTD
+objects empty). It is then named by copying the document the way a
+whole-document shadow copies it — same base URL, same subsets — and reading
+that copy's own id hash, a copy the registration is refused or recorded
+against anyway. Only a value already declared for the element pays for it.
+
+Deferring the check to the replay
 instead would raise from the wrong call — a later `sign`, and then from every
 later call on that document — and would leave the caller believing a
 registration took that can never win the lookup. `add_ids` keeps its own
