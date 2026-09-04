@@ -1,5 +1,7 @@
 import unittest
 
+from lxml import etree
+
 import xmlsec
 from tests import base
 
@@ -367,3 +369,28 @@ class TestSignContext(base.TestMemoryLeaks):
         ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
         with self.assertRaisesRegex(TypeError, 'expected list of KeyData constants.'):
             ctx.set_enabled_key_data('foo')
+
+
+class TestIdRegistryLifetime(base.TestMemoryLeaks):
+    """Guards the lifetime rule of the shadow-mode id registry (issue #356)."""
+
+    # The document churn below is this test's point; the leak harness would repeat it ten times.
+    iterations = 0
+
+    # Far more documents than any bounded registry would have held at once.
+    OTHER_DOCUMENTS = 5000
+
+    def test_registration_survives_other_live_documents(self):
+        """Registering ids for other documents must never drop a live document's own registration."""
+        root = self.load_xml('sign4-out.xml')
+        ctx = xmlsec.SignatureContext()
+        ctx.register_id(root, 'ID')
+
+        # All kept alive, so none of these registrations may be traded for another.
+        others = [etree.fromstring(f'<Envelope ID="doc-{i}"/>') for i in range(self.OTHER_DOCUMENTS)]
+        for other in others:
+            ctx.register_id(other, 'ID')
+
+        sign = xmlsec.tree.find_node(root, consts.NodeSignature)
+        ctx.key = xmlsec.Key.from_file(self.path('rsapub.pem'), format=consts.KeyDataFormatPem)
+        ctx.verify(sign)  # resolves #ID through the registration made before the churn

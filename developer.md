@@ -99,9 +99,8 @@ accepts an lxml element (`PyXmlSec_LxmlElementConverter`) either calls a
 `PyXmlSec_LxmlShadowBegin*` helper or is one of the four dual-body functions
 (`register_id`, `add_ids`, `encrypt_xml`, `decrypt`), which must consult
 `IsActive()` before touching a raw node; and `->_c_node` / `->_c_doc` appear
-only in those four, in the helpers' fast-path branches, and in the ID registry
-(which uses the addresses as keys only). The test scans `src/*.c`, so a raw
-access anywhere else fails the suite on both paths.
+only in those four and in the helpers' fast-path branches. The test scans
+`src/*.c`, so a raw access anywhere else fails the suite on both paths.
 
 ## How the reflection works
 
@@ -198,9 +197,12 @@ document identity (`RecordId`), and every `BeginDoc` replays them onto its
 copy so that `#id` references resolve during sign/verify/decrypt. The replay
 scans the whole copy for the recorded attribute names — a superset of the
 single-node registration on the raw path, mirroring what `xmlSecAddIDs` does
-from the root. The registry holds no strong references to documents (lxml's
-classes refuse weak references), so entries are validated by a stored
-`_c_doc` address and capped in size. The two bindings are the only places,
+from the root. lxml's classes refuse weak references, so an entry keeps a
+strong reference to its document instead: the key (the document's address)
+can then never go stale, and a document referenced by nothing but the
+registry is provably unreachable, so its entry — and the document with it —
+is dropped before the next registration. The registry therefore tracks the
+documents still in use and never evicts a live one. The two bindings are the only places,
 together with encrypt_xml/decrypt's replacement bodies, that branch on
 `IsActive()`.
 

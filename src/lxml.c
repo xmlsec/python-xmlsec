@@ -491,20 +491,49 @@ void PyXmlSec_LxmlShadowDiscard(PyXmlSec_LxmlShadow* shadow) {
 // and every whole-document Begin replays them onto the private copy so that
 // #id references resolve during sign/verify/decrypt.
 //
-// The registry cannot hold strong references to lxml documents (that would
-// pin whole trees forever) and lxml's classes refuse weak references, so
-// entries are keyed by the _Document object's address with the underlying
-// xmlDoc pointer stored alongside as a staleness check: an entry is trusted
-// only while both addresses match, and is replaced when the address has been
-// reused by a different document. A size cap bounds growth from dead
-// documents whose addresses never get reused.
+// An entry is keyed by the _Document object's address and holds a strong
+// reference to that document, so the key can never go stale: the address
+// cannot be reused while the entry keeps the object alive. That reference
+// also makes liveness decidable without weak references (lxml's classes
+// refuse those): when the registry holds the *only* reference to a document,
+// nothing can hand that document to a binding again, so the entry is dead and
+// is dropped. Pruning runs before every new registration, which bounds the
+// registry — and the documents it pins — by the documents still in use. No
+// live registration is ever evicted.
 // ----------------------------------------------------------------------------
 
-#define PYXMLSEC_SHADOW_ID_REGISTRY_CAP 4096
+// Drops the entries of documents nobody but the registry still references.
+// Best effort: on an allocation failure the entries simply survive until the
+// next registration prunes them.
+static void PyXmlSec_LxmlShadowPruneIdRegistry(void) {
+    PyObject* dead;
+    PyObject* key;
+    PyObject* entry;
+    Py_ssize_t pos = 0;
+    Py_ssize_t i;
+
+    dead = PyList_New(0);
+    if (dead == NULL) {
+        PyErr_Clear();
+        return;
+    }
+    // The dict cannot be mutated while iterating it, so collect first.
+    while (PyDict_Next(PyXmlSec_LxmlShadowIdRegistry, &pos, &key, &entry)) {
+        if (Py_REFCNT(PyTuple_GET_ITEM(entry, 0)) == 1 && PyList_Append(dead, key) < 0) {
+            PyErr_Clear();
+            break;
+        }
+    }
+    for (i = 0; i < PyList_GET_SIZE(dead); ++i) {
+        if (PyDict_DelItem(PyXmlSec_LxmlShadowIdRegistry, PyList_GET_ITEM(dead, i)) < 0) {
+            PyErr_Clear();
+        }
+    }
+    Py_DECREF(dead);
+}
 
 int PyXmlSec_LxmlShadowRecordId(PyXmlSec_LxmlElementPtr element, const char* name, const char* ns) {
     PyObject* key = NULL;
-    PyObject* cdoc = NULL;
     PyObject* created = NULL;
     PyObject* spec = NULL;
     PyObject* entry;
@@ -513,36 +542,18 @@ int PyXmlSec_LxmlShadowRecordId(PyXmlSec_LxmlElementPtr element, const char* nam
     int result = -1;
 
     key = PyLong_FromVoidPtr((void*)element->_doc);
-    cdoc = PyLong_FromVoidPtr((void*)element->_doc->_c_doc);
-    if (key == NULL || cdoc == NULL) {
+    if (key == NULL) {
         goto DONE;
     }
 
     entry = PyDict_GetItem(PyXmlSec_LxmlShadowIdRegistry, key);  // borrowed
-    if (entry != NULL) {
-        int eq = PyObject_RichCompareBool(PyTuple_GET_ITEM(entry, 0), cdoc, Py_EQ);
-        if (eq < 0) {
-            goto DONE;
-        }
-        if (!eq) {
-            entry = NULL;  // the address was reused by another document
-        }
-    }
     if (entry == NULL) {
-        if (PyDict_Size(PyXmlSec_LxmlShadowIdRegistry) >= PYXMLSEC_SHADOW_ID_REGISTRY_CAP) {
-            PyObject* k;
-            PyObject* v;
-            Py_ssize_t pos = 0;
-            if (PyDict_Next(PyXmlSec_LxmlShadowIdRegistry, &pos, &k, &v)
-                && PyDict_DelItem(PyXmlSec_LxmlShadowIdRegistry, k) < 0) {
-                goto DONE;
-            }
-        }
+        PyXmlSec_LxmlShadowPruneIdRegistry();
         specs = PyList_New(0);
         if (specs == NULL) {
             goto DONE;
         }
-        created = PyTuple_Pack(2, cdoc, specs);
+        created = PyTuple_Pack(2, (PyObject*)element->_doc, specs);
         Py_DECREF(specs);
         if (created == NULL || PyDict_SetItem(PyXmlSec_LxmlShadowIdRegistry, key, created) < 0) {
             goto DONE;
@@ -563,7 +574,6 @@ int PyXmlSec_LxmlShadowRecordId(PyXmlSec_LxmlElementPtr element, const char* nam
 
 DONE:
     Py_XDECREF(key);
-    Py_XDECREF(cdoc);
     Py_XDECREF(created);
     Py_XDECREF(spec);
     return result;
@@ -596,32 +606,20 @@ static void PyXmlSec_LxmlShadowApplyIdSpec(xmlDocPtr doc, xmlNodePtr n, const xm
 // Replays the specs recorded for the shadow's live document onto the copy.
 static int PyXmlSec_LxmlShadowReplayIds(PyXmlSec_LxmlShadow* shadow) {
     PyObject* key;
-    PyObject* cdoc;
     PyObject* entry;
     PyObject* specs;
     Py_ssize_t i, n;
-    int eq;
 
     key = PyLong_FromVoidPtr((void*)shadow->element->_doc);
     if (key == NULL) {
         return -1;
     }
+    // The entry, if any, belongs to this very document: the registry's own
+    // reference keeps the address from being reused by another one.
     entry = PyDict_GetItem(PyXmlSec_LxmlShadowIdRegistry, key);  // borrowed
     Py_DECREF(key);
     if (entry == NULL) {
         return 0;
-    }
-    cdoc = PyLong_FromVoidPtr((void*)shadow->element->_doc->_c_doc);
-    if (cdoc == NULL) {
-        return -1;
-    }
-    eq = PyObject_RichCompareBool(PyTuple_GET_ITEM(entry, 0), cdoc, Py_EQ);
-    Py_DECREF(cdoc);
-    if (eq < 0) {
-        return -1;
-    }
-    if (!eq) {
-        return 0;  // stale entry from a dead document at the same address
     }
 
     specs = PyTuple_GET_ITEM(entry, 1);

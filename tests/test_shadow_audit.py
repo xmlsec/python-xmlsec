@@ -32,8 +32,8 @@ DUAL_BODY_FUNCTIONS = frozenset(
     }
 )
 
-# Functions allowed to dereference lxml's raw node/document pointers: the dual bodies above,
-# the fast-path branches of the shadow helpers, and the ID registry (addresses used as keys).
+# Functions allowed to dereference lxml's raw node/document pointers: the dual bodies above
+# and the fast-path branches of the shadow helpers.
 RAW_ACCESS_ALLOWED = DUAL_BODY_FUNCTIONS | frozenset(
     {
         'PyXmlSec_LxmlShadowBegin',
@@ -41,8 +41,6 @@ RAW_ACCESS_ALLOWED = DUAL_BODY_FUNCTIONS | frozenset(
         'PyXmlSec_LxmlShadowBeginNewDoc',
         'PyXmlSec_LxmlShadowEnd',
         'PyXmlSec_LxmlShadowEndFind',
-        'PyXmlSec_LxmlShadowRecordId',
-        'PyXmlSec_LxmlShadowReplayIds',
     }
 )
 
