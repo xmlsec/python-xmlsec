@@ -108,8 +108,7 @@ class TestSignContext(base.TestMemoryLeaks):
     def test_register_id_accepts_the_declared_attribute_beside_a_twin(self):
         """A second attribute repeating the value is not the declared one, so registering the declared one is the no-op."""
         xml = b'<!DOCTYPE Root SYSTEM "id_attr.dtd">\n<Root><Node ID="dup" other="dup"/></Root>\n'
-        root = etree.fromstring(xml, etree.XMLParser(load_dtd=True), base_url=self.path('doc.xml'))
-        xmlsec.SignatureContext().register_id(root[0], 'ID')
+        xmlsec.SignatureContext().register_id(self.parse_with_external_dtd(xml)[0], 'ID')
 
     def test_register_id_rejects_a_value_a_namespaced_registration_claimed(self):
         """Two attributes of one element differing only in namespace are two attributes: the second cannot win the lookup."""
@@ -288,9 +287,23 @@ class TestSignContext(base.TestMemoryLeaks):
     # loads it knows "#ext" resolves to the Node (issue #356).
     EXTERNAL_DTD_XML = b'<!DOCTYPE Root SYSTEM "id_attr.dtd">\n<Root><Node ID="ext"><Data>signed</Data></Node></Root>\n'
 
+    def parse_with_external_dtd(self, xml):
+        """Parse `xml` with its external subset loaded, or skip the test when this build forbids that.
+
+        xmlsec installs a no-XXE external entity loader globally at
+        ``xmlSecInit`` (1.2.34 and later, and the patched 1.2.33 some
+        distributions ship), so merely importing xmlsec can refuse lxml its
+        own ``load_dtd=True`` parse. Nothing then types the id, on either
+        path, and there is no declaration left for the copy to carry across.
+        """
+        root = etree.fromstring(xml, etree.XMLParser(load_dtd=True), base_url=self.path('doc.xml'))
+        if root.getroottree().docinfo.externalDTD is None:
+            self.skipTest('this build refuses to load an external DTD subset')
+        return root
+
     def test_sign_and_verify_with_an_id_an_external_dtd_declares(self):
         """Should resolve a #id reference whose id attribute an external subset the caller loaded declares."""
-        root = etree.fromstring(self.EXTERNAL_DTD_XML, etree.XMLParser(load_dtd=True), base_url=self.path('doc.xml'))
+        root = self.parse_with_external_dtd(self.EXTERNAL_DTD_XML)
         sign = xmlsec.template.create(root, consts.TransformExclC14N, consts.TransformRsaSha1, ns='ds')
         root.append(sign)
         ref = xmlsec.template.add_reference(sign, consts.TransformSha1, uri='#ext')
