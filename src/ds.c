@@ -220,7 +220,8 @@ static PyObject* PyXmlSec_SignatureContextRegisterId(PyObject* self, PyObject* a
             PyErr_SetString(PyXmlSec_Error, "missing attribute.");
             goto ON_FAIL;
         }
-        if (PyXmlSec_LxmlShadowRecordId(node, id_attr, id_ns) < 0) {
+        // Scope 0: this node alone, exactly what the fast path registers.
+        if (PyXmlSec_LxmlShadowRecordId(node, id_attr, id_ns, 0) < 0) {
             goto ON_FAIL;
         }
         PYXMLSEC_DEBUGF("%p: register id - ok", self);

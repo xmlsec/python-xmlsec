@@ -222,6 +222,54 @@ class TestSignContext(base.TestMemoryLeaks):
         verify_ctx.key = xmlsec.Key.from_file(self.path('rsapub.pem'), format=consts.KeyDataFormatPem)
         verify_ctx.verify(sign)
 
+    # A document where an unregistered element carries the same id value as the
+    # registered one, and comes first. Only the registered element may answer
+    # the "#dup" reference (issue #356).
+    DUPLICATE_ID_XML = (
+        b'<Root>\n'
+        b'  <Decoy ID="dup"><Data>decoy</Data></Decoy>\n'
+        b'  <Scope><Real ID="dup"><Data>real</Data></Real></Scope>\n'
+        b'</Root>\n'
+    )
+
+    def sign_duplicate_id(self, register):
+        """Signs a "#dup" reference over the document above, registering the ids with `register`."""
+        root = etree.fromstring(self.DUPLICATE_ID_XML)
+        ctx = xmlsec.SignatureContext()
+        register(root)
+        sign = xmlsec.template.create(root, consts.TransformExclC14N, consts.TransformRsaSha1, ns='ds')
+        root.append(sign)
+        ref = xmlsec.template.add_reference(sign, consts.TransformSha1, uri='#dup')
+        xmlsec.template.add_transform(ref, consts.TransformExclC14N)
+        ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
+        ctx.sign(sign)
+        return etree.tostring(root)
+
+    def verify_duplicate_id(self, signed, register, tamper):
+        """Re-parses `signed`, rewrites the text of the `tamper` element and verifies."""
+        root = etree.fromstring(signed)
+        register(root)
+        root.find(tamper).text = 'tampered'
+        ctx = xmlsec.SignatureContext()
+        ctx.key = xmlsec.Key.from_file(self.path('rsapub.pem'), format=consts.KeyDataFormatPem)
+        ctx.verify(root.find('dsig:Signature', namespaces=base.ns))
+
+    def assert_covers_registered_element_only(self, register):
+        signed = self.sign_duplicate_id(register)
+        # the decoy is not what the reference resolved to, so it is not covered
+        self.verify_duplicate_id(signed, register, 'Decoy/Data')
+        # the registered element is
+        with self.assertRaises(xmlsec.VerificationError):
+            self.verify_duplicate_id(signed, register, 'Scope/Real/Data')
+
+    def test_register_id_covers_only_the_registered_node(self):
+        """register_id registers the node it is given, not every element with that attribute."""
+        self.assert_covers_registered_element_only(lambda root: xmlsec.SignatureContext().register_id(root.find('Scope/Real'), 'ID'))
+
+    def test_add_ids_covers_only_the_given_subtree(self):
+        """add_ids registers the subtree it is given, not the whole document."""
+        self.assert_covers_registered_element_only(lambda root: xmlsec.tree.add_ids(root.find('Scope'), ['ID']))
+
     def test_sign_binary_bad_args(self):
         ctx = xmlsec.SignatureContext()
         ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)

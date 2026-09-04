@@ -72,11 +72,22 @@ int PyXmlSec_LxmlElementConverter(PyObject* o, PyXmlSec_LxmlElementPtr* p);
 // which is the long-standing direct behaviour with zero overhead. Setting
 // PYXMLSEC_FORCE_SHADOW in the environment forces the shadow path even on
 // matched libraries; CI uses it to keep that path exercised.
+
+// One per node of the copy that existed before the xmlsec call: the tag the
+// node's libxml2 _private field points at, holding the child count that node
+// had. Untagged after the call means the call created the node; a changed
+// child count means it removed (or moved) one.
+typedef struct {
+    int children;
+} PyXmlSec_LxmlShadowTag;
+
 typedef struct {
     PyXmlSec_LxmlElementPtr element;  // borrowed; the live element copy paths start from (BeginDoc: the live root)
     PyObject* owned;                  // reference released when the shadow ends (BeginDoc's root proxy)
     xmlDocPtr doc;                    // the private copy, owned by the shadow; NULL on the fast path
     xmlNodePtr root;                  // doc's root element, the copy of `element`; NULL for BeginNewDoc
+    PyXmlSec_LxmlShadowTag* tags;     // one per pre-existing node of `doc`, owned by the shadow
+    int ntags;
 } PyXmlSec_LxmlShadow;
 
 // Subtree copy: `shadow.root` is the copy of `element`.
@@ -134,9 +145,13 @@ xmlNodePtr PyXmlSec_LxmlShadowImportElement(PyXmlSec_LxmlShadow* shadow, PyXmlSe
 // Shadow-mode ID registration (issue #356): register_id/add_ids cannot write
 // lxml's ID hash with our libxml2, so they record the id-attribute spec for
 // the element's document here, and every BeginDoc replays the recorded specs
-// onto its copy. The replay scans the whole copy for the recorded attribute
-// names — a superset of the single-node registration on the fast path.
-int PyXmlSec_LxmlShadowRecordId(PyXmlSec_LxmlElementPtr element, const char* name, const char* ns);
+// onto its copy. The registry keeps `element` itself, so the replay applies a
+// spec to exactly the node it was registered for — `subtree` extends it to
+// the node's descendants, as add_ids (xmlSecAddIDs) does, while register_id
+// registers the one node. Registering every matching attribute of the
+// document instead would let an unrelated element with the same id value win
+// the lookup and steer a `#id` reference away from the registered one.
+int PyXmlSec_LxmlShadowRecordId(PyXmlSec_LxmlElementPtr element, const char* name, const char* ns, int subtree);
 
 // get version numbers for libxml2 both compiled and loaded
 long PyXmlSec_GetLibXmlVersionMajor();

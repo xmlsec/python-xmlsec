@@ -194,17 +194,22 @@ lxml's own dump of a tree it already parsed.
 hash with our libxml2 — exactly the cross-library access the shadow forbids.
 Under the shadow they record the id-attribute specs in a registry keyed by
 document identity (`RecordId`), and every `BeginDoc` replays them onto its
-copy so that `#id` references resolve during sign/verify/decrypt. The replay
-scans the whole copy for the recorded attribute names — a superset of the
-single-node registration on the raw path, mirroring what `xmlSecAddIDs` does
-from the root. lxml's classes refuse weak references, so an entry keeps a
-strong reference to its document instead: the key (the document's address)
-can then never go stale, and a document referenced by nothing but the
-registry is provably unreachable, so its entry — and the document with it —
-is dropped before the next registration. The registry therefore tracks the
-documents still in use and never evicts a live one. The two bindings are the only places,
-together with encrypt_xml/decrypt's replacement bodies, that branch on
-`IsActive()`.
+copy so that `#id` references resolve during sign/verify/decrypt. An entry
+keeps the registered elements themselves, so a spec is replayed at exactly
+the node it was registered for — that node alone for `register_id`, its
+subtree for `add_ids`, the scope `xmlSecAddIDs` walks. Registering every
+matching attribute of the copy instead would be unsafe, not merely generous:
+an unrelated element sharing the id value would claim it first and a `#id`
+reference could then resolve to content the caller never registered. lxml's
+classes refuse weak references, so the entry keeps strong references (to the
+document and to those elements) instead: the key (the document's address) can
+then never go stale, and since every element proxy holds a reference to its
+document, a document whose reference count is exactly what the registry holds
+— and whose registered elements nothing else holds — is provably unreachable,
+so its entry, and the document with it, is dropped before the next
+registration. The registry therefore tracks the documents still in use and
+never evicts a live one. The two bindings are the only places, together with
+encrypt_xml/decrypt's replacement bodies, that branch on `IsActive()`.
 
 ## Converting a binding
 
