@@ -115,7 +115,7 @@ static PyObject* PyXmlSec_LxmlEtreeCleanupNamespaces;
 static PyObject* PyXmlSec_LxmlEtreeParser;
 
 // Shadow-mode ID registry: maps the identity of an lxml document to the list
-// of id-attribute specs registered for it (see PyXmlSec_LxmlShadowRecordId).
+// of id-attribute specs registered for it (see PyXmlSec_LxmlShadowRegisterId).
 static PyObject* PyXmlSec_LxmlShadowIdRegistry;
 
 int PyXmlSec_LxmlShadowIsActive(void) {
@@ -880,6 +880,250 @@ static void PyXmlSec_LxmlShadowPruneIdRegistry(void) {
     Py_DECREF(dead);
 }
 
+// The value of `element`'s `name` attribute (in `ns` when given) as a str, a
+// new reference; Py_None when the element carries no such attribute. Without
+// a namespace the lookup goes by *local* name, whatever namespace the
+// attribute is in, because that is how the fast path matches: both
+// xmlHasProp() and xmlSecAddIDs() compare names only, where lxml's
+// element.get(name) would find an unqualified attribute alone.
+static PyObject* PyXmlSec_LxmlAttrValue(PyXmlSec_LxmlElementPtr element, const char* name, const char* ns) {
+    PyObject* items;
+    PyObject* seq;
+    PyObject* found = NULL;
+    Py_ssize_t i;
+    Py_ssize_t n;
+
+    if (ns != NULL) {
+        // lxml spells a namespaced attribute "{href}local".
+        PyObject* key = PyUnicode_FromFormat("{%s}%s", ns, name);
+        if (key == NULL) {
+            return NULL;
+        }
+        found = PyObject_CallMethod((PyObject*)element, "get", "O", key);
+        Py_DECREF(key);
+        return found;
+    }
+
+    items = PyObject_CallMethod((PyObject*)element, "items", NULL);
+    if (items == NULL) {
+        return NULL;
+    }
+    seq = PySequence_Fast(items, "unexpected attributes.");
+    Py_DECREF(items);
+    if (seq == NULL) {
+        return NULL;
+    }
+
+    n = PySequence_Fast_GET_SIZE(seq);
+    for (i = 0; i < n && found == NULL; ++i) {
+        PyObject* item = PySequence_Fast_GET_ITEM(seq, i);  // borrowed (name, value)
+        PyObject* key;
+        const char* local;
+        const char* end;
+
+        if (!PyTuple_Check(item) || PyTuple_GET_SIZE(item) != 2) {
+            PyErr_SetString(PyXmlSec_InternalError, "unexpected attribute.");
+            break;
+        }
+        key = PyTuple_GET_ITEM(item, 0);  // borrowed
+        if (!PyUnicode_Check(key) || (local = PyUnicode_AsUTF8(key)) == NULL) {
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(PyXmlSec_InternalError, "unexpected attribute name.");
+            }
+            break;
+        }
+        if (local[0] == '{' && (end = strchr(local, '}')) != NULL) {
+            local = end + 1;
+        }
+        if (strcmp(local, name) == 0) {
+            found = PyTuple_GET_ITEM(item, 1);  // borrowed
+            Py_INCREF(found);
+        }
+    }
+    Py_DECREF(seq);
+    if (found == NULL && !PyErr_Occurred()) {
+        Py_INCREF(Py_None);
+        found = Py_None;
+    }
+    return found;
+}
+
+// node.xpath(expr, n=name, v=value) — `name` is optional. The id lookups
+// below need XPath variables rather than an interpolated expression, so that
+// an id value never gets read as expression syntax.
+static PyObject* PyXmlSec_LxmlXPath(PyObject* node, const char* expr, PyObject* name, PyObject* value) {
+    PyObject* method;
+    PyObject* args = NULL;
+    PyObject* kwargs = NULL;
+    PyObject* rv = NULL;
+
+    method = PyObject_GetAttrString(node, "xpath");
+    if (method == NULL) {
+        return NULL;
+    }
+    args = Py_BuildValue("(s)", expr);
+    kwargs = PyDict_New();
+    if (args == NULL || kwargs == NULL || PyDict_SetItemString(kwargs, "v", value) < 0
+            || (name != NULL && PyDict_SetItemString(kwargs, "n", name) < 0)) {
+        goto DONE;
+    }
+    rv = PyObject_Call(method, args, kwargs);
+
+DONE:
+    Py_DECREF(method);
+    Py_XDECREF(args);
+    Py_XDECREF(kwargs);
+    return rv;
+}
+
+// Non-zero when `value` is registered as an XML ID in lxml's own document —
+// a DTD-declared id attribute, or an xml:id, both of which lxml's libxml2
+// entered into the document's id hash when it parsed the tree — for an
+// element other than `element`. That hash belongs to lxml's library and
+// cannot be read from here; XPath's id() is the one door into it that takes
+// and returns nothing but strings and elements.
+//
+// id() reads its argument as a whitespace-separated list of ids, so a value
+// carrying whitespace would probe the wrong strings entirely: such a value
+// is left to the registry check below, which compares whole values.
+static int PyXmlSec_LxmlShadowIdIsDeclared(PyXmlSec_LxmlElementPtr element, PyObject* value) {
+    PyObject* matches;
+    Py_ssize_t i;
+    Py_ssize_t n;
+    const char* text;
+    Py_ssize_t size;
+    int taken = 0;
+
+    text = PyUnicode_AsUTF8AndSize(value, &size);
+    if (text == NULL) {
+        return -1;
+    }
+    if (size == 0 || strcspn(text, " \t\r\n") != (size_t)size) {
+        return 0;
+    }
+
+    matches = PyXmlSec_LxmlXPath((PyObject*)element, "id($v)", NULL, value);
+    if (matches == NULL) {
+        return -1;
+    }
+    n = PySequence_Size(matches);
+    for (i = 0; i < n && !taken; ++i) {
+        PyObject* match = PySequence_GetItem(matches, i);
+        if (match == NULL) {
+            Py_DECREF(matches);
+            return -1;
+        }
+        // lxml hands out one proxy per node, so identity is node identity.
+        taken = match != (PyObject*)element;
+        Py_DECREF(match);
+    }
+    Py_DECREF(matches);
+    return n < 0 ? -1 : taken;
+}
+
+// Non-zero when `value` is already registered as an XML ID for anything but
+// `element`'s own `name` attribute — what the fast path finds when it tests
+// `xmlGetID(doc, value) != attr` and raises "duplicated id.". Under the
+// shadow the registrations live in two places: lxml's document (above), and
+// this registry, holding what earlier register_id/add_ids calls recorded and
+// every whole-document Begin replays. A registration for the very attribute
+// being registered is not a collision — the fast path's `tmpAttr == attr`
+// leaves the document alone and returns.
+static int PyXmlSec_LxmlShadowIdIsTaken(PyXmlSec_LxmlElementPtr element, const char* name, PyObject* value) {
+    PyObject* key;
+    PyObject* entry;
+    PyObject* nodes;
+    PyObject* specs;
+    Py_ssize_t i;
+    int taken;
+
+    taken = PyXmlSec_LxmlShadowIdIsDeclared(element, value);
+    if (taken != 0) {
+        return taken;
+    }
+
+    key = PyLong_FromVoidPtr((void*)element->_doc);
+    if (key == NULL) {
+        return -1;
+    }
+    entry = PyDict_GetItem(PyXmlSec_LxmlShadowIdRegistry, key);  // borrowed
+    Py_DECREF(key);
+    if (entry == NULL) {
+        return 0;
+    }
+
+    nodes = PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_NODES);
+    specs = PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_SPECS);
+    for (i = 0; i < PyList_GET_SIZE(specs); ++i) {
+        PyObject* spec = PyList_GET_ITEM(specs, i);  // (name, ns, node index, subtree)
+        PyObject* node = PyList_GET_ITEM(nodes, PyLong_AsSsize_t(PyTuple_GET_ITEM(spec, 2)));
+        PyObject* spec_ns = PyTuple_GET_ITEM(spec, 1);
+        const char* spec_name = PyUnicode_AsUTF8(PyTuple_GET_ITEM(spec, 0));
+        int subtree = PyObject_IsTrue(PyTuple_GET_ITEM(spec, 3));
+        int mine;
+
+        if (spec_name == NULL || subtree < 0) {
+            return -1;
+        }
+        // The same attribute of the same element: registering it again is
+        // the no-op the fast path performs, whoever recorded it first. The
+        // names alone decide it, as xmlHasProp's own matching does.
+        mine = strcmp(spec_name, name) == 0;
+        // A vacated slot, or an element adopted into another tree: neither
+        // stands for anything in this document, and the replay skips both.
+        if (node == Py_None || ((PyXmlSec_LxmlElementPtr)node)->_doc != element->_doc) {
+            continue;
+        }
+        if (subtree) {
+            // add_ids: the spec claims the value for whichever element of the
+            // subtree carries it, xmlSecAddIDs matching by name alone.
+            PyObject* matches = PyXmlSec_LxmlXPath(node, "descendant-or-self::*[@*[local-name()=$n]=$v]",
+                                                   PyTuple_GET_ITEM(spec, 0), value);
+            Py_ssize_t j;
+            Py_ssize_t n;
+            if (matches == NULL) {
+                return -1;
+            }
+            n = PySequence_Size(matches);
+            for (j = 0; j < n && !taken; ++j) {
+                PyObject* match = PySequence_GetItem(matches, j);
+                if (match == NULL) {
+                    Py_DECREF(matches);
+                    return -1;
+                }
+                taken = !(mine && match == (PyObject*)element);
+                Py_DECREF(match);
+            }
+            Py_DECREF(matches);
+            if (n < 0) {
+                return -1;
+            }
+        } else {
+            const char* spec_href = spec_ns == Py_None ? NULL : PyUnicode_AsUTF8(spec_ns);
+            PyObject* other;
+            int same;
+
+            if (spec_href == NULL && spec_ns != Py_None) {
+                return -1;
+            }
+            other = PyXmlSec_LxmlAttrValue((PyXmlSec_LxmlElementPtr)node, spec_name, spec_href);
+            if (other == NULL) {
+                return -1;
+            }
+            same = PyObject_RichCompareBool(other, value, Py_EQ);
+            Py_DECREF(other);
+            if (same < 0) {
+                return -1;
+            }
+            taken = same && !(mine && node == (PyObject*)element);
+        }
+        if (taken) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int PyXmlSec_LxmlShadowRecordIds(PyXmlSec_LxmlElementPtr element, PyObject* names, const char* ns, int subtree) {
     PyObject* key = NULL;
     PyObject* created = NULL;
@@ -973,14 +1217,40 @@ DONE:
     return result;
 }
 
-int PyXmlSec_LxmlShadowRecordId(PyXmlSec_LxmlElementPtr element, const char* name, const char* ns, int subtree) {
-    PyObject* names = Py_BuildValue("[s]", name);
+int PyXmlSec_LxmlShadowRegisterId(PyXmlSec_LxmlElementPtr element, const char* name, const char* ns) {
+    PyObject* value = PyXmlSec_LxmlAttrValue(element, name, ns);
+    PyObject* names;
+    int taken;
     int rv;
 
+    if (value == NULL) {
+        return -1;
+    }
+    if (value == Py_None) {
+        Py_DECREF(value);
+        PyErr_SetString(PyXmlSec_Error, "missing attribute.");
+        return -1;
+    }
+    taken = PyXmlSec_LxmlShadowIdIsTaken(element, name, value);
+    Py_DECREF(value);
+    if (taken < 0) {
+        return -1;
+    }
+    if (taken) {
+        // The requested attribute cannot win the lookup, so the registration
+        // is refused rather than recorded and silently skipped at replay:
+        // the caller would otherwise never learn that its `#id` reference
+        // resolves to the element that claimed the value first.
+        PyErr_SetString(PyXmlSec_Error, "duplicated id.");
+        return -1;
+    }
+
+    // Scope 0: this node alone, exactly what the fast path registers.
+    names = Py_BuildValue("[s]", name);
     if (names == NULL) {
         return -1;
     }
-    rv = PyXmlSec_LxmlShadowRecordIds(element, names, ns, subtree);
+    rv = PyXmlSec_LxmlShadowRecordIds(element, names, ns, 0);
     Py_DECREF(names);
     return rv;
 }

@@ -65,6 +65,40 @@ class TestSignContext(base.TestMemoryLeaks):
         sign.set('{http://www.example.org/ns}Id', 'sig-1')
         ctx.register_id(sign, 'Id')
 
+    def test_register_id_rejects_an_id_value_already_registered(self):
+        """A value another registration claimed cannot be registered again: only one attribute can win the id lookup."""
+        ctx = xmlsec.SignatureContext()
+        root = etree.fromstring(b'<Root><Decoy ID="dup"/><Real Id="dup"/></Root>')
+        ctx.register_id(root[0], 'ID')
+        with self.assertRaisesRegex(xmlsec.Error, 'duplicated id.'):
+            ctx.register_id(root[1], 'Id')
+
+    def test_register_id_rejects_an_id_value_the_document_declares(self):
+        """An xml:id the document was parsed with already claims the value, so another attribute for it is refused."""
+        root = etree.fromstring(b'<Root><A xml:id="dup"/><B ID="dup"/></Root>')
+        with self.assertRaisesRegex(xmlsec.Error, 'duplicated id.'):
+            xmlsec.SignatureContext().register_id(root[1], 'ID')
+
+    def test_register_id_rejects_an_id_value_add_ids_claimed(self):
+        """Registrations made over a subtree by add_ids claim their values too."""
+        root = etree.fromstring(b'<Root><Scope><A ID="dup"/></Scope><B Id="dup"/></Root>')
+        xmlsec.tree.add_ids(root[0], ['ID'])
+        with self.assertRaisesRegex(xmlsec.Error, 'duplicated id.'):
+            xmlsec.SignatureContext().register_id(root[1], 'Id')
+
+    def test_register_id_accepts_the_same_attribute_twice(self):
+        """Re-registering an attribute is the no-op the id lookup already resolves; only another claim is a duplicate."""
+        ctx = xmlsec.SignatureContext()
+        root = etree.fromstring(b'<Root><N ID="dup"/></Root>')
+        ctx.register_id(root[0], 'ID')
+        ctx.register_id(root[0], 'ID')
+
+    def test_register_id_accepts_an_attribute_add_ids_registered(self):
+        """add_ids already registered this very attribute, which the fast path's `tmpAttr == attr` accepts."""
+        root = etree.fromstring(b'<Root><Scope><A ID="dup"/></Scope></Root>')
+        xmlsec.tree.add_ids(root[0], ['ID'])
+        xmlsec.SignatureContext().register_id(root[0][0], 'ID')
+
     def test_register_id_with_namespace_without_attribute(self):
         ctx = xmlsec.SignatureContext()
         root = self.load_xml('sign_template.xml')

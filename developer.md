@@ -71,7 +71,7 @@ End always releases the copy, on success and on error.
 
 Plus three helpers for the call sites whose *semantics* differ per mode:
 `IsActive()` (which path is on), `ImportElement()` (encrypt_xml's template
-import into the shadow document) and `RecordId()` (ID registration, below).
+import into the shadow document) and `RegisterId()` (ID registration, below).
 
 Which pair a binding uses follows from what the xmlsec call does:
 
@@ -201,7 +201,7 @@ lxml's own dump of a tree it already parsed.
 `SignatureContext.register_id` and `tree.add_ids` used to write lxml's ID
 hash with our libxml2 — exactly the cross-library access the shadow forbids.
 Under the shadow they record the id-attribute specs in a registry keyed by
-document identity (`RecordId`), and every `BeginDoc` replays them onto its
+document identity (`RegisterId`, `RecordIds`), and every `BeginDoc` replays them onto its
 copy so that `#id` references resolve during sign/verify/decrypt. An entry
 keeps the registered elements themselves, so a spec is replayed at exactly
 the node it was registered for — that node alone for `register_id`, its
@@ -218,6 +218,19 @@ so its entry, and the document with it, is dropped before the next
 registration. The registry therefore tracks the documents still in use and
 never evicts a live one. The two bindings are the only places, together with
 encrypt_xml/decrypt's replacement bodies, that branch on `IsActive()`.
+
+`register_id` still refuses a duplicate id the way the fast path does, and at
+the same call: `xmlGetID(doc, value) != attr` — the test that raises
+`duplicated id.` — is assembled from the two places a registration can live
+under the shadow. What lxml's own parse declared (a DTD id attribute, an
+`xml:id`) is read back through XPath's `id()`, the one door into lxml's id
+hash that passes nothing but strings and elements; what earlier
+`register_id`/`add_ids` calls claimed is read from the registry, a subtree
+spec through one XPath over its scope. Deferring the check to the replay
+instead would raise from the wrong call — a later `sign`, and then from every
+later call on that document — and would leave the caller believing a
+registration took that can never win the lookup. `add_ids` keeps its own
+semantics: `xmlSecAddIDs` registers first-wins and never raises.
 
 ## Converting a binding
 
@@ -246,7 +259,11 @@ All invisible to the documented API:
   document until grafted;
 - `encrypted_data_ensure_key_info(ns=...)` on an existing `KeyInfo` returns
   a new element object rather than the original proxy;
-- `register_id` skips the live duplicate-id check (it runs per copy instead);
+- `register_id`'s duplicate-id check cannot see an id value that contains
+  whitespace among lxml's declared ids (XPath's `id()` would read it as a
+  list of ids), so such a value is compared against the registry alone; a
+  registration whose element has since been adopted into another document
+  claims nothing, as at replay;
 - `encrypt_xml` encrypts a *copy* of the template, so the caller's template
   proxy is not the returned element; a template attached in the target's own
   document is unlinked afterwards (keeping its tail text where libxml2 would

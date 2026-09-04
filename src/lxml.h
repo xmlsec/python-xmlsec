@@ -101,10 +101,10 @@ int PyXmlSec_LxmlShadowBegin(PyXmlSec_LxmlShadow* shadow, PyXmlSec_LxmlElementPt
 // subtree (sign/verify, encrypt/decrypt, find_parent). Serializes
 // element.getroottree() — comments/PIs outside the root and the internal DTD
 // subset survive — and replays the IDs registered for the document
-// (RecordId) onto the copy so that #id references resolve. `*target`
-// receives the copy's counterpart of `element` (the live node itself on the
-// fast path); `shadow.root` / `shadow.element` become the copy root / the
-// live root, which is what the End functions map paths between.
+// (RegisterId/RecordIds) onto the copy so that #id references resolve.
+// `*target` receives the copy's counterpart of `element` (the live node
+// itself on the fast path); `shadow.root` / `shadow.element` become the copy
+// root / the live root, which is what the End functions map paths between.
 int PyXmlSec_LxmlShadowBeginDoc(PyXmlSec_LxmlShadow* shadow, PyXmlSec_LxmlElementPtr element, xmlNodePtr* target);
 
 // Create shape (template.create, encrypted_data_create): the call only needs
@@ -155,7 +155,13 @@ xmlNodePtr PyXmlSec_LxmlShadowImportElement(PyXmlSec_LxmlShadow* shadow, PyXmlSe
 // registers the one node. Registering every matching attribute of the
 // document instead would let an unrelated element with the same id value win
 // the lookup and steer a `#id` reference away from the registered one.
-int PyXmlSec_LxmlShadowRecordId(PyXmlSec_LxmlElementPtr element, const char* name, const char* ns, int subtree);
+//
+// This is the whole of register_id under the shadow: it validates what the
+// fast path validates — "missing attribute." for an absent one, "duplicated
+// id." when the value is already registered for another attribute — and
+// records the spec for the node alone. Returns 0, or -1 with the exception
+// the fast path would have raised.
+int PyXmlSec_LxmlShadowRegisterId(PyXmlSec_LxmlElementPtr element, const char* name, const char* ns);
 
 // The same for a whole list of attribute names (`names`, a list of str), for
 // add_ids: either every name is recorded or, if anything fails, none is —
