@@ -55,6 +55,14 @@ class TestSignContext(base.TestMemoryLeaks):
         with self.assertRaises(TypeError):
             ctx.register_id('')
 
+    def test_register_id_matches_namespaced_attribute_by_local_name(self):
+        """Should accept a namespaced id attribute when no id_ns is given, as xmlHasProp does."""
+        ctx = xmlsec.SignatureContext()
+        root = self.load_xml('sign_template.xml')
+        sign = xmlsec.template.create(root, consts.TransformExclC14N, consts.TransformRsaSha1)
+        sign.set('{http://www.example.org/ns}Id', 'sig-1')
+        ctx.register_id(sign, 'Id')
+
     def test_register_id_with_namespace_without_attribute(self):
         ctx = xmlsec.SignatureContext()
         root = self.load_xml('sign_template.xml')

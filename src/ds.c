@@ -119,6 +119,50 @@ static int PyXmlSec_SignatureContextKeySet(PyObject* self, PyObject* value, void
     return 0;
 }
 
+// Non-zero when `node` carries an attribute whose *local* name is `name`,
+// whatever its namespace, -1 with an exception set on failure. The fast
+// path's xmlHasProp() matches that way, while lxml's node.get(name) only
+// finds an unqualified attribute; the shadow's validation goes through this
+// so that both modes accept the same calls.
+static int PyXmlSec_LxmlHasAttrByLocalName(PyXmlSec_LxmlElementPtr node, const char* name) {
+    PyObject* keys;
+    PyObject* seq;
+    Py_ssize_t i;
+    Py_ssize_t n;
+    int found = 0;
+
+    keys = PyObject_CallMethod((PyObject*)node, "keys", NULL);
+    if (keys == NULL) {
+        return -1;
+    }
+    seq = PySequence_Fast(keys, "unexpected attribute names.");
+    Py_DECREF(keys);
+    if (seq == NULL) {
+        return -1;
+    }
+
+    n = PySequence_Fast_GET_SIZE(seq);
+    for (i = 0; i < n && !found; ++i) {
+        PyObject* key = PySequence_Fast_GET_ITEM(seq, i);  // borrowed
+        const char* local;
+        const char* end;
+        if (!PyUnicode_Check(key) || (local = PyUnicode_AsUTF8(key)) == NULL) {
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(PyXmlSec_InternalError, "unexpected attribute name.");
+            }
+            Py_DECREF(seq);
+            return -1;
+        }
+        // lxml spells a namespaced attribute "{href}local".
+        if (local[0] == '{' && (end = strchr(local, '}')) != NULL) {
+            local = end + 1;
+        }
+        found = strcmp(local, name) == 0;
+    }
+    Py_DECREF(seq);
+    return found;
+}
+
 static const char PyXmlSec_SignatureContextRegisterId__doc__[] = \
     "register_id(node, id_attr = 'ID', id_ns = None) -> None\n"
     "Registers new id.\n\n"
@@ -151,27 +195,31 @@ static PyObject* PyXmlSec_SignatureContextRegisterId(PyObject* self, PyObject* a
     // whole-document shadows (sign/verify/decrypt) replay it onto their
     // private copies. The duplicate-id check runs there, per copy.
     if (PyXmlSec_LxmlShadowIsActive()) {
-        PyObject* key;
-        PyObject* value;
+        int found;
         if (id_ns != NULL) {
-            key = PyUnicode_FromFormat("{%s}%s", id_ns, id_attr);
-        } else {
-            key = PyUnicode_FromString(id_attr);
-        }
-        if (key == NULL) {
-            goto ON_FAIL;
-        }
-        value = PyObject_CallMethod((PyObject*)node, "get", "O", key);
-        Py_DECREF(key);
-        if (value == NULL) {
-            goto ON_FAIL;
-        }
-        if (value == Py_None) {
+            PyObject* key = PyUnicode_FromFormat("{%s}%s", id_ns, id_attr);
+            PyObject* value;
+            if (key == NULL) {
+                goto ON_FAIL;
+            }
+            value = PyObject_CallMethod((PyObject*)node, "get", "O", key);
+            Py_DECREF(key);
+            if (value == NULL) {
+                goto ON_FAIL;
+            }
+            found = value != Py_None;
             Py_DECREF(value);
+        } else {
+            // As xmlHasProp() does on the fast path: by local name.
+            found = PyXmlSec_LxmlHasAttrByLocalName(node, id_attr);
+            if (found < 0) {
+                goto ON_FAIL;
+            }
+        }
+        if (!found) {
             PyErr_SetString(PyXmlSec_Error, "missing attribute.");
             goto ON_FAIL;
         }
-        Py_DECREF(value);
         if (PyXmlSec_LxmlShadowRecordId(node, id_attr, id_ns) < 0) {
             goto ON_FAIL;
         }

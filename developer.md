@@ -231,9 +231,7 @@ All invisible to the documented API:
   document until grafted;
 - `encrypted_data_ensure_key_info(ns=...)` on an existing `KeyInfo` returns
   a new element object rather than the original proxy;
-- `register_id` skips the live duplicate-id check (it runs per copy instead)
-  and, without `id_ns`, looks the attribute up namespace-strictly where the
-  raw `xmlHasProp` is namespace-agnostic;
+- `register_id` skips the live duplicate-id check (it runs per copy instead);
 - `encrypt_xml` *copies* a template that is attached inside the target tree
   rather than moving it, so it also remains at its original position;
 - signature/encryption contexts keep no live result nodes after the call
