@@ -256,6 +256,27 @@ class TestSignContext(base.TestMemoryLeaks):
         verify_ctx.key = xmlsec.Key.from_file(self.path('rsapub.pem'), format=consts.KeyDataFormatPem)
         verify_ctx.verify(sign)
 
+    # A document whose id attribute is typed by an external DTD subset — the
+    # declarations live in a file the DOCTYPE names, and only a parse that
+    # loads it knows "#ext" resolves to the Node (issue #356).
+    EXTERNAL_DTD_XML = b'<!DOCTYPE Root SYSTEM "id_attr.dtd">\n<Root><Node ID="ext"><Data>signed</Data></Node></Root>\n'
+
+    def test_sign_and_verify_with_an_id_an_external_dtd_declares(self):
+        """Should resolve a #id reference whose id attribute an external subset the caller loaded declares."""
+        root = etree.fromstring(self.EXTERNAL_DTD_XML, etree.XMLParser(load_dtd=True), base_url=self.path('doc.xml'))
+        sign = xmlsec.template.create(root, consts.TransformExclC14N, consts.TransformRsaSha1, ns='ds')
+        root.append(sign)
+        ref = xmlsec.template.add_reference(sign, consts.TransformSha1, uri='#ext')
+        xmlsec.template.add_transform(ref, consts.TransformExclC14N)
+
+        ctx = xmlsec.SignatureContext()
+        ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
+        ctx.sign(sign)
+
+        verify_ctx = xmlsec.SignatureContext()
+        verify_ctx.key = xmlsec.Key.from_file(self.path('rsapub.pem'), format=consts.KeyDataFormatPem)
+        verify_ctx.verify(sign)
+
     # A document where an unregistered element carries the same id value as the
     # registered one, and comes first. Only the registered element may answer
     # the "#dup" reference (issue #356).

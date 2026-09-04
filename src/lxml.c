@@ -253,7 +253,15 @@ static PyObject* PyXmlSec_LxmlElementFromBytes(PyObject* data) {
 // Parses `bytes` into a private document with a root element, or returns
 // NULL with an exception set (`error` for parse failures). `url` is the base
 // URI the copy gets (see PyXmlSec_LxmlDocumentUrl); NULL when there is none.
-static xmlDocPtr PyXmlSec_LxmlShadowParse(PyObject* bytes, const char* url, const char* error) {
+// `external_dtd` says the source document loaded an external subset: the dump
+// keeps only the DOCTYPE reference to it, and its declarations are what typed
+// the document's ID attributes, so the copy has to load it too or resolve no
+// #id reference the DTD declared. DTDLOAD alone, never DTDATTR — libxml2
+// fills in defaulted attributes only under the latter, and the copy must stay
+// what lxml serialized. NONET keeps the fetch to the local file the source
+// document already named, resolved against the same base URI.
+static xmlDocPtr PyXmlSec_LxmlShadowParse(PyObject* bytes, const char* url, int external_dtd, const char* error) {
+    int options = PYXMLSEC_SHADOW_PARSE_OPTIONS | (external_dtd ? XML_PARSE_DTDLOAD : 0);
     char* data = NULL;
     Py_ssize_t size = 0;
     xmlDocPtr doc;
@@ -261,7 +269,7 @@ static xmlDocPtr PyXmlSec_LxmlShadowParse(PyObject* bytes, const char* url, cons
     if (PyBytes_AsStringAndSize(bytes, &data, &size) < 0) {
         return NULL;
     }
-    doc = xmlReadMemory(data, (int)size, url, NULL, PYXMLSEC_SHADOW_PARSE_OPTIONS);
+    doc = xmlReadMemory(data, (int)size, url, NULL, options);
     if (doc == NULL || xmlDocGetRootElement(doc) == NULL) {
         if (doc != NULL) {
             xmlFreeDoc(doc);
@@ -308,23 +316,36 @@ static int PyXmlSec_LxmlDocumentUrl(PyObject* tree, PyObject** holder, const cha
     return 0;
 }
 
-// Whether `tree` carries an internal DTD subset — the only place a document
-// lxml parsed can declare the entities its `&name;` references name, and so
-// what decides whether a subtree may be serialized on its own (see Begin).
-static int PyXmlSec_LxmlDocumentHasInternalDtd(PyObject* tree, int* dtd) {
+// The DTD subsets of the document `tree` belongs to. The internal one (lxml
+// reports one for any DOCTYPE declaration) is where a document lxml parsed
+// declares the entities its `&name;` references name, and so decides whether
+// a subtree may be serialized on its own (see Begin). The external one is
+// reported only when lxml actually loaded it — the caller asked for it with
+// load_dtd — and the copy then has to load it as well, since its declarations
+// are what typed the document's ID attributes (see PyXmlSec_LxmlShadowParse).
+// Returns 0, or -1 with an exception set.
+static int PyXmlSec_LxmlDocumentSubsets(PyObject* tree, int* internal, int* external) {
     PyObject* info = PyObject_GetAttrString(tree, "docinfo");
     PyObject* value;
 
-    *dtd = 0;
+    *internal = 0;
+    *external = 0;
     if (info == NULL) {
         return -1;
     }
     value = PyObject_GetAttrString(info, "internalDTD");
+    if (value == NULL) {
+        Py_DECREF(info);
+        return -1;
+    }
+    *internal = value != Py_None;
+    Py_DECREF(value);
+    value = PyObject_GetAttrString(info, "externalDTD");
     Py_DECREF(info);
     if (value == NULL) {
         return -1;
     }
-    *dtd = value != Py_None;
+    *external = value != Py_None;
     Py_DECREF(value);
     return 0;
 }
@@ -348,10 +369,31 @@ static int PyXmlSec_LxmlDocumentHasInternalDtd(PyObject* tree, int* dtd) {
 #define PYXMLSEC_SHADOW_TAG(shadow, n) \
     (PYXMLSEC_SHADOW_TAGGED(shadow, n) ? (PyXmlSec_LxmlShadowTag*)(n)->_private : NULL)
 
-static int PyXmlSec_LxmlShadowCountNodes(xmlNodePtr node) {
+// The walks over the copy's own structure — this one, TagNodes and
+// CollectSites — recurse once per level of nesting, so they need a ceiling of
+// their own. libxml2 2.14 and later refuse a parse deeper than 2048 levels
+// even under XML_PARSE_HUGE, so a copy parsed by one of those can never reach
+// it; older libxml2 lifts its cap entirely under HUGE (checked: 2.9.13 parses
+// a 200000-level document, and the unguarded walk then overruns the C stack),
+// and lxml hands over trees that were never parsed on its side at all — one
+// built element by element has no limit whatsoever. Anything deeper fails
+// cleanly here rather than crashing; sites deeper than
+// PYXMLSEC_SHADOW_MAX_DEPTH are refused later anyway.
+#define PYXMLSEC_SHADOW_MAX_NESTING 2048
+
+// Number of nodes in the list at `node` and under it, or -1 when the tree is
+// nested deeper than the walks go.
+static int PyXmlSec_LxmlShadowCountNodes(xmlNodePtr node, int depth) {
     int count = 0;
+    if (depth >= PYXMLSEC_SHADOW_MAX_NESTING) {
+        return -1;
+    }
     for (; node != NULL; node = node->next) {
-        count += 1 + PyXmlSec_LxmlShadowCountNodes(node->children);
+        int children = PyXmlSec_LxmlShadowCountNodes(node->children, depth + 1);
+        if (children < 0) {
+            return -1;
+        }
+        count += 1 + children;
     }
     return count;
 }
@@ -372,6 +414,8 @@ static unsigned long long PyXmlSec_LxmlShadowContentPrint(xmlNodePtr node) {
 }
 
 // Hands out `shadow->tags` in document order; returns the next free slot.
+// Runs only after CountNodes succeeded, so the tree it walks is within
+// PYXMLSEC_SHADOW_MAX_NESTING and this recursion is bounded with it.
 static int PyXmlSec_LxmlShadowTagNodes(PyXmlSec_LxmlShadow* shadow, xmlNodePtr node, int next) {
     for (; node != NULL; node = node->next) {
         PyXmlSec_LxmlShadowTag* tag = &shadow->tags[next++];
@@ -390,8 +434,12 @@ static int PyXmlSec_LxmlShadowTagNodes(PyXmlSec_LxmlShadow* shadow, xmlNodePtr n
 // Tags every node of the freshly parsed copy. Returns 0, or -1 with an
 // exception set.
 static int PyXmlSec_LxmlShadowMark(PyXmlSec_LxmlShadow* shadow) {
-    int count = PyXmlSec_LxmlShadowCountNodes(shadow->doc->children);
+    int count = PyXmlSec_LxmlShadowCountNodes(shadow->doc->children, 0);
 
+    if (count < 0) {
+        PyErr_SetString(PyXmlSec_InternalError, "the document is nested too deeply.");
+        return -1;
+    }
     shadow->tags = (PyXmlSec_LxmlShadowTag*)PyMem_Malloc((count > 0 ? count : 1) * sizeof(*shadow->tags));
     if (shadow->tags == NULL) {
         PyErr_NoMemory();
@@ -646,6 +694,7 @@ int PyXmlSec_LxmlShadowBegin(PyXmlSec_LxmlShadow* shadow, PyXmlSec_LxmlElementPt
     int path[PYXMLSEC_SHADOW_MAX_DEPTH];
     int depth = 0;
     int dtd = 0;
+    int extdtd = 0;
 
     shadow->element = element;
     shadow->owned = NULL;
@@ -667,7 +716,7 @@ int PyXmlSec_LxmlShadowBegin(PyXmlSec_LxmlShadow* shadow, PyXmlSec_LxmlElementPt
         goto ON_FAIL;
     }
     if (PyXmlSec_LxmlDocumentUrl(tree, &url_holder, &url) < 0
-            || PyXmlSec_LxmlDocumentHasInternalDtd(tree, &dtd) < 0) {
+            || PyXmlSec_LxmlDocumentSubsets(tree, &dtd, &extdtd) < 0) {
         goto ON_FAIL;
     }
 
@@ -690,7 +739,7 @@ int PyXmlSec_LxmlShadowBegin(PyXmlSec_LxmlShadow* shadow, PyXmlSec_LxmlElementPt
     if (bytes == NULL) {
         goto ON_FAIL;
     }
-    shadow->doc = PyXmlSec_LxmlShadowParse(bytes, url, "cannot make a private copy of the element.");
+    shadow->doc = PyXmlSec_LxmlShadowParse(bytes, url, extdtd, "cannot make a private copy of the element.");
     Py_CLEAR(bytes);
     Py_CLEAR(url_holder);
     if (shadow->doc == NULL) {
@@ -1361,6 +1410,8 @@ int PyXmlSec_LxmlShadowBeginDoc(PyXmlSec_LxmlShadow* shadow, PyXmlSec_LxmlElemen
     const char* url = NULL;
     int path[PYXMLSEC_SHADOW_MAX_DEPTH];
     int depth;
+    int dtd = 0;
+    int extdtd = 0;
 
     shadow->element = element;
     shadow->owned = NULL;
@@ -1390,12 +1441,15 @@ int PyXmlSec_LxmlShadowBeginDoc(PyXmlSec_LxmlShadow* shadow, PyXmlSec_LxmlElemen
     if (tree == NULL) {
         goto ON_FAIL;
     }
+    // The whole tree is dumped either way here, so only the external subset
+    // matters: it has to be loaded for the copy to know the IDs it declares.
     bytes = PyObject_CallFunctionObjArgs(PyXmlSec_LxmlEtreeToString, tree, NULL);
-    if (bytes == NULL || PyXmlSec_LxmlDocumentUrl(tree, &url_holder, &url) < 0) {
+    if (bytes == NULL || PyXmlSec_LxmlDocumentUrl(tree, &url_holder, &url) < 0
+            || PyXmlSec_LxmlDocumentSubsets(tree, &dtd, &extdtd) < 0) {
         goto ON_FAIL;
     }
     Py_CLEAR(tree);
-    shadow->doc = PyXmlSec_LxmlShadowParse(bytes, url, "cannot make a private copy of the document.");
+    shadow->doc = PyXmlSec_LxmlShadowParse(bytes, url, extdtd, "cannot make a private copy of the document.");
     Py_CLEAR(bytes);
     Py_CLEAR(url_holder);
     if (shadow->doc == NULL) {
@@ -1513,13 +1567,19 @@ static int PyXmlSec_LxmlShadowSiteAppend(PyXmlSec_LxmlShadowSiteList* list, xmlN
 // for a parent that no longer holds the children it was tagged with, whose
 // text slots are the only trace the removal left, or one whose own text
 // survived the call but with different content.
-static int PyXmlSec_LxmlShadowCollectSites(PyXmlSec_LxmlShadowSiteList* list, xmlNodePtr parent) {
+static int PyXmlSec_LxmlShadowCollectSites(PyXmlSec_LxmlShadowSiteList* list, xmlNodePtr parent, int depth) {
     PyXmlSec_LxmlShadowTag* tag = PYXMLSEC_SHADOW_TAG(list->shadow, parent);
     xmlNodePtr n;
     int fresh = 0;
     int tagged = 0;
     int rewritten = 0;
 
+    // Checked here too, and not only in Mark: the call being reflected can
+    // have grafted whole subtrees of its own into the copy since.
+    if (depth >= PYXMLSEC_SHADOW_MAX_NESTING) {
+        PyErr_SetString(PyXmlSec_InternalError, "the document is nested too deeply.");
+        return -1;
+    }
     for (n = parent->children; n != NULL; n = n->next) {
         PyXmlSec_LxmlShadowTag* child_tag = PYXMLSEC_SHADOW_TAG(list->shadow, n);
         if (child_tag != NULL) {
@@ -1527,7 +1587,7 @@ static int PyXmlSec_LxmlShadowCollectSites(PyXmlSec_LxmlShadowSiteList* list, xm
             if (child_tag->content != PyXmlSec_LxmlShadowContentPrint(n)) {
                 rewritten = 1;
             }
-            if (n->type == XML_ELEMENT_NODE && PyXmlSec_LxmlShadowCollectSites(list, n) < 0) {
+            if (n->type == XML_ELEMENT_NODE && PyXmlSec_LxmlShadowCollectSites(list, n, depth + 1) < 0) {
                 return -1;
             }
             continue;
@@ -1788,7 +1848,7 @@ static int PyXmlSec_LxmlShadowReflectSites(PyXmlSec_LxmlShadow* shadow) {
         }
         goto DONE;
     }
-    if (PyXmlSec_LxmlShadowCollectSites(&list, list.top) < 0) {
+    if (PyXmlSec_LxmlShadowCollectSites(&list, list.top, 0) < 0) {
         goto DONE;
     }
     if (list.count == 0) {
@@ -2049,7 +2109,7 @@ xmlNodePtr PyXmlSec_LxmlShadowImportElement(PyXmlSec_LxmlShadow* shadow, PyXmlSe
     if (bytes == NULL) {
         return NULL;
     }
-    tdoc = PyXmlSec_LxmlShadowParse(bytes, NULL, "cannot make a private copy of the element.");
+    tdoc = PyXmlSec_LxmlShadowParse(bytes, NULL, 0, "cannot make a private copy of the element.");
     Py_DECREF(bytes);
     if (tdoc == NULL) {
         return NULL;

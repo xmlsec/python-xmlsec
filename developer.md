@@ -270,8 +270,21 @@ All invisible to the documented API:
   leave it), so the resulting tree matches the raw path's move;
 - signature/encryption contexts keep no live result nodes after the call
   (they never usefully did);
-- documents nested deeper than 256 levels (only possible with `huge_tree`)
-  are refused with an internal error;
+- a mutation site deeper than 256 levels is refused with an internal error,
+  and so is a document nested deeper than 2048 levels — the ceiling libxml2
+  2.14 and later put on a parse even under `XML_PARSE_HUGE`. The copy's own
+  walks enforce that ceiling for themselves, since an older libxml2 lifts its
+  cap entirely under `HUGE` (2.9.13 parses a 200000-level document) and lxml
+  can hand over a tree that was never parsed on its side at all;
+- when the source document loaded an external DTD subset (`load_dtd=True`),
+  the copy is parsed with `XML_PARSE_DTDLOAD`, so that the IDs the DTD
+  declares type the copy's attributes as well and `#id` references over them
+  resolve. What is fetched is the local file the document's own DOCTYPE
+  names, resolved against the same base URI, with the network still off and
+  attribute defaulting (`XML_PARSE_DTDATTR`) still off — the copy must stay
+  what lxml serialized. A DTD lxml obtained through a Python resolver of its
+  own is invisible to that parse, so the ids it declares are not carried
+  across;
 - a subtree of a document that declares entities in its internal subset
   (`resolve_entities=False`) is copied by copying the whole document and
   cutting it back to the element, since the subtree's `&name;` references

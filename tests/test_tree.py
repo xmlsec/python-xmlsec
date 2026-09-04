@@ -73,6 +73,19 @@ class TestTree(base.TestMemoryLeaks):
         self.assertIs(root[0], xmlsec.tree.find_parent(si, consts.NodeSignature))
         self.assertEqual(before, etree.tostring(root.getroottree()))
 
+    def test_deeply_nested_document_fails_cleanly(self):
+        """A tree nested deeper than the private copy walks must be refused, never crash (issue #356)."""
+        root = etree.Element('Root')
+        deepest = root
+        for _ in range(3000):  # past the 2048 levels libxml2 2.14+ parses, and the walks' own ceiling
+            deepest = etree.SubElement(deepest, 'a')
+        etree.SubElement(deepest, f'{{{consts.DSigNs}}}Signature')
+        try:
+            found = xmlsec.tree.find_node(root, consts.NodeSignature, consts.DSigNs)
+        except xmlsec.InternalError:
+            return  # the shadow path refuses a document this deep
+        self.assertEqual(consts.NodeSignature, found.tag.partition('}')[2])
+
     def test_add_ids_bad_args(self):
         with self.assertRaises(TypeError):
             xmlsec.tree.add_ids('', [])
