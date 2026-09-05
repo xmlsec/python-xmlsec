@@ -217,18 +217,35 @@ Under the shadow they record the id-attribute specs in a registry keyed by
 document identity (`RegisterId`, `RecordIds`), and every `BeginDoc` replays them onto its
 copy so that `#id` references resolve during sign/verify/decrypt. An entry
 keeps the registered elements themselves, so a spec is replayed at exactly
-the node it was registered for — that node alone for `register_id`, its
-subtree for `add_ids`, the scope `xmlSecAddIDs` walks. Registering every
-matching attribute of the copy instead would be unsafe, not merely generous:
-an unrelated element sharing the id value would claim it first and a `#id`
-reference could then resolve to content the caller never registered. lxml's
+the node it was registered for. Registering every matching attribute of the
+copy instead would be unsafe, not merely generous: an unrelated element
+sharing the id value would claim it first and a `#id` reference could then
+resolve to content the caller never registered.
+
+`add_ids` covers a whole scope, and that scope is walked **at the call**:
+`RecordIds` expands it into one spec per element carrying one of the names,
+element by element in document order and, within an element, in the order of
+the names — the registration `xmlSecAddIDs` makes, at the moment it makes it.
+Leaving the scope to be walked at the replay would register whatever the tree
+had become by the time something was signed: an element that grew the
+attribute, or joined the scope, after the call would resolve under the shadow
+where the fast path never registered it, and two elements claiming one value
+under different names would be ordered by name rather than by document
+order — a `#id` covering different content on the two paths. lxml's
 classes refuse weak references, so the entry keeps strong references (to the
 document and to those elements) instead: the key (the document's address) can
 then never go stale, and since every element proxy holds a reference to its
 document, a document whose reference count is exactly what the registry holds
 — and whose registered elements nothing else holds — is provably unreachable,
 so its entry, and the document with it, is dropped before the next
-registration. The registry therefore tracks the documents still in use and
+registration. Registrations are retired one by one on the same principle: a
+slot whose proxy the registry alone holds, hanging in a tree that is not its
+document's, cannot be reached again — lxml keeps an unlinked subtree only for
+as long as a proxy remains somewhere in it, and the fast path's id entry dies
+at exactly that moment too, when libxml2 frees the attribute. The slot is
+vacated (and reused by the next registration), so registering and dropping
+elements on a long-lived document neither grows the registry nor keeps their
+values claimed. The registry therefore tracks the documents still in use and
 never evicts a live one. The two bindings are the only places, together with
 encrypt_xml/decrypt's replacement bodies, that branch on `IsActive()`.
 
@@ -238,8 +255,8 @@ the same call: `xmlGetID(doc, value) != attr` — the test that raises
 under the shadow. What lxml's own parse declared (a DTD id attribute, an
 `xml:id`) is read back through XPath's `id()`, the one door into lxml's id
 hash that passes nothing but strings and elements; what earlier
-`register_id`/`add_ids` calls claimed is read from the registry, a subtree
-spec through one XPath over its scope.
+`register_id`/`add_ids` calls claimed is read from the registry, spec by
+spec.
 
 Both halves compare *attributes*, not elements: `<N xml:id="dup" ID="dup"/>`
 answers `N` to `id('dup')` whichever attribute is asked about, while the fast
@@ -292,6 +309,13 @@ All invisible to the documented API:
   list of ids), so such a value is compared against the registry alone; a
   registration whose element has since been adopted into another document
   claims nothing, as at replay;
+- a registration follows the element it was made for. lxml drops its own id
+  entry whenever an element is *moved* — even within the one document, and
+  for a whole subtree when an ancestor moves — which the registry cannot
+  observe, so a `#id` the fast path stops resolving after such a move keeps
+  resolving under the shadow. It resolves to the registered element, never to
+  another one: the shadow registers exactly the attributes the caller
+  registered;
 - `encrypt_xml` encrypts a *copy* of the template, so the caller's template
   proxy is not the returned element; a template attached in the target's own
   document is unlinked afterwards (keeping its tail text where libxml2 would

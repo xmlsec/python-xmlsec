@@ -861,17 +861,23 @@ void PyXmlSec_LxmlShadowDiscard(PyXmlSec_LxmlShadow* shadow) {
 //
 // An entry is the tuple (document, nodes, specs), keyed by the _Document
 // object's address: `nodes` holds the registered elements themselves and
-// `specs` the (attribute name, namespace, node index, subtree) records. The
-// entry keeps a strong reference to the document and to every registered
-// element, so the key can never go stale — the address cannot be reused while
-// the entry keeps the object alive.
+// `specs` the (attribute name, namespace, node index) records. The entry
+// keeps a strong reference to the document and to every registered element,
+// so the key can never go stale — the address cannot be reused while the
+// entry keeps the object alive.
 //
 // Keeping the elements is also what makes the replay faithful: a spec is
-// applied to the very node it was registered for (and, for add_ids, that
-// node's subtree), never to every same-named attribute in the document.
-// Registering the whole document would let an unrelated element sharing the
-// id value claim it first, so a `#id` reference — the URI a signature covers
-// — could resolve to content the caller never registered.
+// applied to the very node it was registered for, never to every same-named
+// attribute in the document. Registering the whole document would let an
+// unrelated element sharing the id value claim it first, so a `#id`
+// reference — the URI a signature covers — could resolve to content the
+// caller never registered.
+//
+// A registration covering a subtree (add_ids) is expanded into one spec per
+// element carrying the attribute *at the call*, which is the snapshot
+// xmlSecAddIDs takes of the scope it walks: an element that only later grows
+// the attribute, or only later joins the scope, was never registered by the
+// fast path and must not become resolvable under the shadow either.
 //
 // Those references also make liveness decidable without weak references
 // (lxml's classes refuse those): every element proxy holds a reference to the
@@ -916,13 +922,29 @@ static int PyXmlSec_LxmlShadowIdEntryIsDead(PyObject* entry) {
     return Py_REFCNT(doc) == held;
 }
 
+// Releases the node held in slot `i` of `entry`: the specs that named the
+// slot go with it, and the slot is set to None rather than removed, so the
+// indices the surviving specs carry stay valid — the next registration
+// reuses it. Best effort; a failure only keeps a spec alive longer.
+static void PyXmlSec_LxmlShadowVacateIdSlot(PyObject* entry, Py_ssize_t i) {
+    PyObject* nodes = PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_NODES);
+    PyObject* specs = PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_SPECS);
+    Py_ssize_t j;
+
+    for (j = PyList_GET_SIZE(specs) - 1; j >= 0; --j) {
+        PyObject* spec = PyList_GET_ITEM(specs, j);
+        if (PyLong_AsSsize_t(PyTuple_GET_ITEM(spec, 2)) == i && PyList_SetSlice(specs, j, j + 1, NULL) < 0) {
+            PyErr_Clear();
+        }
+    }
+    Py_INCREF(Py_None);
+    PyList_SetItem(nodes, i, Py_None);   // steals the reference, releases the node
+}
+
 // Drops `element` from every entry but `keep`. A node registered again after
 // being adopted into another document is no longer part of the tree its old
 // entry stands for, and its slot there must stop holding it: the liveness
-// test above counts on a registered proxy being held by one entry only. The
-// slot is vacated rather than removed, so the indices the surviving specs
-// carry stay valid; the specs that pointed at it go. Best effort — a failure
-// only leaves an entry alive longer than needed.
+// test above counts on a registered proxy being held by one entry only.
 static void PyXmlSec_LxmlShadowForgetIdNode(PyObject* keep, PyObject* element) {
     PyObject* key;
     PyObject* entry;
@@ -930,28 +952,180 @@ static void PyXmlSec_LxmlShadowForgetIdNode(PyObject* keep, PyObject* element) {
 
     while (PyDict_Next(PyXmlSec_LxmlShadowIdRegistry, &pos, &key, &entry)) {
         PyObject* nodes;
-        PyObject* specs;
         Py_ssize_t i;
         if (entry == keep) {
             continue;
         }
         nodes = PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_NODES);
-        specs = PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_SPECS);
         for (i = 0; i < PyList_GET_SIZE(nodes); ++i) {
-            Py_ssize_t j;
-            if (PyList_GET_ITEM(nodes, i) != element) {
-                continue;
+            if (PyList_GET_ITEM(nodes, i) == element) {
+                PyXmlSec_LxmlShadowVacateIdSlot(entry, i);
             }
-            for (j = PyList_GET_SIZE(specs) - 1; j >= 0; --j) {
-                PyObject* spec = PyList_GET_ITEM(specs, j);
-                if (PyLong_AsSsize_t(PyTuple_GET_ITEM(spec, 2)) == i && PyList_SetSlice(specs, j, j + 1, NULL) < 0) {
-                    PyErr_Clear();
-                }
-            }
-            Py_INCREF(Py_None);
-            PyList_SetItem(nodes, i, Py_None);   // steals the reference, releases the node
         }
     }
+}
+
+// The root element of the document `node` belongs to — the one lxml answers
+// with even for a node that has left the tree. New reference, or NULL.
+static PyObject* PyXmlSec_LxmlDocumentRoot(PyObject* node) {
+    PyObject* tree = PyObject_CallMethod(node, "getroottree", NULL);
+    PyObject* root = tree == NULL ? NULL : PyObject_CallMethod(tree, "getroot", NULL);
+
+    Py_XDECREF(tree);
+    return root;
+}
+
+// Non-zero when nothing but the registry can reach `node` again: the registry
+// holds the only reference to the proxy, and the tree the node hangs in is
+// not the document's (`root` is that document's root element) — an unlinked
+// subtree, which lxml keeps alive only for as long as a proxy remains
+// somewhere in it. On the fast path such a subtree is freed at that same
+// moment, and libxml2 drops the ID entries of the attributes it takes with
+// it, so a slot that answers yes here stands for a registration the fast path
+// no longer has either. Best effort: anything that goes wrong answers
+// "reachable", which only keeps the slot.
+static int PyXmlSec_LxmlShadowIdNodeIsDead(PyObject* node, PyObject* root) {
+    PyObject* top;
+    PyObject* nodes = NULL;
+    Py_ssize_t i;
+    int dead = 0;
+
+    if (Py_REFCNT(node) != 1) {
+        return 0;
+    }
+    // The top of the tree `node` hangs in, through lxml's own API.
+    top = node;
+    Py_INCREF(top);
+    for (;;) {
+        PyObject* parent = PyObject_CallMethod(top, "getparent", NULL);
+        if (parent == NULL) {
+            goto DONE;
+        }
+        if (parent == Py_None) {
+            Py_DECREF(parent);
+            break;
+        }
+        Py_DECREF(top);
+        top = parent;
+    }
+    // Still in the document's own tree, which is reachable through the
+    // document itself, whoever holds that; only the entry's own liveness test
+    // can retire one of those.
+    if (top == root) {
+        goto DONE;
+    }
+    // lxml hands out at most one proxy per node, so a reference held by
+    // anyone but this walk and the registry is a way back to `node`: from any
+    // node of the tree, `getparent()` and the children lead to every other.
+    nodes = PyObject_CallMethod(top, "xpath", "s",
+                                "descendant-or-self::*"
+                                "|descendant-or-self::comment()"
+                                "|descendant-or-self::processing-instruction()");
+    if (nodes == NULL || !PyList_Check(nodes)) {
+        goto DONE;
+    }
+    dead = 1;
+    for (i = 0; i < PyList_GET_SIZE(nodes) && dead; ++i) {
+        PyObject* item = PyList_GET_ITEM(nodes, i);   // borrowed
+        Py_ssize_t held = 1;                          // the list's own reference
+        if (item == node) {
+            ++held;                                   // the registry's
+        }
+        if (item == top) {
+            ++held;                                   // the walk above
+        }
+        dead = Py_REFCNT(item) <= held;
+    }
+
+DONE:
+    Py_XDECREF(nodes);
+    Py_DECREF(top);
+    PyErr_Clear();
+    return dead;
+}
+
+// Vacates every slot no spec names any more.
+static void PyXmlSec_LxmlShadowCompactIdNodes(PyObject* entry) {
+    PyObject* nodes = PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_NODES);
+    PyObject* specs = PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_SPECS);
+    Py_ssize_t i;
+    Py_ssize_t j;
+
+    for (i = 0; i < PyList_GET_SIZE(nodes); ++i) {
+        int named = 0;
+        if (PyList_GET_ITEM(nodes, i) == Py_None) {
+            continue;
+        }
+        for (j = 0; j < PyList_GET_SIZE(specs) && !named; ++j) {
+            named = PyLong_AsSsize_t(PyTuple_GET_ITEM(PyList_GET_ITEM(specs, j), 2)) == i;
+        }
+        if (!named) {
+            PyXmlSec_LxmlShadowVacateIdSlot(entry, i);
+        }
+    }
+}
+
+// Vacates the slots of nodes nothing can reach any more. Registration churn
+// on a long-lived document — elements created, registered, dropped — would
+// otherwise pin every one of those elements, and its subtree, for as long as
+// the document lives, where the fast path's own registration dies with the
+// element. Runs before every registration, so the entry stays bounded by the
+// registrations that can still be replayed.
+static void PyXmlSec_LxmlShadowReclaimIdNodes(PyObject* entry) {
+    PyObject* doc = PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_DOC);
+    PyObject* nodes = PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_NODES);
+    PyObject* root = NULL;   // this document's root element, one lookup for the whole pass
+    Py_ssize_t i;
+
+    for (i = 0; i < PyList_GET_SIZE(nodes); ++i) {
+        PyObject* node = PyList_GET_ITEM(nodes, i);   // borrowed
+        // Anything the registry does not hold alone is reachable, and a node
+        // adopted into another document stands for nothing here anyway.
+        if (node == Py_None || Py_REFCNT(node) != 1
+                || (PyObject*)((PyXmlSec_LxmlElementPtr)node)->_doc != doc) {
+            continue;
+        }
+        if (root == NULL && (root = PyXmlSec_LxmlDocumentRoot(node)) == NULL) {
+            PyErr_Clear();
+            break;
+        }
+        if (PyXmlSec_LxmlShadowIdNodeIsDead(node, root)) {
+            PyXmlSec_LxmlShadowVacateIdSlot(entry, i);
+        }
+    }
+    Py_XDECREF(root);
+}
+
+// The entry's slot holding `node`, reused from a vacated one or appended.
+// Returns the index, or -1 with an exception set.
+static Py_ssize_t PyXmlSec_LxmlShadowIdSlot(PyObject* entry, PyObject* node) {
+    PyObject* nodes = PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_NODES);
+    Py_ssize_t n = PyList_GET_SIZE(nodes);
+    Py_ssize_t vacant = -1;
+    Py_ssize_t i;
+
+    for (i = 0; i < n; ++i) {
+        PyObject* item = PyList_GET_ITEM(nodes, i);   // borrowed
+        if (item == node) {
+            return i;   // already held here, and so already dropped elsewhere
+        }
+        if (item == Py_None && vacant < 0) {
+            vacant = i;
+        }
+    }
+    if (vacant < 0) {
+        if (PyList_Append(nodes, node) < 0) {
+            return -1;
+        }
+        vacant = n;
+    } else {
+        Py_INCREF(node);
+        PyList_SetItem(nodes, vacant, node);   // steals the reference
+    }
+    // One reference per registered element, so that the liveness test can
+    // account for exactly the references the registry itself holds.
+    PyXmlSec_LxmlShadowForgetIdNode(entry, node);
+    return vacant;
 }
 
 // Drops the entries of documents nobody but the registry still references.
@@ -1332,18 +1506,21 @@ static int PyXmlSec_LxmlShadowIdIsTaken(PyXmlSec_LxmlElementPtr element, PyObjec
     if (entry == NULL) {
         return 0;
     }
+    // A registration whose element nothing can reach any more claims nothing:
+    // the fast path lost that attribute — and libxml2's id entry for it —
+    // when lxml freed the element.
+    PyXmlSec_LxmlShadowReclaimIdNodes(entry);
 
     nodes = PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_NODES);
     specs = PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_SPECS);
     for (i = 0; i < PyList_GET_SIZE(specs); ++i) {
-        PyObject* spec = PyList_GET_ITEM(specs, i);  // (name, ns, node index, subtree)
+        PyObject* spec = PyList_GET_ITEM(specs, i);  // (name, ns, node index)
         PyObject* node = PyList_GET_ITEM(nodes, PyLong_AsSsize_t(PyTuple_GET_ITEM(spec, 2)));
         PyObject* spec_ns = PyTuple_GET_ITEM(spec, 1);
         const char* spec_name = PyUnicode_AsUTF8(PyTuple_GET_ITEM(spec, 0));
         const char* spec_href;
-        int subtree = PyObject_IsTrue(PyTuple_GET_ITEM(spec, 3));
 
-        if (spec_name == NULL || subtree < 0) {
+        if (spec_name == NULL) {
             return -1;
         }
         spec_href = spec_ns == Py_None ? NULL : PyUnicode_AsUTF8(spec_ns);
@@ -1355,41 +1532,10 @@ static int PyXmlSec_LxmlShadowIdIsTaken(PyXmlSec_LxmlElementPtr element, PyObjec
         if (node == Py_None || ((PyXmlSec_LxmlElementPtr)node)->_doc != element->_doc) {
             continue;
         }
-        if (subtree) {
-            // add_ids: the spec claims the value for whichever element of the
-            // subtree carries it, xmlSecAddIDs matching by name alone.
-            PyObject* matches = PyXmlSec_LxmlXPath(node, "descendant-or-self::*[@*[local-name()=$n]=$v]",
-                                                   PyTuple_GET_ITEM(spec, 0), value);
-            Py_ssize_t j;
-            Py_ssize_t n;
-            if (matches == NULL) {
-                return -1;
-            }
-            n = PySequence_Size(matches);
-            for (j = 0; j < n && !taken; ++j) {
-                PyObject* match = PySequence_GetItem(matches, j);
-                if (match == NULL) {
-                    Py_DECREF(matches);
-                    return -1;
-                }
-                taken = PyXmlSec_LxmlShadowSpecClaims((PyXmlSec_LxmlElementPtr)match, spec_name, spec_href,
-                                                      element, key, value);
-                Py_DECREF(match);
-                if (taken < 0) {
-                    Py_DECREF(matches);
-                    return -1;
-                }
-            }
-            Py_DECREF(matches);
-            if (n < 0) {
-                return -1;
-            }
-        } else {
-            taken = PyXmlSec_LxmlShadowSpecClaims((PyXmlSec_LxmlElementPtr)node, spec_name, spec_href,
-                                                  element, key, value);
-            if (taken < 0) {
-                return -1;
-            }
+        taken = PyXmlSec_LxmlShadowSpecClaims((PyXmlSec_LxmlElementPtr)node, spec_name, spec_href,
+                                              element, key, value);
+        if (taken < 0) {
+            return -1;
         }
         if (taken) {
             return 1;
@@ -1398,29 +1544,47 @@ static int PyXmlSec_LxmlShadowIdIsTaken(PyXmlSec_LxmlElementPtr element, PyObjec
     return 0;
 }
 
+// The elements a registration covers, in document order: `element` alone, or
+// — for add_ids — the subtree rooted at it, the scope xmlSecAddIDs walks.
+// New reference to a list, or NULL with an exception set.
+static PyObject* PyXmlSec_LxmlShadowIdTargets(PyXmlSec_LxmlElementPtr element, int subtree) {
+    PyObject* targets;
+
+    if (!subtree) {
+        return Py_BuildValue("[O]", (PyObject*)element);
+    }
+    targets = PyObject_CallMethod((PyObject*)element, "xpath", "s", "descendant-or-self::*");
+    if (targets != NULL && !PyList_Check(targets)) {
+        PyErr_SetString(PyXmlSec_InternalError, "unexpected elements.");
+        Py_CLEAR(targets);
+    }
+    return targets;
+}
+
 int PyXmlSec_LxmlShadowRecordIds(PyXmlSec_LxmlElementPtr element, PyObject* names, const char* ns, int subtree) {
     PyObject* key = NULL;
     PyObject* created = NULL;
+    PyObject* targets = NULL;
     PyObject* spec = NULL;
     PyObject* entry = NULL;
     PyObject* nodes;
     PyObject* specs;
     Py_ssize_t nnodes = 0;
     Py_ssize_t nspecs = 0;
-    Py_ssize_t idx;
+    Py_ssize_t t;
     Py_ssize_t i;
-    int contains;
     int fresh = 0;
     int result = -1;
 
+    targets = PyXmlSec_LxmlShadowIdTargets(element, subtree);
     key = PyLong_FromVoidPtr((void*)element->_doc);
-    if (key == NULL) {
+    if (targets == NULL || key == NULL) {
         goto DONE;
     }
 
+    PyXmlSec_LxmlShadowPruneIdRegistry();
     entry = PyDict_GetItem(PyXmlSec_LxmlShadowIdRegistry, key);  // borrowed
     if (entry == NULL) {
-        PyXmlSec_LxmlShadowPruneIdRegistry();
         nodes = PyList_New(0);
         specs = PyList_New(0);
         if (nodes != NULL && specs != NULL) {
@@ -1433,39 +1597,54 @@ int PyXmlSec_LxmlShadowRecordIds(PyXmlSec_LxmlElementPtr element, PyObject* name
         }
         entry = created;
         fresh = 1;
+    } else {
+        PyXmlSec_LxmlShadowReclaimIdNodes(entry);
     }
 
-    // One reference per registered element, so that the liveness test can
-    // account for exactly the references the registry itself holds.
     nodes = PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_NODES);
     specs = PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_SPECS);
     nnodes = PyList_GET_SIZE(nodes);
     nspecs = PyList_GET_SIZE(specs);
-    idx = -1;
-    for (i = 0; i < nnodes; ++i) {
-        if (PyList_GET_ITEM(nodes, i) == (PyObject*)element) {
-            idx = i;
-            break;
-        }
-    }
-    if (idx < 0) {
-        if (PyList_Append(nodes, (PyObject*)element) < 0) {
-            goto DONE;
-        }
-        idx = nnodes;
-        PyXmlSec_LxmlShadowForgetIdNode(entry, (PyObject*)element);
-    }
 
-    for (i = 0; i < PyList_GET_SIZE(names); ++i) {
-        spec = Py_BuildValue("(Ozni)", PyList_GET_ITEM(names, i), ns, idx, subtree);
-        if (spec == NULL) {
-            goto DONE;
+    // One spec per attribute the scope carries *now*, element by element in
+    // document order and, within an element, in the order of `names`: the
+    // registration xmlSecAddIDs makes, taken at the call rather than left to
+    // the replay, which would see whatever the tree had become by then.
+    for (t = 0; t < PyList_GET_SIZE(targets); ++t) {
+        PyObject* target = PyList_GET_ITEM(targets, t);  // borrowed
+        Py_ssize_t idx = -1;
+        for (i = 0; i < PyList_GET_SIZE(names); ++i) {
+            PyObject* name = PyList_GET_ITEM(names, i);  // borrowed
+            const char* text = PyUnicode_AsUTF8(name);
+            PyObject* value;
+            int carried;
+            int contains;
+
+            if (text == NULL) {
+                goto DONE;
+            }
+            value = PyXmlSec_LxmlAttrFind((PyXmlSec_LxmlElementPtr)target, text, ns, NULL);
+            if (value == NULL) {
+                goto DONE;
+            }
+            carried = value != Py_None;
+            Py_DECREF(value);
+            if (!carried) {
+                continue;
+            }
+            if (idx < 0 && (idx = PyXmlSec_LxmlShadowIdSlot(entry, target)) < 0) {
+                goto DONE;
+            }
+            spec = Py_BuildValue("(Ozn)", name, ns, idx);
+            if (spec == NULL) {
+                goto DONE;
+            }
+            contains = PySequence_Contains(specs, spec);
+            if (contains < 0 || (!contains && PyList_Append(specs, spec) < 0)) {
+                goto DONE;
+            }
+            Py_CLEAR(spec);
         }
-        contains = PySequence_Contains(specs, spec);
-        if (contains < 0 || (!contains && PyList_Append(specs, spec) < 0)) {
-            goto DONE;
-        }
-        Py_CLEAR(spec);
     }
     result = 0;
 
@@ -1478,15 +1657,24 @@ DONE:
         PyObject* value;
         PyObject* tb;
         PyErr_Fetch(&type, &value, &tb);
-        if (fresh ? PyDict_DelItem(PyXmlSec_LxmlShadowIdRegistry, key) < 0
-                  : (PyList_SetSlice(PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_SPECS), nspecs, PY_SSIZE_T_MAX, NULL) < 0
-                     || PyList_SetSlice(PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_NODES), nnodes, PY_SSIZE_T_MAX, NULL) < 0)) {
-            PyErr_Clear();
+        if (fresh) {
+            if (PyDict_DelItem(PyXmlSec_LxmlShadowIdRegistry, key) < 0) {
+                PyErr_Clear();
+            }
+        } else {
+            if (PyList_SetSlice(PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_SPECS), nspecs, PY_SSIZE_T_MAX, NULL) < 0
+                    || PyList_SetSlice(PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_NODES), nnodes, PY_SSIZE_T_MAX, NULL) < 0) {
+                PyErr_Clear();
+            }
+            // A slot reused for one of the rolled-back specs holds a node no
+            // surviving spec names any more.
+            PyXmlSec_LxmlShadowCompactIdNodes(entry);
         }
         PyErr_Restore(type, value, tb);
     }
     Py_XDECREF(key);
     Py_XDECREF(created);
+    Py_XDECREF(targets);
     Py_XDECREF(spec);
     return result;
 }
@@ -1554,27 +1742,13 @@ static void PyXmlSec_LxmlShadowAddId(xmlDocPtr doc, xmlNodePtr node, const xmlCh
     xmlFree(value);
 }
 
-// `node`, its siblings and their descendants.
-static void PyXmlSec_LxmlShadowAddIdsBelow(xmlDocPtr doc, xmlNodePtr node, const xmlChar* name, const xmlChar* ns) {
-    for (; node != NULL; node = node->next) {
-        if (node->type == XML_ELEMENT_NODE) {
-            PyXmlSec_LxmlShadowAddId(doc, node, name, ns);
-            PyXmlSec_LxmlShadowAddIdsBelow(doc, node->children, name, ns);
-        }
-    }
-}
-
 // Applies one recorded spec to `node`, the copy's counterpart of the element
-// it was registered for: that node alone (register_id), or the subtree rooted
-// at it (add_ids, which is the scope xmlSecAddIDs walks).
-static void PyXmlSec_LxmlShadowApplyIdSpec(xmlDocPtr doc, xmlNodePtr node, const xmlChar* name, const xmlChar* ns, int subtree) {
+// it was registered for.
+static void PyXmlSec_LxmlShadowApplyIdSpec(xmlDocPtr doc, xmlNodePtr node, const xmlChar* name, const xmlChar* ns) {
     if (node == NULL || node->type != XML_ELEMENT_NODE) {
         return;
     }
     PyXmlSec_LxmlShadowAddId(doc, node, name, ns);
-    if (subtree) {
-        PyXmlSec_LxmlShadowAddIdsBelow(doc, node->children, name, ns);
-    }
 }
 
 // Replays the specs recorded for the shadow's live document onto the copy,
@@ -1605,12 +1779,11 @@ static int PyXmlSec_LxmlShadowReplayIds(PyXmlSec_LxmlShadow* shadow, PyObject* l
     specs = PyTuple_GET_ITEM(entry, PYXMLSEC_ID_ENTRY_SPECS);
     n = PyList_GET_SIZE(specs);
     for (i = 0; i < n; ++i) {
-        PyObject* spec = PyList_GET_ITEM(specs, i);  // (name, ns, node index, subtree)
+        PyObject* spec = PyList_GET_ITEM(specs, i);  // (name, ns, node index)
         PyObject* node = PyList_GET_ITEM(nodes, PyLong_AsSsize_t(PyTuple_GET_ITEM(spec, 2)));
         PyObject* top = NULL;
         const char* name = PyUnicode_AsUTF8(PyTuple_GET_ITEM(spec, 0));
         const char* ns = PyTuple_GET_ITEM(spec, 1) == Py_None ? NULL : PyUnicode_AsUTF8(PyTuple_GET_ITEM(spec, 1));
-        int subtree = PyObject_IsTrue(PyTuple_GET_ITEM(spec, 3));
         int depth;
 
         if (name == NULL || (ns == NULL && PyErr_Occurred())) {
@@ -1628,7 +1801,7 @@ static int PyXmlSec_LxmlShadowReplayIds(PyXmlSec_LxmlShadow* shadow, PyObject* l
         // for an element that has since left it applies to nothing here.
         if (top == live_top) {
             PyXmlSec_LxmlShadowApplyIdSpec(shadow->doc, PyXmlSec_LxmlShadowWalkNode(copy_top, path, depth),
-                                           (const xmlChar*)name, (const xmlChar*)ns, subtree);
+                                           (const xmlChar*)name, (const xmlChar*)ns);
         }
         Py_DECREF(top);
     }

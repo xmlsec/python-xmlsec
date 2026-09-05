@@ -132,6 +132,35 @@ class TestSignContext(base.TestMemoryLeaks):
         with self.assertRaisesRegex(xmlsec.Error, 'missing attribute.'):
             ctx.register_id(sign, 'Id', id_ns='foo')
 
+    def sign_id_reference(self, root, uri):
+        """Signs `root` with a single reference to `uri` and returns the digest of that reference."""
+        sign = xmlsec.template.create(root, consts.TransformExclC14N, consts.TransformRsaSha1, ns='ds')
+        root.append(sign)
+        ref = xmlsec.template.add_reference(sign, consts.TransformSha1, uri=uri)
+        xmlsec.template.add_transform(ref, consts.TransformExclC14N)
+        ctx = xmlsec.SignatureContext()
+        ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
+        ctx.sign(sign)
+        return xmlsec.tree.find_node(sign, consts.NodeDigestValue, consts.DSigNs).text
+
+    def test_add_ids_ignores_an_id_that_joins_the_scope_later(self):
+        """add_ids registers what the scope carries at the call, which is where xmlSecAddIDs walks it."""
+        root = etree.fromstring(b'<Root><A ID="a"/></Root>')
+        xmlsec.tree.add_ids(root, ['ID'])
+        etree.SubElement(root, 'B', {'ID': 'b'})
+        with self.assertRaisesRegex(xmlsec.Error, 'failed to sign'):
+            self.sign_id_reference(root, '#b')
+
+    def test_add_ids_claims_a_value_in_document_order(self):
+        """xmlSecAddIDs walks the scope element by element, the names within each: <Y B="v"/> claims "v" first."""
+        xml = b'<Root><Y B="v"><Data>y</Data></Y><X A="v"><Data>x</Data></X></Root>'
+        root = etree.fromstring(xml)
+        xmlsec.tree.add_ids(root, ['A', 'B'])
+        both = self.sign_id_reference(root, '#v')
+        root = etree.fromstring(xml)
+        xmlsec.tree.add_ids(root, ['B'])
+        self.assertEqual(both, self.sign_id_reference(root, '#v'))
+
     def test_sign_bad_args(self):
         ctx = xmlsec.SignatureContext()
         ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
@@ -594,6 +623,37 @@ class TestIdRegistryLifetime(base.TestMemoryLeaks):
         sign = xmlsec.tree.find_node(root, consts.NodeSignature)
         ctx.key = xmlsec.Key.from_file(self.path('rsapub.pem'), format=consts.KeyDataFormatPem)
         ctx.verify(sign)  # resolves #ID through the registration made before the churn
+
+    def test_registration_dies_with_its_element(self):
+        """A dropped element takes its registration with it: libxml2 drops the id entry when it frees the attribute."""
+        root = etree.fromstring(b'<Root/>')
+        ctx = xmlsec.SignatureContext()
+        for _ in range(2):  # the second registration claims the value the first one did
+            node = etree.SubElement(root, 'T', {'ID': 'x'})
+            ctx.register_id(node, 'ID')
+            root.remove(node)
+            del node
+
+    def test_registration_survives_its_element_being_removed(self):
+        """An element out of its document is not gone: lxml keeps the subtree, and the id entry stands."""
+        root = etree.fromstring(b'<Root><Removed ID="x"/><Other ID="x"/></Root>')
+        ctx = xmlsec.SignatureContext()
+        removed = root[0]
+        ctx.register_id(removed, 'ID')
+        root.remove(removed)
+        with self.assertRaisesRegex(xmlsec.Error, 'duplicated id.'):
+            ctx.register_id(root[0], 'ID')
+
+    def test_registration_survives_a_descendant_being_held(self):
+        """A proxy anywhere in a removed subtree keeps it alive, registration included."""
+        root = etree.fromstring(b'<Root><Removed ID="x"><Inner/></Removed><Other ID="x"/></Root>')
+        ctx = xmlsec.SignatureContext()
+        ctx.register_id(root[0], 'ID')
+        inner = root[0][0]
+        root.remove(inner.getparent())
+        with self.assertRaisesRegex(xmlsec.Error, 'duplicated id.'):
+            ctx.register_id(root[0], 'ID')
+        del inner
 
     def test_registration_survives_a_sibling_being_adopted_away(self):
         """An element moved into another document must not make its old document's registrations look collectable."""

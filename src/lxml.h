@@ -157,11 +157,10 @@ xmlNodePtr PyXmlSec_LxmlShadowImportElement(PyXmlSec_LxmlShadow* shadow, PyXmlSe
 // lxml's ID hash with our libxml2, so they record the id-attribute spec for
 // the element's document here, and every BeginDoc replays the recorded specs
 // onto its copy. The registry keeps `element` itself, so the replay applies a
-// spec to exactly the node it was registered for — `subtree` extends it to
-// the node's descendants, as add_ids (xmlSecAddIDs) does, while register_id
-// registers the one node. Registering every matching attribute of the
-// document instead would let an unrelated element with the same id value win
-// the lookup and steer a `#id` reference away from the registered one.
+// spec to exactly the node it was registered for. Registering every matching
+// attribute of the document instead would let an unrelated element with the
+// same id value win the lookup and steer a `#id` reference away from the
+// registered one.
 //
 // This is the whole of register_id under the shadow: it validates what the
 // fast path validates — "missing attribute." for an absent one, "duplicated
@@ -174,6 +173,11 @@ int PyXmlSec_LxmlShadowRegisterId(PyXmlSec_LxmlElementPtr element, const char* n
 // add_ids: either every name is recorded or, if anything fails, none is —
 // the fast path likewise builds its complete list before it touches the
 // document, so a bad list leaves no half-applied registration behind.
+// `subtree` extends the registration to the node's descendants, the scope
+// add_ids (xmlSecAddIDs) walks; it is expanded here and now into one spec per
+// element carrying one of the names, which is the snapshot xmlSecAddIDs takes
+// — an element that grows the attribute, or joins the scope, after the call
+// was never registered by the fast path either.
 int PyXmlSec_LxmlShadowRecordIds(PyXmlSec_LxmlElementPtr element, PyObject* names, const char* ns, int subtree);
 
 // get version numbers for libxml2 both compiled and loaded

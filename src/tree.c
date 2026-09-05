@@ -195,9 +195,9 @@ static PyObject* PyXmlSec_TreeAddIds(PyObject* self, PyObject *args, PyObject *k
 
     // Shadow mode: registering IDs on lxml's document with our libxml2 is
     // exactly the cross-library write issue #356 forbids. Record the
-    // attribute names instead; every whole-document shadow (sign, verify,
-    // decrypt) replays them onto its private copy, over the subtree rooted at
-    // `node` — the scope xmlSecAddIDs walks below.
+    // attributes the subtree rooted at `node` — the scope xmlSecAddIDs walks
+    // below — carries right now instead; every whole-document shadow (sign,
+    // verify, decrypt) replays those onto its private copy.
     if (PyXmlSec_LxmlShadowIsActive()) {
         // Materialize and validate the whole list before recording any of it,
         // as the fast path below does before it calls xmlSecAddIDs: a bad
