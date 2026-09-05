@@ -238,7 +238,7 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         with tempfile.NamedTemporaryFile(delete=False) as tmpfile:
             tmpfile.write(b'test')
 
-        encrypted = ctx.encrypt_binary(enc_data, 'file://' + tmpfile.name)
+        encrypted = ctx.encrypt_uri(enc_data, 'file://' + tmpfile.name)
         self.assertIsNotNone(encrypted)
         self.assertEqual(f'{{{consts.EncNs}}}{consts.NodeEncryptedData}', encrypted.tag)
 
@@ -253,6 +253,27 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         self.assertEqual('http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p', enc_method2.get('Algorithm'))
         cipher_value = xmlsec.tree.find_node(ki, consts.NodeCipherValue, consts.EncNs)
         self.assertIsNotNone(cipher_value)
+
+    def test_encrypt_and_decrypt_content_of_a_subtree_removed_from_its_document(self):
+        """A subtree taken out of its tree is encrypted and decrypted in place, as on the raw path (issue #356)."""
+        root = etree.fromstring(b'<Envelope xmlns="urn:envelope"><Data>hello <b>x</b> tail</Data></Envelope>')
+        data = root[0]
+        root.remove(data)
+        before = etree.tostring(data)
+
+        key = xmlsec.Key.generate(consts.KeyDataAes, 128, consts.KeyDataTypeSession)
+        enc_data = xmlsec.template.encrypted_data_create(data, consts.TransformAes128Cbc, type=consts.TypeEncContent, ns='xenc')
+        xmlsec.template.encrypted_data_ensure_cipher_value(enc_data)
+        ctx = xmlsec.EncryptionContext()
+        ctx.key = key
+        ctx.encrypt_xml(enc_data, data)
+        self.assertEqual(b'<Envelope xmlns="urn:envelope"/>', etree.tostring(root))
+        self.assertIsNone(data.text)
+
+        dec_ctx = xmlsec.EncryptionContext()
+        dec_ctx.key = key
+        dec_ctx.decrypt(data[0])
+        self.assertEqual(before, etree.tostring(data))
 
     def test_encrypt_uri_bad_args(self):
         ctx = xmlsec.EncryptionContext()

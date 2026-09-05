@@ -24,6 +24,15 @@ class TestTree(base.TestMemoryLeaks):
         self.assertIs(root, xmlsec.tree.find_parent(si, consts.NodeSignature))
         self.assertIsNone(xmlsec.tree.find_parent(root, consts.NodeSignedInfo))
 
+    def test_find_parent_in_a_removed_subtree(self):
+        """The walk upward stops at the top of a subtree removed from its document (issue #356)."""
+        root = self.load_xml('sign1-in.xml')
+        sign = xmlsec.tree.find_node(root, consts.NodeSignature, consts.DSigNs)
+        si = xmlsec.tree.find_child(sign, consts.NodeSignedInfo, consts.DSigNs)
+        sign.getparent().remove(sign)
+        self.assertIs(sign, xmlsec.tree.find_parent(si, consts.NodeSignature, consts.DSigNs))
+        self.assertIsNone(xmlsec.tree.find_parent(si, 'Envelope', 'urn:envelope'))
+
     def test_find_parent_bad_args(self):
         with self.assertRaises(TypeError):
             xmlsec.tree.find_parent('', 0, True)

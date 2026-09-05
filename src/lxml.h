@@ -90,6 +90,8 @@ typedef struct {
     xmlNodePtr root;                  // doc's root element, the copy of `element`; NULL for BeginNewDoc
     PyXmlSec_LxmlShadowTag* tags;     // one per pre-existing node of `doc`, owned by the shadow
     int ntags;
+    int unlinked;                     // `root` hangs in `doc` outside its tree (BeginDoc of an element
+                                      // removed from its document); the shadow frees it itself
 } PyXmlSec_LxmlShadow;
 
 // Subtree copy: `shadow.root` is the copy of `element`. When the document
@@ -105,6 +107,11 @@ int PyXmlSec_LxmlShadowBegin(PyXmlSec_LxmlShadow* shadow, PyXmlSec_LxmlElementPt
 // `*target` receives the copy's counterpart of `element` (the live node
 // itself on the fast path); `shadow.root` / `shadow.element` become the copy
 // root / the live root, which is what the End functions map paths between.
+// An element removed from its document keeps pointing at it, and so does the
+// raw path — xmlsec works on the unlinked node while the document it left
+// still answers its `#id` references. The copy holds both: the document, and
+// the unlinked subtree copied into it beside the tree (`shadow.unlinked`,
+// with `shadow.root` / `shadow.element` the subtree's top on either side).
 int PyXmlSec_LxmlShadowBeginDoc(PyXmlSec_LxmlShadow* shadow, PyXmlSec_LxmlElementPtr element, xmlNodePtr* target);
 
 // Create shape (template.create, encrypted_data_create): the call only needs

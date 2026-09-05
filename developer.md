@@ -160,7 +160,20 @@ caller gets a new proxy object.
 `index`), serializes `element.getroottree()` — comments/PIs outside the root
 and the internal DTD subset survive — and hands back the copy's counterpart;
 `shadow.element` becomes the live *root*, which is where the reflection maps
-paths onto. `BeginNewDoc` creates an empty private document; `End` roots the
+paths onto.
+
+An element **removed from its document** is a shape of its own: lxml leaves
+such a subtree pointing at the document it left, and so does the raw path —
+xmlsec works on a node outside the tree whose `doc` still answers its `#id`
+references (a template taken out of a document and signed with `URI=""`
+digests that document, without itself in it). The copy holds both: the
+document is copied as always, and the removed subtree is copied into it as an
+*unlinked* node beside its tree (`shadow.unlinked`), which is then what
+`shadow.root` / `shadow.element` and every path map between. Registered IDs
+are replayed twice, once for each of the two live tops. Such a node cannot be
+replaced (libxml2 needs a parent to put the replacement in), on either path.
+
+`BeginNewDoc` creates an empty private document; `End` roots the
 detached result there, dumps it and returns it as a new detached lxml element
 (in a document of its own until grafted; lxml moves it when the caller
 appends it, like the raw path's detached node).
@@ -303,9 +316,9 @@ All invisible to the documented API:
 - a subtree of a document that declares entities in its internal subset
   (`resolve_entities=False`) is copied by copying the whole document and
   cutting it back to the element, since the subtree's `&name;` references
-  need their declarations; `encrypt_xml` templates are still serialized on
-  their own, so a *template* carrying unresolved entity references is not
-  supported (signing and encryption of such a document are refused on both
+  need their declarations; `encrypt_xml` templates and subtrees removed from
+  their document are still serialized on their own, so a *template* — or a
+  removed subtree — carrying unresolved entity references is not supported (signing and encryption of such a document are refused on both
   paths anyway — libxml2's c14n rejects entity-reference nodes);
 - operations that replace the **document root** (encrypting the root element
   with `Type=Element`, decrypting a root `EncryptedData`) morph the live root

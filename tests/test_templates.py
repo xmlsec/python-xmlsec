@@ -107,6 +107,19 @@ class TestTemplates(base.TestMemoryLeaks):
         ref = xmlsec.template.add_reference(sign, consts.TransformSha1, uri='#abc')
         self.assertIs(ref, sign[0][3])
 
+    def test_add_reference_in_a_subtree_removed_from_an_entity_document(self):
+        """The whole-document copy an internal subset forces cannot hold a subtree the document lost (issue #356)."""
+        root = etree.fromstring(
+            b'<!DOCTYPE Root [ <!ENTITY greet "hello"> ]>\n<Root><Data>&greet;</Data><Holder/></Root>',
+            etree.XMLParser(resolve_entities=False),
+        )
+        holder = root[1]
+        root.remove(holder)
+        sign = xmlsec.template.create(holder, c14n_method=consts.TransformExclC14N, sign_method=consts.TransformRsaSha1)
+        holder.append(sign)
+        ref = xmlsec.template.add_reference(sign, consts.TransformSha1, uri='#abc')
+        self.assertIs(ref, sign[0][2])
+
     def test_add_reference_bad_args(self):
         with self.assertRaises(TypeError):
             xmlsec.template.add_reference('', consts.TransformSha1)

@@ -282,6 +282,51 @@ class TestSignContext(base.TestMemoryLeaks):
         verify_ctx.key = xmlsec.Key.from_file(self.path('rsapub.pem'), format=consts.KeyDataFormatPem)
         verify_ctx.verify(sign)
 
+    def test_sign_and_verify_a_template_removed_from_its_document(self):
+        """A template taken out of its tree still signs: lxml leaves it pointing at the document it left,
+        and that is where its URI="" reference resolves — on the raw path too (issue #356)."""
+        root = self.load_xml('sign1-in.xml')
+        sign = xmlsec.tree.find_node(root, consts.NodeSignature, consts.DSigNs)
+        sign.getparent().remove(sign)
+
+        ctx = xmlsec.SignatureContext()
+        ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
+        ctx.sign(sign)
+        # the signature is written into the removed subtree, and nothing is
+        # written into the document it covers
+        self.assertTrue(xmlsec.tree.find_node(sign, consts.NodeSignatureValue, consts.DSigNs).text)
+        self.assertIsNone(xmlsec.tree.find_node(root, consts.NodeSignature, consts.DSigNs))
+
+        verify_ctx = xmlsec.SignatureContext()
+        verify_ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
+        verify_ctx.verify(sign)
+
+        # the digest covers that document: changing it invalidates the signature
+        root.find('{urn:envelope}Data').text = 'tampered'
+        tampered_ctx = xmlsec.SignatureContext()
+        tampered_ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
+        with self.assertRaises(xmlsec.VerificationError):
+            tampered_ctx.verify(sign)
+
+    def test_sign_and_verify_a_removed_template_against_a_registered_id(self):
+        """A #id reference from a removed subtree resolves in the document it left (issue #356)."""
+        root = self.load_xml('sign4-in.xml')
+        sign = xmlsec.template.create(root, consts.TransformExclC14N, consts.TransformRsaSha1, ns='ds')
+        root.append(sign)
+        ref = xmlsec.template.add_reference(sign, consts.TransformSha1, uri='#' + root.get('ID'))
+        xmlsec.template.add_transform(ref, consts.TransformExclC14N)
+        root.remove(sign)
+
+        ctx = xmlsec.SignatureContext()
+        ctx.register_id(root, 'ID')
+        ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
+        ctx.sign(sign)
+
+        verify_ctx = xmlsec.SignatureContext()
+        verify_ctx.register_id(root, 'ID')
+        verify_ctx.key = xmlsec.Key.from_file(self.path('rsapub.pem'), format=consts.KeyDataFormatPem)
+        verify_ctx.verify(sign)
+
     # A document whose id attribute is typed by an external DTD subset — the
     # declarations live in a file the DOCTYPE names, and only a parse that
     # loads it knows "#ext" resolves to the Node (issue #356).
