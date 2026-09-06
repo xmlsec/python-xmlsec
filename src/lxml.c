@@ -986,6 +986,7 @@ static PyObject* PyXmlSec_LxmlDocumentRoot(PyObject* node) {
 // "reachable", which only keeps the slot.
 static int PyXmlSec_LxmlShadowIdNodeIsDead(PyObject* node, PyObject* root) {
     PyObject* top;
+    PyObject* walk;
     PyObject* nodes = NULL;
     Py_ssize_t i;
     int dead = 0;
@@ -1017,11 +1018,17 @@ static int PyXmlSec_LxmlShadowIdNodeIsDead(PyObject* node, PyObject* root) {
     // lxml hands out at most one proxy per node, so a reference held by
     // anyone but this walk and the registry is a way back to `node`: from any
     // node of the tree, `getparent()` and the children lead to every other.
-    nodes = PyObject_CallMethod(top, "xpath", "s",
-                                "descendant-or-self::*"
-                                "|descendant-or-self::comment()"
-                                "|descendant-or-self::processing-instruction()");
-    if (nodes == NULL || !PyList_Check(nodes)) {
+    // `iter()` reaches every node lxml hands a proxy to — elements, comments,
+    // processing instructions and entity references alike — where an XPath
+    // node set leaves the entity references out, and a subtree held only
+    // through such a proxy would read as dead.
+    walk = PyObject_CallMethod(top, "iter", NULL);
+    if (walk == NULL) {
+        goto DONE;
+    }
+    nodes = PySequence_List(walk);
+    Py_DECREF(walk);
+    if (nodes == NULL) {
         goto DONE;
     }
     dead = 1;

@@ -655,6 +655,20 @@ class TestIdRegistryLifetime(base.TestMemoryLeaks):
             ctx.register_id(root[0], 'ID')
         del inner
 
+    def test_registration_survives_an_entity_reference_being_held(self):
+        """An entity reference is a proxy like any other: holding one keeps its removed subtree alive."""
+        parser = etree.XMLParser(resolve_entities=False)
+        root = etree.fromstring(
+            b'<!DOCTYPE Root [<!ENTITY e "text">]><Root><Removed ID="x">&e;</Removed><Other ID="x"/></Root>', parser
+        )
+        ctx = xmlsec.SignatureContext()
+        ctx.register_id(root[0], 'ID')
+        entity = root[0][0]
+        root.remove(entity.getparent())
+        with self.assertRaisesRegex(xmlsec.Error, 'duplicated id.'):
+            ctx.register_id(root[0], 'ID')
+        del entity
+
     def test_registration_survives_a_sibling_being_adopted_away(self):
         """An element moved into another document must not make its old document's registrations look collectable."""
         root = etree.fromstring(b'<Root><Moved ID="moved"/><Stays ID="stays"><Data>x</Data></Stays></Root>')
