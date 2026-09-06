@@ -1,0 +1,3 @@
+<!-- Types Node/@ID as an ID from an *external* subset: only a parse that
+     loads this file knows the document's "#ext" reference resolves here. -->
+<!ATTLIST Node ID ID #IMPLIED>

@@ -56,6 +56,11 @@ echo "== [container] Step: Install test dependencies =="
 echo "== [container] Step: Run tests =="
 /opt/python/${PY_ABI}/bin/pytest -v --color=yes
 
+# Step: Run tests again on the shadow-copy path (issue #356), which the
+# matched libxml2 build would otherwise never exercise.
+echo "== [container] Step: Run tests (forced shadow path) =="
+PYXMLSEC_FORCE_SHADOW=1 /opt/python/${PY_ABI}/bin/pytest -v --color=yes
+
 # Step: Fix mounted workspace file ownership on host
 echo "== [container] Step: Fix mounted workspace file ownership on host =="
 chown -R "${HOST_UID}:${HOST_GID}" dist wheelhouse build libs || true

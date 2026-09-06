@@ -146,6 +146,18 @@ static PyObject* PyXmlSec_SignatureContextRegisterId(PyObject* self, PyObject* a
         goto ON_FAIL;
     }
 
+    // Shadow mode: never touch lxml's document (its ID hash) with our libxml2
+    // (issue #356). The registration is validated through lxml's API and
+    // recorded instead; the whole-document shadows (sign/verify/decrypt)
+    // replay it onto their private copies.
+    if (PyXmlSec_LxmlShadowIsActive()) {
+        if (PyXmlSec_LxmlShadowRegisterId(node, id_attr, id_ns) < 0) {
+            goto ON_FAIL;
+        }
+        PYXMLSEC_DEBUGF("%p: register id - ok", self);
+        Py_RETURN_NONE;
+    }
+
     if (id_ns != NULL) {
         attr = xmlHasNsProp(node->_c_node, XSTR(id_attr), XSTR(id_ns));
     } else {
@@ -189,6 +201,8 @@ static PyObject* PyXmlSec_SignatureContextSign(PyObject* self, PyObject* args, P
 
     PyXmlSec_SignatureContext* ctx = (PyXmlSec_SignatureContext*)self;
     PyXmlSec_LxmlElementPtr node = NULL;
+    xmlNodePtr target;
+    PyXmlSec_LxmlShadow shadow;
     int rv;
 
     PYXMLSEC_DEBUGF("%p: sign - start", self);
@@ -196,12 +210,19 @@ static PyObject* PyXmlSec_SignatureContextSign(PyObject* self, PyObject* args, P
         goto ON_FAIL;
     }
 
+    // References (URI="", "#id") reach anywhere in the document, so the
+    // shadow covers the whole tree (issue #356), with the registered IDs
+    // replayed onto the copy. Signing fills several places inside
+    // <Signature> (DigestValue, SignatureValue, KeyInfo); the reflect carries
+    // them all back.
+    if (PyXmlSec_LxmlShadowBeginDoc(&shadow, node, &target) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    rv = xmlSecDSigCtxSign(ctx->handle, node->_c_node);
+    rv = xmlSecDSigCtxSign(ctx->handle, target);
     PYXMLSEC_DUMP(xmlSecDSigCtxDebugDump, ctx->handle);
     Py_END_ALLOW_THREADS;
-    if (rv < 0) {
-        PyXmlSec_SetLastError("failed to sign");
+    if (PyXmlSec_LxmlShadowReflect(&shadow, rv, "failed to sign") < 0) {
         goto ON_FAIL;
     }
     PYXMLSEC_DEBUGF("%p: sign - ok", self);
@@ -224,6 +245,8 @@ static PyObject* PyXmlSec_SignatureContextVerify(PyObject* self, PyObject* args,
 
     PyXmlSec_SignatureContext* ctx = (PyXmlSec_SignatureContext*)self;
     PyXmlSec_LxmlElementPtr node = NULL;
+    xmlNodePtr target;
+    PyXmlSec_LxmlShadow shadow;
     int rv;
 
     PYXMLSEC_DEBUGF("%p: verify - start", self);
@@ -231,10 +254,16 @@ static PyObject* PyXmlSec_SignatureContextVerify(PyObject* self, PyObject* args,
         goto ON_FAIL;
     }
 
+    // Verification is read-only: whole-document shadow (with the registered
+    // IDs replayed) and no reflection at all — the copy is simply discarded.
+    if (PyXmlSec_LxmlShadowBeginDoc(&shadow, node, &target) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    rv = xmlSecDSigCtxVerify(ctx->handle, node->_c_node);
+    rv = xmlSecDSigCtxVerify(ctx->handle, target);
     PYXMLSEC_DUMP(xmlSecDSigCtxDebugDump, ctx->handle);
     Py_END_ALLOW_THREADS;
+    PyXmlSec_LxmlShadowDiscard(&shadow);
 
     if (rv < 0) {
         PyXmlSec_SetLastError("failed to verify");

@@ -87,6 +87,14 @@ jobs:
         run: |
           coverage run -m pytest -v --color=yes
 
+      # Same suite on the shadow-copy path (issue #356), which the matched
+      # libxml2 build would otherwise never exercise.
+      - name: Run tests (forced shadow path)
+        env:
+          PYXMLSEC_FORCE_SHADOW: "1"
+        run: |
+          pytest -v --color=yes
+
       - name: Report coverage to codecov
         if: matrix.static_deps != 'static'
         run: |
