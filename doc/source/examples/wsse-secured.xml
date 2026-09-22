@@ -1,0 +1,32 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ex="urn:example:wsse-demo"><soapenv:Header><wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"><EncryptedKey xmlns="http://www.w3.org/2001/04/xmlenc#" Id="body-key">
+<EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p"/>
+<CipherData>
+<CipherValue>pJoXEOU2aFv0uy/p4DmrewBLwPC4EnSifah2uyjay94lD2o9DxH+KFA67CqbM+sqb+Uw1l/ktBw81Hvx+TIwAzhDMJqQwPR97bANjfnEb04EiEdxqUMMnzJunx9xCAqNbU3mPxIVtchqqq3IN2MSY8nGZXFZzrFGt3GWfBrU84JjT8Z6Qsax1/60Evx/SIIhPb+J+e0GauOuqqUvulyg8A2CTLkPZDrbsXDQxyyvl6Hs1JO7nYzufmmy8dlt6L22ryaTQeE179UQhA0g1xxi4urqWW8c4p7DyFfGOYSV6ZIM0QL26ExGqfmJj47crnoeLoB7C1apeOBx4PJrLMSdAA==</CipherValue>
+</CipherData>
+<ReferenceList><DataReference URI="#body-data"/></ReferenceList></EncryptedKey>
+<wsse:UsernameToken><wsse:Username>demo-user</wsse:Username><wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">demo-password</wsse:Password></wsse:UsernameToken><Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+<SignedInfo>
+<CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+<SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+<Reference URI="#body">
+<Transforms>
+<Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+</Transforms>
+<DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+<DigestValue>CVIISH/pUxaPBQOdrr5VmOvwb+Yc19VyJRaTc8y7q0k=</DigestValue>
+</Reference>
+</SignedInfo>
+<SignatureValue>YPw0lnnztPmRCQGdr7UvsqLDVKVjcFjo5SbBfC9ZqhCvyP+5mBChj/G8gDC1tPuV
+L8t20xUtHpO6qjW4emnncXHTZqnaD9BGqGzl6KEX0tzA16nkvTaVxfc52h4vc+Xv
+rUl0wfwkK0bxkVKTN8cwmUYtH0MNEENG5ogP4ql6A3yyGZamxGSvoRHmnM+wBInd
+cUKlTM7OinB70kDzKjkKu/ZfNa8EZIfy2VzAS5u01Co9ZKdaAd9ahyre8Y0MDscc
+LokWJ0A88dCvtdq06ymxHtQTufz4ZiTsH6G9zUWK7aoZKDxO/d/wYr8SJDZ0P8BC
+fCtKC9GM5w89FFMRwmZDGg==</SignatureValue>
+</Signature></wsse:Security></soapenv:Header><soapenv:Body xmlns:ns0="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" ns0:Id="body"><xenc:EncryptedData xmlns:xenc="http://www.w3.org/2001/04/xmlenc#" Type="http://www.w3.org/2001/04/xmlenc#Content" Id="body-data">
+<xenc:EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#aes128-cbc"/>
+<xenc:CipherData>
+<xenc:CipherValue>aplU5Dg8X8x19a7O2XlV1PouZe1PEl2Lh+k2l79OKnp4ddD7p3XGpAHNXMwN13lx
+VSyP3+JBn+q5NvLvHJwdEqDoHntUAVC+c/4vTABfWdH3qEq8ObG4QZiAbw9uncvm
+utZyrJsZcl9org9p1QWCjw==</xenc:CipherValue>
+</xenc:CipherData>
+</xenc:EncryptedData></soapenv:Body></soapenv:Envelope>
