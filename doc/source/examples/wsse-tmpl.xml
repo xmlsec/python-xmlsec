@@ -1,0 +1,10 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                   xmlns:ex="urn:example:wsse-demo">
+    <soapenv:Header/>
+    <soapenv:Body>
+        <ex:ExampleRequest>
+            <ex:Field1>hello</ex:Field1>
+            <ex:Field2>42</ex:Field2>
+        </ex:ExampleRequest>
+    </soapenv:Body>
+</soapenv:Envelope>
