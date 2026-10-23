@@ -84,7 +84,7 @@ jobs:
 
       - name: Install cibuildwheel
         # N.B. Keep cibuildwheel version pin consistent with "build_wheels" job below.
-        run: pipx install cibuildwheel==3.3
+        run: pipx install cibuildwheel==4.3.4
 
       - id: set-matrix
         run: |
@@ -96,7 +96,7 @@ jobs:
               && cibuildwheel --print-build-identifiers --platform macos \
               | jq -nRc '{"only": inputs, "os": "macos-latest"}' \
               && cibuildwheel --print-build-identifiers --platform windows \
-              | jq -nRc '{"only": inputs, "os": "windows-2022"}' \
+              | jq -nRc '{"only": inputs, "os": "windows-2025-vs2026"}' \
               && cibuildwheel --print-build-identifiers --platform windows --archs ARM64 \
               | jq -nRc '{"only": inputs, "os": "windows-11-arm"}'
             } | jq -sc
@@ -145,7 +145,7 @@ jobs:
           platforms: all
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.3.0
+        uses: pypa/cibuildwheel@v4.3.4
         with:
           only: ${{ matrix.only }}
         env:

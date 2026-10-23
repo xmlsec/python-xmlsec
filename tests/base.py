@@ -39,7 +39,7 @@ class TestMemoryLeaks(unittest.TestCase):
             return
 
         m_usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        o_count = gc.get_count()[0]
+        o_count = len(gc.get_objects(0))
         m_hits = 0
         o_hits = 0
         for _ in range(self.iterations):
@@ -48,7 +48,7 @@ class TestMemoryLeaks(unittest.TestCase):
             if m_usage_n > m_usage:
                 m_usage = m_usage_n
                 m_hits += 1
-            o_count_n = gc.get_count()[0]
+            o_count_n = len(gc.get_objects(0))
             if o_count_n > o_count:
                 o_count = o_count_n
                 o_hits += 1
@@ -107,7 +107,7 @@ class TestMemoryLeaks(unittest.TestCase):
         cl2 = sorted(second.getchildren(), key=lambda x: x.tag)
         if len(cl1) != len(cl2):
             self.fail(f'children length differs, {len(cl1)} != {len(cl2)}. {msg}')
-        for c1, c2 in zip(cl1, cl2):
+        for c1, c2 in zip(cl1, cl2, strict=True):
             self.assertXmlEqual(c1, c2)
 
 
