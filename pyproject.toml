@@ -6,7 +6,7 @@ name = "xmlsec"
 dynamic = ["version"]
 description = "Python bindings for the XML Security Library"
 readme = {file = "README.md", content-type = "text/markdown"}
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = ["lxml>=3.8"]
 keywords = ["xmlsec"]
 authors = [
@@ -24,12 +24,12 @@ classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: C",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Topic :: Text Processing :: Markup :: XML",
   "Typing :: Typed"
 ]
@@ -90,7 +90,7 @@ disable_error_code = ["attr-defined"]
 line-length = 130
 
 # Target Python version (used for autofixes and style rules)
-target-version = "py39"
+target-version = "py310"
 
 # Directories and files to exclude from linting and formatting
 exclude = [
@@ -154,12 +154,12 @@ line-ending = "lf"
 # cibuildwheel
 [tool.cibuildwheel]
 build = [
-    "cp39-*",
     "cp310-*",
     "cp311-*",
     "cp312-*",
     "cp313-*",
-    "cp314-*"
+    "cp314-*",
+    "cp315-*"
 ]
 build-verbosity = 1
 environment = {PYXMLSEC_STATIC_DEPS="true"}
