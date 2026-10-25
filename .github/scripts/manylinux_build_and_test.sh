@@ -26,6 +26,17 @@ case "$MANYLINUX_IMAGE" in
     ;;
 esac
 
+# Step: Build lxml from source with static deps (temporary)
+# TODO: remove once lxml publishes cp315 manylinux2014_x86_64 wheels.
+echo "== [container] Step: Configure lxml static build (cp315 manylinux2014 only) =="
+case "$PY_ABI/$MANYLINUX_IMAGE" in
+  cp315-*/manylinux2014_*)
+    export STATIC_DEPS=true
+    export LIBXML2_VERSION="${LIBXML2_VERSION:?}" LIBXSLT_VERSION="${LIBXSLT_VERSION:?}"
+    echo "STATIC_DEPS=$STATIC_DEPS LIBXML2_VERSION=$LIBXML2_VERSION LIBXSLT_VERSION=$LIBXSLT_VERSION"
+    ;;
+esac
+
 # Step: Install python build dependencies
 echo "== [container] Step: Install python build dependencies =="
 /opt/python/${PY_ABI}/bin/pip install --upgrade pip setuptools wheel build 'setuptools_scm>=8'
