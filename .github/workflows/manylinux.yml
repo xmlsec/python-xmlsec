@@ -1,5 +1,8 @@
 name: manylinux
-on: [push, pull_request]
+on:
+  push:
+    branches: [master]
+  pull_request:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref_name != 'master' }}
@@ -61,6 +64,8 @@ jobs:
             -e PYXMLSEC_STATIC_DEPS \
             -e PY_ABI \
             -e MANYLINUX_IMAGE \
+            -e LIBXML2_VERSION \
+            -e LIBXSLT_VERSION \
             -e HOST_UID="$(id -u)" \
             -e HOST_GID="$(id -g)" \
             "quay.io/pypa/${MANYLINUX_IMAGE}" \
