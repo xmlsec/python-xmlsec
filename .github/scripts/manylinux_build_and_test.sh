@@ -25,6 +25,13 @@ case "$MANYLINUX_IMAGE" in
     yum install -y perl-core
     ;;
 esac
+# libiconv >= 1.19 needs GNU make >= 4.0 (po/Makefile uses '!='); CentOS 7 ships 3.82.
+case "$MANYLINUX_IMAGE" in
+  manylinux2014_*)
+    yum install -y devtoolset-10-make
+    make --version | head -n 1
+    ;;
+esac
 
 # Step: Build lxml from source with static deps (temporary)
 # TODO: remove once lxml publishes cp315 manylinux2014_x86_64 wheels.
