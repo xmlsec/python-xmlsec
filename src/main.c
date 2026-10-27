@@ -14,6 +14,7 @@
 
 #include <xmlsec/xmlsec.h>
 #include <xmlsec/crypto.h>
+#include <xmlsec/dl.h>
 #include <xmlsec/errors.h>
 #include <xmlsec/base64.h>
 #include <xmlsec/io.h>
