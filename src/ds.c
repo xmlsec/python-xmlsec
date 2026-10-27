@@ -517,12 +517,53 @@ ON_FAIL:
     return NULL;
 }
 
+static const char PyXmlSec_SignatureContextEnabledReferenceUris__doc__[] = \
+    "Bitmask of :samp:`TransformUriType{XXX}` constants allowed in :xml:`<dsig:Reference/>` URI.\n\n"
+    ".. note:: since xmlsec1 1.3.13 only empty and same-document URIs are enabled by default. "
+    "Dereferencing local or remote URIs (e.g. through :func:`~xmlsec.register_callbacks`) requires "
+    "an explicit opt-in.\n";
+static PyObject* PyXmlSec_SignatureContextEnabledReferenceUrisGet(PyObject* self, void* closure) {
+    PyXmlSec_SignatureContext* ctx = (PyXmlSec_SignatureContext*)self;
+    return PyLong_FromUnsignedLong(ctx->handle->enabledReferenceUris);
+}
+
+static int PyXmlSec_SignatureContextEnabledReferenceUrisSet(PyObject* self, PyObject* value, void* closure) {
+    PyXmlSec_SignatureContext* ctx = (PyXmlSec_SignatureContext*)self;
+    unsigned long uris;
+
+    if (value == NULL) {
+        PyErr_SetString(PyExc_TypeError, "cannot delete enabled_reference_uris.");
+        return -1;
+    }
+    if (!PyLong_Check(value)) {
+        PyErr_SetString(PyExc_TypeError, "instance of *int* expected.");
+        return -1;
+    }
+    uris = PyLong_AsUnsignedLong(value);
+    if (PyErr_Occurred()) {
+        return -1;
+    }
+    if (uris > xmlSecTransformUriTypeAny) {
+        PyErr_SetString(PyExc_ValueError, "invalid uri type mask.");
+        return -1;
+    }
+    ctx->handle->enabledReferenceUris = (xmlSecTransformUriType)uris;
+    return 0;
+}
+
 static PyGetSetDef PyXmlSec_SignatureContextGetSet[] = {
     {
         "key",
         (getter)PyXmlSec_SignatureContextKeyGet,
         (setter)PyXmlSec_SignatureContextKeySet,
         (char*)PyXmlSec_SignatureContextKey__doc__,
+        NULL
+    },
+    {
+        "enabled_reference_uris",
+        (getter)PyXmlSec_SignatureContextEnabledReferenceUrisGet,
+        (setter)PyXmlSec_SignatureContextEnabledReferenceUrisSet,
+        (char*)PyXmlSec_SignatureContextEnabledReferenceUris__doc__,
         NULL
     },
     {NULL} /* Sentinel */
