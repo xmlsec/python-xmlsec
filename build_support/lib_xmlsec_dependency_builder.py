@@ -390,6 +390,7 @@ class LibXmlsecDependencyBuilder:
                 './configure',
                 prefix_arg,
                 '--disable-shared',
+                '--disable-apps',
                 '--disable-gost',
                 '--enable-md5',
                 '--enable-ripemd160',
