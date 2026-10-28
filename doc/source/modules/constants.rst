@@ -306,11 +306,12 @@ Transforms
 
 .. data:: xmlsec.constants.TransformUriTypeLocal
 
-   Local file URI (:xml:`URI="file:///path"` or a URI without a scheme).
+   Local file URI (:xml:`URI="file:///path"`).
 
 .. data:: xmlsec.constants.TransformUriTypeRemote
 
-   Remote URI (any other scheme, e.g. :xml:`URI="http://..."` or :xml:`URI="cid:..."`).
+   Any other non-empty URI, e.g. :xml:`URI="http://..."`, :xml:`URI="cid:..."`
+   or a relative path such as :xml:`URI="other.xml"`.
 
 .. data:: xmlsec.constants.TransformUriTypeAny
 
