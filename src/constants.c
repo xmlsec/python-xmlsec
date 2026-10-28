@@ -282,6 +282,13 @@ int PyXmlSec_ConstantsModule_Init(PyObject* package) {
     if (PYXMLSEC_ADD_INT_CONSTANT(TransformUsageEncryptionMethod) < 0) goto ON_FAIL;
     if (PYXMLSEC_ADD_INT_CONSTANT(TransformUsageAny) < 0) goto ON_FAIL;
 
+    if (PYXMLSEC_ADD_INT_CONSTANT(TransformUriTypeNone) < 0) goto ON_FAIL;
+    if (PYXMLSEC_ADD_INT_CONSTANT(TransformUriTypeEmpty) < 0) goto ON_FAIL;
+    if (PYXMLSEC_ADD_INT_CONSTANT(TransformUriTypeSameDocument) < 0) goto ON_FAIL;
+    if (PYXMLSEC_ADD_INT_CONSTANT(TransformUriTypeLocal) < 0) goto ON_FAIL;
+    if (PYXMLSEC_ADD_INT_CONSTANT(TransformUriTypeRemote) < 0) goto ON_FAIL;
+    if (PYXMLSEC_ADD_INT_CONSTANT(TransformUriTypeAny) < 0) goto ON_FAIL;
+
 #undef PYXMLSEC_ADD_INT_CONSTANT
 
 #define PYXMLSEC_DECLARE_NAMESPACE(var, name) \

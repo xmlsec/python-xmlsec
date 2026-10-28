@@ -14,6 +14,7 @@
 
 #include <xmlsec/xmlsec.h>
 #include <xmlsec/crypto.h>
+#include <xmlsec/dl.h>
 #include <xmlsec/errors.h>
 #include <xmlsec/base64.h>
 #include <xmlsec/io.h>
@@ -56,6 +57,12 @@ static void PyXmlSec_Free(int what) {
 }
 
 static int PyXmlSec_Init(void) {
+    // Already initialized (e.g. on module import). Since xmlsec1 1.3.13,
+    // calling xmlSecInit() again without a shutdown fails.
+    if (free_mode == _PYXMLSEC_FREE_ALL) {
+        return 0;
+    }
+
     if (xmlSecInit() < 0) {
         PyXmlSec_SetLastError("cannot initialize xmlsec library.");
         PyXmlSec_Free(_PYXMLSEC_FREE_NONE);

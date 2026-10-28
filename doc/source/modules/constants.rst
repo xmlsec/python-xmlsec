@@ -292,6 +292,31 @@ Transforms
 
    Transform could be used for operation.
 
+.. data:: xmlsec.constants.TransformUriTypeNone
+
+   No URI types are allowed.
+
+.. data:: xmlsec.constants.TransformUriTypeEmpty
+
+   Empty URI (:xml:`URI=""`), i.e. the document containing the signature.
+
+.. data:: xmlsec.constants.TransformUriTypeSameDocument
+
+   Same-document URI (:xml:`URI="#id"`).
+
+.. data:: xmlsec.constants.TransformUriTypeLocal
+
+   Local file URI (:xml:`URI="file:///path"`).
+
+.. data:: xmlsec.constants.TransformUriTypeRemote
+
+   Any other non-empty URI, e.g. :xml:`URI="http://..."`, :xml:`URI="cid:..."`
+   or a relative path such as :xml:`URI="other.xml"`.
+
+.. data:: xmlsec.constants.TransformUriTypeAny
+
+   Any URI type.
+
 .. data:: xmlsec.constants.TransformInclC14N
 
    The regular (inclusive) C14N without comments transform klass.

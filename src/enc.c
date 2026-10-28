@@ -62,6 +62,17 @@ static int PyXmlSec_EncryptionContext__init__(PyObject* self, PyObject* args, Py
     ctx->handle->keyInfoReadCtx.flags = XMLSEC_KEYINFO_FLAGS_LAX_KEY_SEARCH;
     ctx->handle->keyInfoWriteCtx.flags = XMLSEC_KEYINFO_FLAGS_LAX_KEY_SEARCH;
 
+    // xmlsec 1.3.13 no longer copies these flags to the read context of the nested
+    // context used to encrypt <enc:EncryptedKey/>, so the session key encryption key
+    // lookup becomes strict. Create the nested context upfront (it is reused by
+    // xmlsec) and enable lax key search on it as well.
+    if (xmlSecKeyInfoCtxCreateEncCtx(&(ctx->handle->keyInfoWriteCtx)) < 0) {
+        // ctx->manager is owned by ctx now and released on dealloc
+        PyXmlSec_SetLastError("failed to create the nested encryption context");
+        return -1;
+    }
+    ctx->handle->keyInfoWriteCtx.encCtx->keyInfoReadCtx.flags = XMLSEC_KEYINFO_FLAGS_LAX_KEY_SEARCH;
+
     return 0;
 ON_FAIL:
     PYXMLSEC_DEBUGF("%p: init enc context - failed", self);

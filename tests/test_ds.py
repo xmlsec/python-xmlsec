@@ -39,6 +39,23 @@ class TestSignContext(base.TestMemoryLeaks):
         with self.assertRaisesRegex(TypeError, r'instance of \*xmlsec.Key\* expected.'):
             ctx.key = ''
 
+    def test_set_enabled_reference_uris(self):
+        ctx = xmlsec.SignatureContext()
+        uris = consts.TransformUriTypeEmpty | consts.TransformUriTypeSameDocument | consts.TransformUriTypeRemote
+        ctx.enabled_reference_uris = uris
+        self.assertEqual(ctx.enabled_reference_uris, uris)
+
+    def test_set_enabled_reference_uris_bad_args(self):
+        ctx = xmlsec.SignatureContext()
+        with self.assertRaisesRegex(TypeError, r'instance of \*int\* expected.'):
+            ctx.enabled_reference_uris = ''
+        with self.assertRaises(OverflowError):
+            ctx.enabled_reference_uris = -1
+        with self.assertRaisesRegex(ValueError, 'invalid uri type mask'):
+            ctx.enabled_reference_uris = consts.TransformUriTypeAny + 1
+        with self.assertRaisesRegex(TypeError, 'cannot delete'):
+            del ctx.enabled_reference_uris
+
     def test_set_invalid_key(self):
         ctx = xmlsec.SignatureContext(manager=xmlsec.KeysManager())
         with self.assertRaisesRegex(TypeError, 'empty key.'):

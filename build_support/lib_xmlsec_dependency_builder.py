@@ -36,7 +36,7 @@ class CrossCompileInfo:
 
 
 class LibXmlsecDependencyBuilder:
-    WINDOWS_LIBS_DOWNLOAD_RELEASE_URL = 'https://github.com/mxamin/python-xmlsec-win-binaries/releases/download/2026.10.23/'
+    WINDOWS_LIBS_DOWNLOAD_RELEASE_URL = 'https://github.com/mxamin/python-xmlsec-win-binaries/releases/download/2026.10.28/'
     LIB_VERSION_ENV_VARS: ClassVar[dict[str, str]] = {
         'libiconv_version': 'PYXMLSEC_LIBICONV_VERSION',
         'libxml2_version': 'PYXMLSEC_LIBXML2_VERSION',
@@ -50,7 +50,7 @@ class LibXmlsecDependencyBuilder:
         'libxml2_version': '2.14.6',  # Make sure it matches with lxml
         'libxslt_version': '1.1.43',  # 1.1.44+ requires libxml2 >= 2.15.1
         'openssl_version': '3.6.5',
-        'xmlsec1_version': '1.3.12',
+        'xmlsec1_version': '1.3.13',
         'zlib_version': '1.3.2',
     }
     WINDOWS_DEFAULT_LIB_VERSIONS: ClassVar[dict[str, str]] = {
@@ -58,7 +58,7 @@ class LibXmlsecDependencyBuilder:
         'libxml2_version': '2.11.9-8',  # Make sure it matches with lxml
         'libxslt_version': '1.1.45',
         'openssl_version': '3.5.9',
-        'xmlsec1_version': '1.3.12',
+        'xmlsec1_version': '1.3.13',
         'zlib_version': '1.3.2',
     }
 
@@ -390,6 +390,8 @@ class LibXmlsecDependencyBuilder:
                 './configure',
                 prefix_arg,
                 '--disable-shared',
+                '--with-pic',
+                '--disable-apps',
                 '--disable-gost',
                 '--enable-md5',
                 '--enable-ripemd160',

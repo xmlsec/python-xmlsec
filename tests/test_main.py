@@ -48,6 +48,8 @@ class TestCallbacks(base.TestMemoryLeaks):
         xmlsec.template.add_reference(sign, consts.TransformSha1, uri='cid:123456')
 
         ctx = xmlsec.SignatureContext()
+        # xmlsec1 >= 1.3.13 only allows empty and same-document reference URIs by default
+        ctx.enabled_reference_uris = consts.TransformUriTypeAny
         ctx.key = xmlsec.Key.from_file(self.path('rsakey.pem'), format=consts.KeyDataFormatPem)
         ctx.sign(sign)
         return sign
