@@ -1,3 +1,4 @@
+import io
 import tempfile
 
 from lxml import etree
@@ -81,6 +82,76 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         self.assertEqual('http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p', enc_method2.get('Algorithm'))
         cipher_value = xmlsec.tree.find_node(ki, consts.NodeCipherValue, consts.EncNs)
         self.assertIsNotNone(cipher_value)
+
+    def test_encrypt_xml_root(self):
+        # Type=Element on the document root replaces the root itself: the new
+        # root keeps the template's namespace prefix and the document-level
+        # siblings, and decrypting it restores the document in place
+        xml = b'<!--c--><Doc xmlns="urn:d" xmlns:p="urn:p" a="1"><p:x>t</p:x>tail</Doc>'
+        root = etree.parse(io.BytesIO(xml)).getroot()
+        key = xmlsec.Key.generate(consts.KeyDataAes, 128, consts.KeyDataTypeSession)
+        enc_data = xmlsec.template.encrypted_data_create(root, consts.TransformAes128Cbc, type=consts.TypeEncElement, ns='xenc')
+        xmlsec.template.encrypted_data_ensure_cipher_value(enc_data)
+        ctx = xmlsec.EncryptionContext()
+        ctx.key = key
+        encrypted = ctx.encrypt_xml(enc_data, root)
+        self.assertEqual(f'{{{consts.EncNs}}}{consts.NodeEncryptedData}', encrypted.tag)
+        self.assertEqual('xenc', encrypted.prefix)
+        self.assertIsNone(encrypted.getparent())
+        self.assertIs(encrypted.getroottree().getroot(), encrypted)
+        self.assertTrue(etree.tostring(encrypted.getroottree()).startswith(b'<!--c--><xenc:EncryptedData '))
+        self.assertIsNotNone(xmlsec.tree.find_child(encrypted, consts.NodeCipherData, consts.EncNs))
+
+        ctx = xmlsec.EncryptionContext()
+        ctx.key = key
+        decrypted = ctx.decrypt(encrypted)
+        self.assertIsNone(decrypted.getparent())
+        self.assertIs(decrypted.getroottree().getroot(), decrypted)
+        self.assertEqual(xml, etree.tostring(decrypted.getroottree()))
+
+    def encrypt_with_attached_template(self, enc_type, index):
+        # A template that hangs in the target's own document is *moved* into
+        # the target's place, whichever path runs: the document must not end
+        # up with a second, empty <EncryptedData/> where the template was, and
+        # the text that followed it must stay behind (issue #356).
+        root = etree.fromstring(b'<Root>\n  <A/>\n  <Data>secret</Data>\n  <B/>\n</Root>')
+        enc_data = xmlsec.template.encrypted_data_create(root, consts.TransformAes128Cbc, type=enc_type, ns='xenc')
+        xmlsec.template.encrypted_data_ensure_cipher_value(enc_data)
+        root.insert(index, enc_data)
+        enc_data.tail = '\n  tail\n  '
+
+        ctx = xmlsec.EncryptionContext()
+        ctx.key = xmlsec.Key.generate(consts.KeyDataAes, 128, consts.KeyDataTypeSession)
+        encrypted = ctx.encrypt_xml(enc_data, root.find('Data'))
+
+        self.assertEqual(f'{{{consts.EncNs}}}{consts.NodeEncryptedData}', encrypted.tag)
+        self.assertEqual(1, len(root.findall(f'.//{{{consts.EncNs}}}{consts.NodeEncryptedData}')))
+        self.assertIn('tail', etree.tostring(root).decode())
+
+    def test_encrypt_xml_attached_template_element(self):
+        self.encrypt_with_attached_template(consts.TypeEncElement, 0)
+        self.encrypt_with_attached_template(consts.TypeEncElement, 2)
+
+    def test_encrypt_xml_attached_template_content(self):
+        self.encrypt_with_attached_template(consts.TypeEncContent, 0)
+        self.encrypt_with_attached_template(consts.TypeEncContent, 2)
+
+    def test_encrypt_binary_over_a_filled_cipher_value(self):
+        # The reflection must carry a rewritten text value back, not only the
+        # first one written into an empty element (issue #356).
+        root = self.load_xml('enc1-in.xml')
+        enc_data = xmlsec.template.encrypted_data_create(root, consts.TransformAes128Cbc, type=consts.TypeEncContent, ns='xenc')
+        xmlsec.template.encrypted_data_ensure_cipher_value(enc_data)
+
+        def encrypt(data):
+            ctx = xmlsec.EncryptionContext()
+            ctx.key = xmlsec.Key.generate(consts.KeyDataAes, 128, consts.KeyDataTypeSession)
+            ctx.encrypt_binary(enc_data, data)
+            return xmlsec.tree.find_node(enc_data, consts.NodeCipherValue, consts.EncNs).text
+
+        first = encrypt(b'first')
+        self.assertIsNotNone(first)
+        self.assertNotEqual(first, encrypt(b'a rather different payload'))
 
     def test_encrypt_xml_bad_args(self):
         ctx = xmlsec.EncryptionContext()
@@ -167,7 +238,7 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         with tempfile.NamedTemporaryFile(delete=False) as tmpfile:
             tmpfile.write(b'test')
 
-        encrypted = ctx.encrypt_binary(enc_data, 'file://' + tmpfile.name)
+        encrypted = ctx.encrypt_uri(enc_data, 'file://' + tmpfile.name)
         self.assertIsNotNone(encrypted)
         self.assertEqual(f'{{{consts.EncNs}}}{consts.NodeEncryptedData}', encrypted.tag)
 
@@ -182,6 +253,27 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         self.assertEqual('http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p', enc_method2.get('Algorithm'))
         cipher_value = xmlsec.tree.find_node(ki, consts.NodeCipherValue, consts.EncNs)
         self.assertIsNotNone(cipher_value)
+
+    def test_encrypt_and_decrypt_content_of_a_subtree_removed_from_its_document(self):
+        """A subtree taken out of its tree is encrypted and decrypted in place, as on the raw path (issue #356)."""
+        root = etree.fromstring(b'<Envelope xmlns="urn:envelope"><Data>hello <b>x</b> tail</Data></Envelope>')
+        data = root[0]
+        root.remove(data)
+        before = etree.tostring(data)
+
+        key = xmlsec.Key.generate(consts.KeyDataAes, 128, consts.KeyDataTypeSession)
+        enc_data = xmlsec.template.encrypted_data_create(data, consts.TransformAes128Cbc, type=consts.TypeEncContent, ns='xenc')
+        xmlsec.template.encrypted_data_ensure_cipher_value(enc_data)
+        ctx = xmlsec.EncryptionContext()
+        ctx.key = key
+        ctx.encrypt_xml(enc_data, data)
+        self.assertEqual(b'<Envelope xmlns="urn:envelope"/>', etree.tostring(root))
+        self.assertIsNone(data.text)
+
+        dec_ctx = xmlsec.EncryptionContext()
+        dec_ctx.key = key
+        dec_ctx.decrypt(data[0])
+        self.assertEqual(before, etree.tostring(data))
 
     def test_encrypt_uri_bad_args(self):
         ctx = xmlsec.EncryptionContext()
@@ -228,6 +320,54 @@ class TestEncryptionContext(base.TestMemoryLeaks):
         decrypted = ctx.decrypt(enc_data)
         self.assertIsNotNone(decrypted)
         self.assertEqual(self.load_xml(f'enc{i}-in.xml'), root)
+
+    def encrypt_content(self, xml, path):
+        """Encrypts the content of the element at ``path`` with a fresh session key."""
+        root = etree.fromstring(xml)
+        key = xmlsec.Key.generate(consts.KeyDataAes, 128, consts.KeyDataTypeSession)
+        enc_data = xmlsec.template.encrypted_data_create(root, consts.TransformAes128Cbc, type=consts.TypeEncContent, ns='xenc')
+        xmlsec.template.encrypted_data_ensure_cipher_value(enc_data)
+        ctx = xmlsec.EncryptionContext()
+        ctx.key = key
+        ctx.encrypt_xml(enc_data, root.find(path))
+        return root, key
+
+    def test_decrypt_root_content(self):
+        # a root EncryptedData of Type=Content gives way to its decrypted
+        # content, which becomes the new document root
+        root, key = self.encrypt_content(b'<Doc><x>t</x></Doc>', '.')
+        enc_data = etree.fromstring(etree.tostring(root[0]))
+        self.assertIsNone(enc_data.getparent())
+        ctx = xmlsec.EncryptionContext()
+        ctx.key = key
+        decrypted = ctx.decrypt(enc_data)
+        self.assertEqual('x', decrypted.tag)
+        self.assertEqual('t', decrypted.text)
+        self.assertIsNone(decrypted.getparent())
+        self.assertIs(decrypted.getroottree().getroot(), decrypted)
+
+    def test_decrypt_content_text_between_whitespace(self):
+        # in a pretty-printed document the decrypted text lands between the
+        # whitespace that surrounded <EncryptedData/>; the parent's text must
+        # carry all three pieces
+        root, key = self.encrypt_content(b'<root><Password>secret</Password><Other/></root>', 'Password')
+        pretty = etree.fromstring(etree.tostring(root, pretty_print=True))
+        enc_data = xmlsec.tree.find_node(pretty, consts.NodeEncryptedData, consts.EncNs)
+        ctx = xmlsec.EncryptionContext()
+        ctx.key = key
+        password = ctx.decrypt(enc_data)
+        self.assertIs(password, pretty[0])
+        self.assertEqual('\n    secret\n  ', password.text)
+        self.assertEqual(0, len(password))
+
+    def test_decrypt_content_mixed(self):
+        root, key = self.encrypt_content(b'<root><Box>hello <b>world</b> end</Box></root>', 'Box')
+        pretty = etree.fromstring(etree.tostring(root, pretty_print=True))
+        enc_data = xmlsec.tree.find_node(pretty, consts.NodeEncryptedData, consts.EncNs)
+        ctx = xmlsec.EncryptionContext()
+        ctx.key = key
+        box = ctx.decrypt(enc_data)
+        self.assertEqual(b'<Box>\n    hello <b>world</b> end\n  </Box>', etree.tostring(box, with_tail=False))
 
     def test_decrypt_bad_args(self):
         ctx = xmlsec.EncryptionContext()

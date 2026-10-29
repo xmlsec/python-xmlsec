@@ -36,6 +36,22 @@ class TestTemplates(base.TestMemoryLeaks):
         ki = xmlsec.template.ensure_key_info(sign, id='Id')
         self.assertEqual('Id', ki.get('Id'))
 
+    def test_ensure_key_info_existing(self):
+        root = self.load_xml('doc.xml')
+        sign = xmlsec.template.create(root, c14n_method=consts.TransformExclC14N, sign_method=consts.TransformRsaSha1)
+        # attach the template the way real callers do; a created template is
+        # detached (on the shadow path it also lives in its own document
+        # until grafted, so liveness is only observable through `root`)
+        root.append(sign)
+        ki = xmlsec.template.ensure_key_info(sign)
+        self.assertIs(ki.getroottree().getroot(), root)
+        # the second call finds the existing node instead of adding another one,
+        # but still applies the requested id to it
+        ki2 = xmlsec.template.ensure_key_info(sign, id='Id')
+        self.assertIs(ki2, ki)
+        self.assertEqual('Id', ki.get('Id'))
+        self.assertEqual(1, sum(1 for n in sign if n.tag == f'{{{consts.DSigNs}}}KeyInfo'))
+
     def test_ensure_key_info_fail(self):
         with self.assertRaisesRegex(xmlsec.Error, 'cannot ensure key info.'):
             xmlsec.template.ensure_key_info(etree.fromstring(b'<Data/>'), id='Id')
@@ -82,6 +98,28 @@ class TestTemplates(base.TestMemoryLeaks):
         for a in ('Id', 'URI', 'Type'):
             self.assertEqual(a, ref.get(a))
 
+    def test_add_reference_beside_an_entity_reference(self):
+        """A graft must count entity references as children, exactly as lxml's insert does (issue #356)."""
+        root = etree.fromstring(b'<!DOCTYPE Root [ <!ENTITY greet "hello"> ]>\n<Root/>', etree.XMLParser(resolve_entities=False))
+        sign = xmlsec.template.create(root, c14n_method=consts.TransformExclC14N, sign_method=consts.TransformRsaSha1)
+        root.append(sign)
+        sign[0].insert(0, etree.Entity('greet'))  # SignedInfo now leads with an entity reference
+        ref = xmlsec.template.add_reference(sign, consts.TransformSha1, uri='#abc')
+        self.assertIs(ref, sign[0][3])
+
+    def test_add_reference_in_a_subtree_removed_from_an_entity_document(self):
+        """The whole-document copy an internal subset forces cannot hold a subtree the document lost (issue #356)."""
+        root = etree.fromstring(
+            b'<!DOCTYPE Root [ <!ENTITY greet "hello"> ]>\n<Root><Data>&greet;</Data><Holder/></Root>',
+            etree.XMLParser(resolve_entities=False),
+        )
+        holder = root[1]
+        root.remove(holder)
+        sign = xmlsec.template.create(holder, c14n_method=consts.TransformExclC14N, sign_method=consts.TransformRsaSha1)
+        holder.append(sign)
+        ref = xmlsec.template.add_reference(sign, consts.TransformSha1, uri='#abc')
+        self.assertIs(ref, sign[0][2])
+
     def test_add_reference_bad_args(self):
         with self.assertRaises(TypeError):
             xmlsec.template.add_reference('', consts.TransformSha1)
@@ -91,6 +129,36 @@ class TestTemplates(base.TestMemoryLeaks):
     def test_add_reference_fail(self):
         with self.assertRaisesRegex(xmlsec.Error, 'cannot add reference.'):
             xmlsec.template.add_reference(etree.Element('root'), consts.TransformSha1)
+
+    def test_add_transform(self):
+        root = self.load_xml('doc.xml')
+        sign = xmlsec.template.create(root, c14n_method=consts.TransformExclC14N, sign_method=consts.TransformRsaSha1)
+        # attach the template the way real callers do; a created template is
+        # detached (on the shadow path it also lives in its own document
+        # until grafted, so liveness is only observable through `root`)
+        root.append(sign)
+        ref = xmlsec.template.add_reference(sign, consts.TransformSha1, uri='URI')
+        tr = xmlsec.template.add_transform(ref, consts.TransformEnveloped)
+        # the returned node is live in the original tree, inside the
+        # <Transforms> wrapper the first call creates before <DigestMethod>
+        self.assertIs(tr.getroottree().getroot(), root)
+        transforms = tr.getparent()
+        self.assertEqual(f'{{{consts.DSigNs}}}Transforms', transforms.tag)
+        self.assertIs(ref[0], transforms)
+        self.assertEqual(f'{{{consts.DSigNs}}}DigestMethod', ref[1].tag)
+
+    def test_add_transform_existing_transforms(self):
+        root = self.load_xml('doc.xml')
+        sign = xmlsec.template.create(root, c14n_method=consts.TransformExclC14N, sign_method=consts.TransformRsaSha1)
+        ref = xmlsec.template.add_reference(sign, consts.TransformSha1, uri='URI')
+        tr = xmlsec.template.add_transform(ref, consts.TransformEnveloped)
+        # a second transform lands in the existing wrapper, after the first
+        tr2 = xmlsec.template.add_transform(ref, consts.TransformExclC14N)
+        transforms = tr.getparent()
+        self.assertIs(tr2.getparent(), transforms)
+        self.assertEqual(2, len(transforms))
+        self.assertIs(transforms[0], tr)
+        self.assertIs(transforms[1], tr2)
 
     def test_add_transform_bad_args(self):
         with self.assertRaises(TypeError):
@@ -192,6 +260,19 @@ class TestTemplates(base.TestMemoryLeaks):
         ki2 = xmlsec.template.encrypted_data_ensure_key_info(enc, id='Id', ns='test')
         self.assertEqual('Id', ki2.get('Id'))
         self.assertEqual('test', ki2.prefix)
+
+    def test_encrypted_data_ensure_key_info_rename_prefix(self):
+        root = self.load_xml('doc.xml')
+        enc = xmlsec.template.encrypted_data_create(root, method=consts.TransformDes3Cbc)
+        root.append(enc)
+        xmlsec.template.encrypted_data_ensure_key_info(enc)
+        # renaming the prefix of the KeyInfo that already exists keeps it
+        # live, in place, and unique
+        ki = xmlsec.template.encrypted_data_ensure_key_info(enc, ns='test')
+        self.assertIs(ki.getroottree().getroot(), root)
+        self.assertEqual('test', ki.prefix)
+        self.assertIs(enc[1], ki)
+        self.assertEqual(1, sum(1 for n in enc if n.tag == f'{{{consts.DSigNs}}}KeyInfo'))
 
     def test_encrypted_data_ensure_key_info_bad_args(self):
         with self.assertRaises(TypeError):

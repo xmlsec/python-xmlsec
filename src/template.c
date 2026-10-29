@@ -42,6 +42,9 @@ static PyObject* PyXmlSec_TemplateCreate(PyObject* self, PyObject *args, PyObjec
     const char* id = NULL;
     const char* ns = NULL;
     xmlNodePtr res;
+    xmlDocPtr tdoc;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template create - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O!O!|zz:create", kwlist,
@@ -50,16 +53,22 @@ static PyObject* PyXmlSec_TemplateCreate(PyObject* self, PyObject *args, PyObjec
         goto ON_FAIL;
     }
 
+    // `node` only supplies the document the detached template is built in;
+    // the create-shape shadow provides a private one instead (issue #356).
+    tdoc = PyXmlSec_LxmlShadowBeginNewDoc(&shadow, node);
+    if (tdoc == NULL) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplSignatureCreateNsPref(node->_doc->_c_doc, c14n->id, sign->id, XSTR(id), XSTR(ns));
+    res = xmlSecTmplSignatureCreateNsPref(tdoc, c14n->id, sign->id, XSTR(id), XSTR(ns));
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot create template.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot create template.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template create - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template create - fail");
@@ -91,6 +100,8 @@ static PyObject* PyXmlSec_TemplateAddReference(PyObject* self, PyObject *args, P
     const char* uri = NULL;
     const char* type = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template add_reference - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O!|zzz:add_reference", kwlist,
@@ -98,16 +109,21 @@ static PyObject* PyXmlSec_TemplateAddReference(PyObject* self, PyObject *args, P
     {
         goto ON_FAIL;
     }
+    // The xmlsec call runs on a private copy of `node`, never on lxml's own
+    // nodes (issue #356); the shadow reflects the new <Reference> back.
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplSignatureAddReference(node->_c_node, digest->id, XSTR(id), XSTR(uri), XSTR(type));
+    res = xmlSecTmplSignatureAddReference(shadow.root, digest->id, XSTR(id), XSTR(uri), XSTR(type));
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot add reference.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot add reference.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template add_reference - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template add_reference - fail");
@@ -129,6 +145,8 @@ static PyObject* PyXmlSec_TemplateAddTransform(PyObject* self, PyObject *args, P
     PyXmlSec_LxmlElementPtr node = NULL;
     PyXmlSec_Transform* transform = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template add_transform - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O!:add_transform", kwlist,
@@ -136,16 +154,19 @@ static PyObject* PyXmlSec_TemplateAddTransform(PyObject* self, PyObject *args, P
     {
         goto ON_FAIL;
     }
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplReferenceAddTransform(node->_c_node, transform->id);
+    res = xmlSecTmplReferenceAddTransform(shadow.root, transform->id);
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot add transform.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot add transform.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template add_transform - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template add_transform - fail");
@@ -167,6 +188,8 @@ static PyObject* PyXmlSec_TemplateEnsureKeyInfo(PyObject* self, PyObject *args, 
     PyXmlSec_LxmlElementPtr node = NULL;
     const char* id = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template ensure_key_info - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&|z:ensure_key_info", kwlist, PyXmlSec_LxmlElementConverter, &node, &id))
@@ -174,16 +197,19 @@ static PyObject* PyXmlSec_TemplateEnsureKeyInfo(PyObject* self, PyObject *args, 
         goto ON_FAIL;
     }
 
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplSignatureEnsureKeyInfo(node->_c_node, XSTR(id));
+    res = xmlSecTmplSignatureEnsureKeyInfo(shadow.root, XSTR(id));
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot ensure key info.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot ensure key info.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template ensure_key_info - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template ensure_key_info - fail");
@@ -205,6 +231,8 @@ static PyObject* PyXmlSec_TemplateAddKeyName(PyObject* self, PyObject *args, PyO
     PyXmlSec_LxmlElementPtr node = NULL;
     const char* name = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template add_key_name - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&|z:add_key_name", kwlist, PyXmlSec_LxmlElementConverter, &node, &name))
@@ -212,16 +240,19 @@ static PyObject* PyXmlSec_TemplateAddKeyName(PyObject* self, PyObject *args, PyO
         goto ON_FAIL;
     }
 
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplKeyInfoAddKeyName(node->_c_node, XSTR(name));
+    res = xmlSecTmplKeyInfoAddKeyName(shadow.root, XSTR(name));
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot add key name.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot add key name.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template add_key_name - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template add_key_name - fail");
@@ -240,6 +271,8 @@ static PyObject* PyXmlSec_TemplateAddKeyValue(PyObject* self, PyObject *args, Py
 
     PyXmlSec_LxmlElementPtr node = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template add_key_value - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&:add_key_value", kwlist, PyXmlSec_LxmlElementConverter, &node))
@@ -247,16 +280,19 @@ static PyObject* PyXmlSec_TemplateAddKeyValue(PyObject* self, PyObject *args, Py
         goto ON_FAIL;
     }
 
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplKeyInfoAddKeyValue(node->_c_node);
+    res = xmlSecTmplKeyInfoAddKeyValue(shadow.root);
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot add key value.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot add key value.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template add_key_name - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template add_key_name - fail");
@@ -275,6 +311,8 @@ static PyObject* PyXmlSec_TemplateAddX509Data(PyObject* self, PyObject *args, Py
 
     PyXmlSec_LxmlElementPtr node = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template add_x509_data - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&:add_x509_data", kwlist, PyXmlSec_LxmlElementConverter, &node))
@@ -282,16 +320,19 @@ static PyObject* PyXmlSec_TemplateAddX509Data(PyObject* self, PyObject *args, Py
         goto ON_FAIL;
     }
 
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplKeyInfoAddX509Data(node->_c_node);
+    res = xmlSecTmplKeyInfoAddX509Data(shadow.root);
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot add x509 data.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot add x509 data.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template add_x509_data - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template add_x509_data - fail");
@@ -310,6 +351,8 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddIssuerSerial(PyObject* self, PyO
 
     PyXmlSec_LxmlElementPtr node = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template x509_data_add_issuer_serial - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&:x509_data_add_issuer_serial", kwlist,
@@ -317,16 +360,19 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddIssuerSerial(PyObject* self, PyO
     {
         goto ON_FAIL;
     }
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplX509DataAddIssuerSerial(node->_c_node);
+    res = xmlSecTmplX509DataAddIssuerSerial(shadow.root);
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot add x509 issuer serial.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot add x509 issuer serial.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template x509_data_add_issuer_serial - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template x509_data_add_issuer_serial - fail");
@@ -348,6 +394,8 @@ static PyObject* PyXmlSec_TemplateAddX509DataIssuerSerialAddIssuerName(PyObject*
     PyXmlSec_LxmlElementPtr node = NULL;
     const char* name = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template x509_issuer_serial_add_issuer_name - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&|z:x509_issuer_serial_add_issuer_name", kwlist,
@@ -356,16 +404,19 @@ static PyObject* PyXmlSec_TemplateAddX509DataIssuerSerialAddIssuerName(PyObject*
         goto ON_FAIL;
     }
 
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplX509IssuerSerialAddIssuerName(node->_c_node, XSTR(name));
+    res = xmlSecTmplX509IssuerSerialAddIssuerName(shadow.root, XSTR(name));
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot add x509 issuer serial name.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot add x509 issuer serial name.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template x509_issuer_serial_add_issuer_name - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template x509_issuer_serial_add_issuer_name - fail");
@@ -387,6 +438,8 @@ static PyObject* PyXmlSec_TemplateAddX509DataIssuerSerialAddIssuerSerialNumber(P
     PyXmlSec_LxmlElementPtr node = NULL;
     const char* serial = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template x509_issuer_serial_add_serial_number - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&|z:x509_issuer_serial_add_serial_number", kwlist,
@@ -395,16 +448,19 @@ static PyObject* PyXmlSec_TemplateAddX509DataIssuerSerialAddIssuerSerialNumber(P
         goto ON_FAIL;
     }
 
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplX509IssuerSerialAddSerialNumber(node->_c_node, XSTR(serial));
+    res = xmlSecTmplX509IssuerSerialAddSerialNumber(shadow.root, XSTR(serial));
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot add x509 issuer serial number.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot add x509 issuer serial number.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template x509_issuer_serial_add_serial_number - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template x509_issuer_serial_add_serial_number - fail");
@@ -423,6 +479,8 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddSubjectName(PyObject* self, PyOb
 
     PyXmlSec_LxmlElementPtr node = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template x509_data_add_subject_name - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&:x509_data_add_subject_name", kwlist,
@@ -431,16 +489,19 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddSubjectName(PyObject* self, PyOb
         goto ON_FAIL;
     }
 
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplX509DataAddSubjectName(node->_c_node);
+    res = xmlSecTmplX509DataAddSubjectName(shadow.root);
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot add x509 subject name.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot add x509 subject name.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template x509_data_add_subject_name - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template x509_data_add_subject_name - fail");
@@ -459,6 +520,8 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddSKI(PyObject* self, PyObject *ar
 
     PyXmlSec_LxmlElementPtr node = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template x509_data_add_ski - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&:x509_data_add_ski", kwlist,
@@ -467,16 +530,19 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddSKI(PyObject* self, PyObject *ar
         goto ON_FAIL;
     }
 
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplX509DataAddSKI(node->_c_node);
+    res = xmlSecTmplX509DataAddSKI(shadow.root);
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot add x509 SKI.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot add x509 SKI.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template x509_data_add_ski - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template x509_data_add_ski - fail");
@@ -495,6 +561,8 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddCertificate(PyObject* self, PyOb
 
     PyXmlSec_LxmlElementPtr node = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template x509_data_add_certificate - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&:x509_data_add_certificate", kwlist,
@@ -503,16 +571,19 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddCertificate(PyObject* self, PyOb
         goto ON_FAIL;
     }
 
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplX509DataAddCertificate(node->_c_node);
+    res = xmlSecTmplX509DataAddCertificate(shadow.root);
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot add x509 certificate.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot add x509 certificate.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template x509_data_add_certificate - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template x509_data_add_certificate - fail");
@@ -531,6 +602,8 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddCRL(PyObject* self, PyObject *ar
 
     PyXmlSec_LxmlElementPtr node = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template x509_data_add_crl - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&:x509_data_add_crl", kwlist,
@@ -539,16 +612,19 @@ static PyObject* PyXmlSec_TemplateAddX509DataAddCRL(PyObject* self, PyObject *ar
         goto ON_FAIL;
     }
 
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplX509DataAddCRL(node->_c_node);
+    res = xmlSecTmplX509DataAddCRL(shadow.root);
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot add x509 CRL.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot add x509 CRL.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template x509_data_add_crl - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template x509_data_add_crl - fail");
@@ -579,6 +655,8 @@ static PyObject* PyXmlSec_TemplateAddEncryptedKey(PyObject* self, PyObject *args
     const char* type = NULL;
     const char* recipient = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template add_encrypted_key - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O!|zzz:add_encrypted_key", kwlist,
@@ -587,16 +665,19 @@ static PyObject* PyXmlSec_TemplateAddEncryptedKey(PyObject* self, PyObject *args
         goto ON_FAIL;
     }
 
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplKeyInfoAddEncryptedKey(node->_c_node, method->id, XSTR(id), XSTR(type), XSTR(recipient));
+    res = xmlSecTmplKeyInfoAddEncryptedKey(shadow.root, method->id, XSTR(id), XSTR(type), XSTR(recipient));
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot add encrypted key.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot add encrypted key.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template add_encrypted_key - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template add_encrypted_key - fail");
@@ -633,6 +714,9 @@ static PyObject* PyXmlSec_TemplateCreateEncryptedData(PyObject* self, PyObject *
     const char* encoding = NULL;
     const char* ns = NULL;
     xmlNodePtr res;
+    xmlDocPtr tdoc;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template encrypted_data_create - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&O!|zzzzz:encrypted_data_create", kwlist,
@@ -641,19 +725,24 @@ static PyObject* PyXmlSec_TemplateCreateEncryptedData(PyObject* self, PyObject *
         goto ON_FAIL;
     }
 
-    Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplEncDataCreate(node->_doc->_c_doc, method->id, XSTR(id), XSTR(type), XSTR(mime_type), XSTR(encoding));
-    Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot create encrypted data.");
+    tdoc = PyXmlSec_LxmlShadowBeginNewDoc(&shadow, node);
+    if (tdoc == NULL) {
         goto ON_FAIL;
     }
-    if (ns != NULL) {
+    Py_BEGIN_ALLOW_THREADS;
+    res = xmlSecTmplEncDataCreate(tdoc, method->id, XSTR(id), XSTR(type), XSTR(mime_type), XSTR(encoding));
+    // the prefix rewrite happens before End so the serialization carries it
+    if (res != NULL && ns != NULL) {
         res->ns->prefix = xmlStrdup(XSTR(ns));
+    }
+    Py_END_ALLOW_THREADS;
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot create encrypted data.");
+    if (result == NULL) {
+        goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template encrypted_data_create - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template encrypted_data_create - fail");
@@ -678,6 +767,8 @@ static PyObject* PyXmlSec_TemplateEncryptedDataEnsureKeyInfo(PyObject* self, PyO
     const char* id = NULL;
     const char* ns = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template encrypted_data_ensure_key_info - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&|zz:encrypted_data_ensure_key_info", kwlist,
@@ -686,19 +777,23 @@ static PyObject* PyXmlSec_TemplateEncryptedDataEnsureKeyInfo(PyObject* self, PyO
         goto ON_FAIL;
     }
 
-    Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplEncDataEnsureKeyInfo(node->_c_node, XSTR(id));
-    Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot ensure key info for encrypted data.");
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
         goto ON_FAIL;
     }
-    if (ns != NULL) {
+    Py_BEGIN_ALLOW_THREADS;
+    res = xmlSecTmplEncDataEnsureKeyInfo(shadow.root, XSTR(id));
+    // the prefix rewrite lands before End so the reflection carries it
+    if (res != NULL && ns != NULL) {
         res->ns->prefix = xmlStrdup(XSTR(ns));
+    }
+    Py_END_ALLOW_THREADS;
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot ensure key info for encrypted data.");
+    if (result == NULL) {
+        goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template encrypted_data_ensure_key_info - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template encrypted_data_ensure_key_info - fail");
@@ -717,6 +812,8 @@ static PyObject* PyXmlSec_TemplateEncryptedDataEnsureCipherValue(PyObject* self,
 
     PyXmlSec_LxmlElementPtr node = NULL;
     xmlNodePtr res;
+    PyObject* result;
+    PyXmlSec_LxmlShadow shadow;
 
     PYXMLSEC_DEBUG("template encrypted_data_ensure_cipher_value - start");
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&:encrypted_data_ensure_cipher_value", kwlist,
@@ -725,16 +822,19 @@ static PyObject* PyXmlSec_TemplateEncryptedDataEnsureCipherValue(PyObject* self,
         goto ON_FAIL;
     }
 
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplEncDataEnsureCipherValue(node->_c_node);
+    res = xmlSecTmplEncDataEnsureCipherValue(shadow.root);
     Py_END_ALLOW_THREADS;
-    if (res == NULL) {
-        PyXmlSec_SetLastError("cannot ensure cipher value for encrypted data.");
+    result = PyXmlSec_LxmlShadowEnd(&shadow, res, "cannot ensure cipher value for encrypted data.");
+    if (result == NULL) {
         goto ON_FAIL;
     }
 
     PYXMLSEC_DEBUG("template encrypted_data_ensure_cipher_value - ok");
-    return (PyObject*)PyXmlSec_elementFactory(node->_doc, res);
+    return result;
 
 ON_FAIL:
     PYXMLSEC_DEBUG("template encrypted_data_ensure_cipher_value - fail");
@@ -756,6 +856,7 @@ static PyObject* PyXmlSec_TemplateTransformAddC14NInclNamespaces(PyObject* self,
     PyObject* sep;
     int res;
     const char* c_prefixes;
+    PyXmlSec_LxmlShadow shadow;
 
     // transform_add_c14n_inclusive_namespaces
     PYXMLSEC_DEBUG("template encrypted_data_ensure_cipher_value - start");
@@ -782,11 +883,15 @@ static PyObject* PyXmlSec_TemplateTransformAddC14NInclNamespaces(PyObject* self,
 
 
     c_prefixes = PyUnicode_AsUTF8(prefixes);
+    if (PyXmlSec_LxmlShadowBegin(&shadow, node) < 0) {
+        goto ON_FAIL;
+    }
     Py_BEGIN_ALLOW_THREADS;
-    res = xmlSecTmplTransformAddC14NInclNamespaces(node->_c_node, XSTR(c_prefixes));
+    res = xmlSecTmplTransformAddC14NInclNamespaces(shadow.root, XSTR(c_prefixes));
     Py_END_ALLOW_THREADS;
-    if (res != 0) {
-        PyXmlSec_SetLastError("cannot add 'inclusive' namespaces to the ExcC14N transform node");
+    // the call only reports a status; the reflect grafts the
+    // <InclusiveNamespaces/> it created back into the live tree
+    if (PyXmlSec_LxmlShadowReflect(&shadow, res, "cannot add 'inclusive' namespaces to the ExcC14N transform node") < 0) {
         goto ON_FAIL;
     }
 
