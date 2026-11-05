@@ -39,6 +39,49 @@ Documentation = "https://xmlsec.readthedocs.io"
 Source = "https://github.com/xmlsec/python-xmlsec"
 Changelog = "https://github.com/xmlsec/python-xmlsec/releases"
 
+# Development dependencies. `uv sync` installs the `dev` group by default.
+# Versions are pinned exactly because cibuildwheel installs the `test` group
+# directly from here and does not read uv.lock.
+[dependency-groups]
+test = [
+  "lxml==6.1.3",
+  "lxml-stubs==0.5.1",
+  "pytest==9.0.3"
+]
+lint = [
+  "pre-commit",
+  "ruff==0.17.1"  # keep in sync with .pre-commit-config.yaml
+]
+coverage = ["coverage"]
+docs = [
+  "furo==2025.12.19",
+  "lxml==6.1.3",
+  "packaging==26.1",
+  "Sphinx==9.1.0"
+]
+dev = [
+  {include-group = "test"},
+  {include-group = "lint"},
+  {include-group = "coverage"}
+]
+
+# uv
+[tool.uv]
+required-version = ">=0.13"
+# xmlsec is a C extension: rebuild it whenever one of these changes. Git state and
+# PYXMLSEC_STATIC_DEPS are left out on purpose: a static rebuild takes over a minute, and
+# keying on the variable makes any `uv run` without it rebuild against the system libraries.
+cache-keys = [
+  {file = "pyproject.toml"},
+  {file = "setup.py"},
+  {file = "src/**/*.c"},
+  {file = "src/**/*.h"},
+  {file = "build_support/**/*.py"}
+]
+
+[tool.uv.dependency-groups]
+docs = {requires-python = ">=3.12"}  # Sphinx 9 needs Python 3.12+
+
 # setuptools
 [tool.setuptools]
 zip-safe = false
@@ -169,7 +212,7 @@ skip = [
     "*musllinux_riscv64"  # maturin and ruff currently don’t support the musl + riscv64 target
 ]
 test-command = "pytest -v --color=yes {package}/tests"
-before-test = "pip install -r requirements-test.txt"
+test-groups = ["test"]
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64", "riscv64"]

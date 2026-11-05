@@ -16,10 +16,9 @@ For this repository, RTD is configured to:
 
 - use config version `2`
 - build on `ubuntu-24.04`
-- use Python `3.14`
+- use the Python version pinned in `.python-version`
 - build with Sphinx using `doc/source/conf.py`
-- install the project itself with `pip install .`
-- install extra docs dependencies from `doc/source/requirements.txt`
+- install `uv`, then install the project and the `docs` dependency group from `uv.lock` with `uv sync`
 
 That means every successful RTD build uses the repository contents plus the settings in `.readthedocs.yaml`.
 
@@ -27,52 +26,18 @@ That means every successful RTD build uses the repository contents plus the sett
 
 If you changed the docs, or changed code that affects autodoc output, validate locally first.
 
-### 1. Create and activate a virtual environment
+### 1. Set up the development environment
 
-From the repository root:
+Follow [CONTRIBUTING.md](../CONTRIBUTING.md) to install `uv` and choose how to get the native libraries. Autodoc imports `xmlsec` to render the API pages, so the package has to build.
 
-```bash
-python3 -m venv .venv-docs
-source .venv-docs/bin/activate
-python -m pip install --upgrade pip
-```
+### 2. Keep your build settings
 
-Use Python `3.12+` for local docs builds. The docs dependencies are pinned to current releases, including Sphinx `9.1.0`, which no longer supports older Python versions.
-
-### 2. Install the package and doc dependencies
-
-For a minimal local docs build, install the docs dependencies:
-
-```bash
-python -m pip install -r doc/source/requirements.txt
-```
-
-If you want autodoc to import `xmlsec` and render the API pages without import warnings, also install the package itself:
-
-```bash
-python -m pip install .
-```
-
-Note: `xmlsec` depends on native libraries. If `pip install .` fails, install the system dependencies first.
-
-Examples:
-
-- Debian/Ubuntu:
-
-```bash
-sudo apt-get install pkg-config libxml2-dev libxmlsec1-dev libxmlsec1-openssl
-```
-
-- macOS with Homebrew:
-
-```bash
-brew install libxml2 libxmlsec1 pkg-config
-```
+Keep the environment variables for the option you chose, such as `PYXMLSEC_STATIC_DEPS=true`, set in your shell. The docs dependencies are in the `docs` dependency group, and `uv run` installs them in the next step. That group needs Python `3.12+` because of Sphinx `9.1.0`; the project's default development Python already meets this.
 
 ### 3. Build the docs locally
 
 ```bash
-make -C doc html
+uv run --group docs make -C doc html
 ```
 
 Built HTML will be placed in:
@@ -136,9 +101,9 @@ After that, pushes to GitHub should trigger builds automatically.
 
 ## Troubleshooting
 
-### Build fails locally on `pip install .`
+### Build fails locally on `uv sync` or `uv run`
 
-The Python package requires native `xmlsec` and `libxml2` dependencies. Install the OS packages first, then retry.
+The Python package needs native `xmlsec` and `libxml2` libraries. Check the environment variables and packages for your option in [CONTRIBUTING.md](../CONTRIBUTING.md), then retry.
 
 ### RTD build fails after a push
 

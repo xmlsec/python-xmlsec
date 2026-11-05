@@ -5,10 +5,9 @@ prune .github
 prune doc
 exclude .appveyor.yml
 exclude .editorconfig
-exclude .travis.yml
 exclude .gitattributes
 exclude .gitignore
-exclude requirements-test.txt
-exclude requirements.txt
+exclude .python-version
+exclude uv.lock
 exclude xmlsec_extra.py
 exclude xmlsec_setupinfo.py

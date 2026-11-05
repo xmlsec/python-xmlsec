@@ -18,7 +18,7 @@ libs/
 You can override it with either:
 
 ```bash
-python build_libs_xmlsec.py --libs-dir /path/to/cache
+uv run --no-project --with setuptools python build_libs_xmlsec.py --libs-dir /path/to/cache
 ```
 
 or:

@@ -113,17 +113,12 @@ jobs:
         key: >-
           libs-${{ runner.os }}-${{ runner.arch }}-${{ env.LIBICONV_VERSION }}-${{ env.LIBXML2_VERSION }}-${{ env.LIBXSLT_VERSION }}-${{ env.OPENSSL_VERSION }}-${{ env.XMLSEC1_VERSION }}-${{ env.ZLIB_VERSION }}
 
-    - uses: actions/setup-python@v6
-      with:
-        python-version: "3.13"
-
-    - name: Install setuptools shim
-      run: python -m pip install --upgrade pip setuptools
+    - uses: astral-sh/setup-uv@v10.3.3
 
     - name: Download latest libraries
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: python build_libs_xmlsec.py --download-only
+      run: uv run --no-project --with setuptools python build_libs_xmlsec.py --download-only
 
     - name: Check Windows library versions
       if: ${{ contains(matrix.os, 'windows-') }}

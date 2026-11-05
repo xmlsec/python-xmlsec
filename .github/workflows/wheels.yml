@@ -42,27 +42,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v6.0.0
-        with:
-          python-version: '3.14'
-
-      - name: Install build dependencies
-        run: |
-          pip install --upgrade pip setuptools wheel setuptools_scm>=8 pkgconfig>=1.5.1
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.3.3
 
       - name: Package source dist
-        run: python setup.py sdist
+        run: uv build --sdist
 
       - name: Install test dependencies
         run: |
           sudo apt-get update -y -q
           sudo apt-get install -y -q libxml2-dev libxslt1-dev libxmlsec1-dev libxmlsec1-openssl opensc softhsm2 libengine-pkcs11-openssl
-          pip install --upgrade -r requirements-test.txt --no-binary lxml
-          pip install dist/xmlsec-$(python setup.py --version).tar.gz
+          uv sync --locked --no-default-groups --group test --no-install-project --no-binary-package lxml
+          uv pip install dist/xmlsec-*.tar.gz
 
       - name: Run tests
-        run: pytest -v --color=yes
+        run: uv run --no-sync pytest -v --color=yes
 
       - name: Upload sdist
         uses: actions/upload-artifact@v5.0.0
@@ -83,9 +77,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5.0.0
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.3.3
+
       - name: Install cibuildwheel
         # N.B. Keep cibuildwheel version pin consistent with "build_wheels" job below.
-        run: pipx install cibuildwheel==4.3.4
+        run: uv tool install cibuildwheel==4.3.4
 
       - id: set-matrix
         run: |
