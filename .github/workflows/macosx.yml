@@ -17,6 +17,9 @@ jobs:
     runs-on: macos-latest
 
     env:
+      # Runners preinstall several Pythons. Without this, uv can pick one of them (for example
+      # the universal2 build of 3.11), and lxml and xmlsec can end up on different libxml2 versions.
+      UV_PYTHON_PREFERENCE: only-managed
       LIBICONV_VERSION: ${{ needs.cache_libs.outputs.LIBICONV_VERSION }}
       LIBXML2_VERSION: ${{ needs.cache_libs.outputs.LIBXML2_VERSION }}
       LIBXSLT_VERSION: ${{ needs.cache_libs.outputs.LIBXSLT_VERSION }}
@@ -79,7 +82,9 @@ jobs:
           export PKG_CONFIG_PATH="$(brew --prefix)/opt/libxml2/lib/pkgconfig"
           uv sync --locked --no-default-groups --group test --group coverage --no-install-project --no-binary-package lxml
           uv pip install xmlsec --only-binary xmlsec --no-index --find-links dist/
-          echo "PYXMLSEC_LIBFILE=$(uv run --no-sync python -c 'import xmlsec; print(xmlsec.__file__)')" >> $GITHUB_ENV
+          # Assign separately so that a failed import stops this step.
+          PYXMLSEC_LIBFILE="$(uv run --no-sync python -c 'import xmlsec; print(xmlsec.__file__)')"
+          echo "PYXMLSEC_LIBFILE=$PYXMLSEC_LIBFILE" >> $GITHUB_ENV
 
       - name: Run tests
         run: |

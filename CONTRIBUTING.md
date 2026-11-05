@@ -219,6 +219,11 @@ in [Option B](#option-b-system-libraries).
 the variables for your chosen option, then rebuild both packages as described in
 [Switching between options](#switching-between-options).
 
+If that doesn't help on macOS, uv may have picked a preinstalled Python, such as
+a universal2 build in `/usr/local/bin`. Check with `uv python find`, then
+`export UV_PYTHON_PREFERENCE=only-managed` to use uv's own Python, delete `.venv`
+and rebuild.
+
 ### C changes don't seem to take effect
 
 Force a rebuild with `uv sync --reinstall-package xmlsec`. This also refreshes
