@@ -7,6 +7,12 @@ Installation
 
    pip install xmlsec
 
+or, in a `uv <https://docs.astral.sh/uv/>`_ project:
+
+.. code-block:: bash
+
+   uv add xmlsec
+
 Depending on your OS, you may need to install the required native
 libraries first:
 
@@ -141,3 +147,10 @@ to build from source:
    .. code-block:: bash
 
       pip install xmlsec --no-binary=xmlsec
+
+
+Development setup
+*****************
+
+To work on ``xmlsec`` itself, see the
+`contributing guide <https://github.com/xmlsec/python-xmlsec/blob/master/CONTRIBUTING.md>`_.

@@ -1,5 +1,0 @@
--r requirements.txt
-
-pytest==9.0.3
-lxml-stubs==0.5.1
-ruff[format]==0.14.4

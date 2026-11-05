@@ -22,25 +22,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/setup-python@v4
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Install build dependencies
-        run: |
-          pip install --upgrade pip setuptools wheel 'setuptools_scm>=8'
-
       - name: Package source dist
-        run: |
-          python setup.py sdist
+        run: uv build --sdist
 
       - name: Install test dependencies
         run: |
           sudo apt-get update
           sudo apt-get install libxml2-dev libxmlsec1-dev libxmlsec1-openssl opensc softhsm2 libengine-pkcs11-openssl
-          pip install --upgrade -r requirements-test.txt --no-binary lxml
-          pip install dist/xmlsec-$(python setup.py --version).tar.gz
+          uv sync --locked --no-default-groups --group test --no-install-project --no-binary-package lxml
+          uv pip install dist/xmlsec-*.tar.gz
 
       - name: Run tests
-        run: |
-          pytest -v --color=yes
+        run: uv run --no-sync pytest -v --color=yes

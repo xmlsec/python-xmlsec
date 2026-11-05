@@ -36,6 +36,12 @@ verifying using the library.
 pip install xmlsec
 ```
 
+or, in a [uv](https://docs.astral.sh/uv/) project:
+
+``` bash
+uv add xmlsec
+```
+
 Depending on your OS, you may need to install the required native
 libraries first:
 
@@ -163,84 +169,34 @@ source:
 
 ## Building from source
 
-1. Clone the `xmlsec` source code repository to your local computer.
+You need [uv](https://docs.astral.sh/uv/getting-started/installation/) and a C
+compiler. This builds an sdist and wheel in `dist/`, compiling the native
+libraries statically:
 
-    ``` bash
-    git clone https://github.com/xmlsec/python-xmlsec.git
-    ```
+``` bash
+git clone https://github.com/xmlsec/python-xmlsec.git
+cd python-xmlsec
+PYXMLSEC_STATIC_DEPS=true uv build
+```
 
-2. Change into the `python-xmlsec` root directory.
-
-    ``` bash
-    cd /path/to/xmlsec
-    ```
-
-3. Install the project and all its dependencies using `pip`.
-
-   ``` bash
-   pip install .
-   ```
+To link against system libraries instead, install them as shown under
+[Install](#install) and leave out `PYXMLSEC_STATIC_DEPS=true`.
 
 ## Contributing
 
-### Setting up your environment
+The project uses [uv](https://docs.astral.sh/uv/) for development, with Python
+3.14 as the default. To get a working environment and run the tests:
 
-1. Follow steps 1 and 2 of the [manual installation
-   instructions](#building-from-source).
+``` bash
+git clone https://github.com/xmlsec/python-xmlsec.git
+cd python-xmlsec
+export PYXMLSEC_STATIC_DEPS=true
+uv sync
+uv run pytest
+```
 
-2. Initialize a virtual environment to develop in. This is done so as
-   to ensure every contributor is working with close-to-identical
-   versions of packages.
-
-   ``` bash
-   mkvirtualenv xmlsec
-   ```
-
-   The `mkvirtualenv` command is available from `virtualenvwrapper`
-   package which can be installed by following
-   [link](http://virtualenvwrapper.readthedocs.org/en/latest/install.html#basic-installation).
-
-3. Activate the created virtual environment:
-
-   ``` bash
-   workon xmlsec
-   ```
-
-4. Install `xmlsec` in development mode with testing enabled. This will
-   download all dependencies required for running the unit tests.
-
-   ``` bash
-   pip install -r requirements-test.txt
-   pip install -e "."
-   ```
-
-### Running the test suite
-
-1. [Set up your environment](#setting-up-your-environment).
-
-2. Run the unit tests.
-
-   ``` bash
-   pytest tests
-   ```
-
-3. Tests configuration
-
-   Env variable `PYXMLSEC_TEST_ITERATIONS` specifies number of test
-   iterations to detect memory leaks.
-
-### Reporting an issue
-
-Please attach the output of following information:
-
-- version of `xmlsec`
-- version of `libxmlsec1`
-- version of `libxml2`
-- output from the command
-
-  ``` bash
-  pkg-config --cflags xmlsec1
-  ```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full setup, including how to use
+system libraries, everyday commands and how to report an issue.
 
 ## License
 
