@@ -17,8 +17,7 @@ jobs:
     runs-on: macos-latest
 
     env:
-      # Runners preinstall several Pythons. Without this, uv can pick one of them (for example
-      # the universal2 build of 3.11), and lxml and xmlsec can end up on different libxml2 versions.
+      # Runners preinstall several Pythons. Use uv's own so every job in the matrix gets the same kind of build.
       UV_PYTHON_PREFERENCE: only-managed
       LIBICONV_VERSION: ${{ needs.cache_libs.outputs.LIBICONV_VERSION }}
       LIBXML2_VERSION: ${{ needs.cache_libs.outputs.LIBXML2_VERSION }}
@@ -70,18 +69,20 @@ jobs:
         shell: bash
         run: echo "LLVM_PROFILE_FILE=pyxmlsec.profraw" >> $GITHUB_ENV
 
+      # Static and non-static jobs share a uv cache and build wheels with the same filename, so uv can
+      # install the other job's cached wheel from dist/. --refresh-package makes it use the one just built.
       - name: Install test dependencies (static only)
         if: matrix.static_deps == 'static'
         run: |
           uv sync --locked --no-default-groups --group test --group coverage --no-install-project
-          uv pip install xmlsec --only-binary xmlsec --no-index --find-links dist/
+          uv pip install xmlsec --only-binary xmlsec --no-index --find-links dist/ --refresh-package xmlsec
 
       - name: Install test dependencies (non-static only)
         if: matrix.static_deps != 'static'
         run: |
           export PKG_CONFIG_PATH="$(brew --prefix)/opt/libxml2/lib/pkgconfig"
           uv sync --locked --no-default-groups --group test --group coverage --no-install-project --no-binary-package lxml
-          uv pip install xmlsec --only-binary xmlsec --no-index --find-links dist/
+          uv pip install xmlsec --only-binary xmlsec --no-index --find-links dist/ --refresh-package xmlsec
           # Assign separately so that a failed import stops this step.
           PYXMLSEC_LIBFILE="$(uv run --no-sync python -c 'import xmlsec; print(xmlsec.__file__)')"
           echo "PYXMLSEC_LIBFILE=$PYXMLSEC_LIBFILE" >> $GITHUB_ENV
