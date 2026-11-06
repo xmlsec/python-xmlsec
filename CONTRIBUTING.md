@@ -166,7 +166,7 @@ Runtime and build requirements are in `[project]` and `[build-system]` in
 | Group      | Contents                                  | Installed by                  |
 | ---------- | ----------------------------------------- | ----------------------------- |
 | `test`     | pytest and test dependencies              | `dev`, CI, cibuildwheel       |
-| `lint`     | ruff and pre-commit                       | `dev`                         |
+| `lint`     | ruff and pre-commit (Python 3.11+ only)   | `dev`                         |
 | `coverage` | coverage.py                               | `dev`, macOS CI               |
 | `dev`      | All of the above                          | `uv sync` by default          |
 | `docs`     | Sphinx and its theme (Python 3.12+ only)  | `--group docs`, Read the Docs |
